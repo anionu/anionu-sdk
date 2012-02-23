@@ -1,0 +1,3 @@
+add_subdirectory(SurveillanceMode)
+add_subdirectory(RecordingMode)
+add_subdirectory(MediaProvider)
