@@ -1,5 +1,8 @@
-# This macro is for defining a Spot plug-in
-
+#
+### Macro: define_spot_executable
+#
+# This template defines a Spot plug-in.
+#
 macro(define_spot_plugin name)
             
     project(${name})
@@ -20,7 +23,7 @@ macro(define_spot_plugin name)
     include_directories(${LibSourcey_INCLUDE_DIRS})    
     link_directories(${LibSourcey_LIBRARY_DIRS})
     
-    include_libsourcey_modules(Base Net JSON Media HTTP Anionu ISpot HTTP Symple ${ARGN})
+    include_sourcey_modules(Base Net JSON Media HTTP Anionu ISpot HTTP Symple ${ARGN})
     include_directories(
       "${LibSourcey_INSTALL_DIR}/lib"
       "${CMAKE_SOURCE_DIR}/projects/Anionu/ISpot/include")
