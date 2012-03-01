@@ -1,5 +1,5 @@
 #include "AVFileReader.h"
-#include "Sourcey/Base/Logger.h"
+#include "Sourcey/Logger.h"
 
 
 using namespace std;
@@ -93,10 +93,10 @@ void AVFileReader::open(const std::string& file)
 	av_register_all();
 		
 	if (av_open_input_file(&_formatCtx, file.data(), NULL, 0, NULL) != 0)
-		throw Exception("Could not open the media file.");
+		throw Exception("Could not open the media file");
 
 	if (av_find_stream_info(_formatCtx) < 0)
-		throw Exception("Could not find stream information.");
+		throw Exception("Could not find stream information");
 	
   	dump_format(_formatCtx, 0, file.data(), 0);
 	
@@ -114,7 +114,7 @@ void AVFileReader::open(const std::string& file)
 	}
 	if (_video == NULL && 
 		_audio == NULL)
-		throw Exception("Could not find a valid media stream.");
+		throw Exception("Could not find a valid media stream");
 }
 
 
@@ -143,7 +143,7 @@ void AVFileReader::run()
 
 						VideoPacket video(_video->buffer, len, _video->pts);
 						video.opaque = _video;
-						broadcast(video);
+						dispatch(this, video);
 					}
 
 					/*
@@ -169,7 +169,7 @@ void AVFileReader::run()
 
 						AudioPacket audio(_audio->buffer, len, _audio->pts);
 						audio.opaque = _audio;
-						broadcast(audio);
+						dispatch(this, audio);
 					}
 					/*
 					if ((len = decodeAudio(packet)) > 0) {
@@ -236,18 +236,18 @@ void AVFileReader::openVideo(int streamID)
 	_video->codec = _video->stream->codec;
 	_video->codec = avcodec_find_decoder(_video->codec->codec_id);	
 	if (_video->codec == NULL)
-		throw Exception("The video codec is missing or unsupported.");
+		throw Exception("The video codec is missing or unsupported");
 	
 	if (avcodec_open(_video->codec, _video->codec)<0)
-		throw Exception("Could not open the video codec.");
+		throw Exception("Could not open the video codec");
 	
 	_video->iframe = avcodec_alloc_frame();
 	if (_video->iframe == NULL)
-		throw Exception("Could not allocate the input frame.");
+		throw Exception("Could not allocate the input frame");
 
 	_video->oframe = avcodec_alloc_frame();	
 	if (_video->oframe == NULL)
-		throw Exception("Could not allocate the output frame.");
+		throw Exception("Could not allocate the output frame");
 	
 	_video->bufferSize = avpicture_get_size(PIX_FMT_BGR24, _video->codec->width, _video->codec->height);
 	_video->buffer = (uint8_t*)av_malloc(_video->bufferSize * sizeof(uint8_t));	
@@ -274,12 +274,12 @@ void AVFileReader::openAudio(int streamID)
     _audio->codec = _audio->stream->codec;
     _audio->codec = avcodec_find_decoder (_audio->codec->codec_id);
     if (_audio->codec == NULL)
-		throw Exception("The audio codec is missing or unsupported.");
+		throw Exception("The audio codec is missing or unsupported");
 
 	_audio->populate();
 
     if (avcodec_open(_audio->codec, _audio->codec) < 0)
-		throw Exception("Could not open the video codec.");
+		throw Exception("Could not open the video codec");
 
     switch (_audio->codec->sample_fmt) {
     case SAMPLE_FMT_S16:
@@ -299,7 +299,7 @@ void AVFileReader::openAudio(int streamID)
         _audio->fp = true;
         break;
     default:
-		throw Exception("Unsupported audio sample format.");
+		throw Exception("Unsupported audio sample format");
     }
 
     _audio->bufferSize = AVCODEC_MAX_AUDIO_FRAME_SIZE; // * 3) / 2;
@@ -477,7 +477,7 @@ int AVFileReader::populateMatrix(cv::Mat& mat)
 	if (sws_scale(convCtx,
 		iframe->data, iframe->linesize, 0, height,
 		oframe->data, oframe->linesize) < 0)
-		throw Exception("Pixel format conversion not supported.");
+		throw Exception("Pixel format conversion not supported");
 
 	sws_scale(
 		_video->convertCtx, _video->iframe->data, _video->iframe->linesize, 
@@ -639,4 +639,4 @@ int AVFileReader::populateMatrix(cv::Mat& mat)
 		*/
 	// Throw an exception if we can't decode a video frame and exit early.
 	//if (len < 0)
-	//	throw Exception("Failed to decode video frame.");
+	//	throw Exception("Failed to decode video frame");

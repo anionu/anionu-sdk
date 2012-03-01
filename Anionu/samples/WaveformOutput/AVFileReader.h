@@ -2,8 +2,8 @@
 #define SOURCEY_MEDIA_AVFileReader_H
 
 
-#include "Sourcey/Base/IPacketBroadcaster.h"
-#include "Sourcey/Base/IRunnable.h"
+#include "Sourcey/PacketDispatcher.h"
+#include "Sourcey/IRunnable.h"
 #include "Sourcey/Media/Types.h"
 #include "Sourcey/Media/VideoContext.h"
 #include "Sourcey/Media/AudioContext.h"
@@ -126,7 +126,7 @@ struct VideoContext
 	*/
 
 
-class AVFileReader: public IPacketBroadcaster, public IRunnable, public Poco::Runnable 
+class AVFileReader: public PacketDispatcher, public IRunnable, public Poco::Runnable 
 	/// Video encoder class with reusable code that
 	/// depends on ffmpeg libavcodec/libavformat.
 {

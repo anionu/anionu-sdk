@@ -1,5 +1,5 @@
-#ifndef SPOT_BASE_IStreamingManager_H
-#define SPOT_BASE_IStreamingManager_H
+#ifndef ANIONU_SPOT_IStreamingManager_H
+#define ANIONU_SPOT_IStreamingManager_H
 
 
 #include "Sourcey/Logger.h"
@@ -81,4 +81,4 @@ public:
 } } // namespace Sourcey::Spot
 
 
-#endif // SPOT_BASE_IStreamingManager_H
+#endif // ANIONU_SPOT_IStreamingManager_H

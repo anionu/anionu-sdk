@@ -2,9 +2,9 @@
 #include "MatrixPacketizer.h"
 #include "FFT.h"
 #include "Sourcey/Anionu/MotionDetector.h"
-#include "Sourcey/Base/TaskRunner.h"
-#include "Sourcey/Base/PacketStream.h"
-#include "Sourcey/Base/Util.h"
+#include "Sourcey/Runner.h"
+#include "Sourcey/PacketStream.h"
+#include "Sourcey/Util.h"
 
 #include <string>
 #include <vector>
@@ -99,14 +99,14 @@ public:
 		// Receive MHI output images directly from the motion
 		// detector. The motion level will represent the 
 		// output waveform level.
-		_detector.addReceiver(packetDelegate(this, &WaveformOutput::onVideo));
-		//stream.addReceiver(packetDelegate(this, &WaveformOutput::onVideo));
+		_detector.attach(packetDelegate(this, &WaveformOutput::onVideo));
+		//stream.attach(packetDelegate(this, &WaveformOutput::onVideo));
 				
 		// Receive decoded audio from the file decoder and
 		// run it through the FFT algorithm to gather
 		// visualisation data.
-		_reader.addReceiver(packetDelegate(this, &WaveformOutput::onAudio));
-		//stream.addReceiver(packetDelegate(this, &WaveformOutput::onAudio));
+		_reader.attach(packetDelegate(this, &WaveformOutput::onAudio));
+		//stream.attach(packetDelegate(this, &WaveformOutput::onAudio));
 
 		// Kick off the packet stream...
 		stream.start();
@@ -141,15 +141,15 @@ public:
 
 	void onAudio(void* sender, AudioPacket& packet)
 	{
-		cout << "onAudio: " << packet.size << ": " << packet.time << endl;
-		short const* data16 = reinterpret_cast<short *>(packet.data);
+		cout << "onAudio: " << packet.size() << ": " << packet.time << endl;
+		short const* data16 = reinterpret_cast<short*>(packet.data());
 
 		// Fill the FFT buffer
 		for (int i = 0; i < FFT_POINTS; ++i) {
 			//int audioLeft = (int)data16[i * 2];
 			//int audioRight = (int)data16[i * 2 + 1];
 			//(audioLeft + audioRight) * (1.0f / 65536.0f); //packet.data[i]; //buf[i];
-			_fftData[i] = packet.data[i];
+			_fftData[i] = packet.data()[i];
 		}
 		
 		// Run Fourier Transform
@@ -227,7 +227,7 @@ public:
 	MotionDetector	_detector;	
 	std::ofstream _file;
 	FFT _fft;
-	vector<FFT::Complex> _fftData; //(FFT_POINTS);
+	vector<FFT::Complex> _fftData;
 
 	// Testing
 	//vector<WaveformInfo> audioResults;
@@ -236,7 +236,7 @@ public:
 
 int main(int argc, char** argv)
 {
-	Logger::instance().add(new ConsoleChannel("debug", VerboseLevel));
+	Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
 	/*
 
 	// A standard 16-bit stereo WAVE file, but with a long header

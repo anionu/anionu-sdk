@@ -30,7 +30,7 @@
 #include "Sourcey/HTTP/Request.h"
 #include "Sourcey/HTTP/Response.h"
 #include "Sourcey/HTTP/Transaction.h"
-#include "Sourcey/XML/XML.h"
+#include "Sourcey/JSON/JSON.h"
 
 	
 namespace Sourcey { 
@@ -46,49 +46,58 @@ namespace Anionu {
 
 // ---------------------------------------------------------------------
 //
-class APIService 
+class APIMethod 
 {
 public:
-	APIService();
+	APIMethod();
 
 	virtual void format(const std::string& format);
-		/// Sets the format as .html, .xml, .api
+		/// Sets the return format as .json, .xml, .api
 
 	virtual void interpolate(const StringMap& params);
 		/// Interpolates a URI parameter eg. :key => value
 
 public:
 	std::string name;
-	std::string method;
+	std::string httpMethod; // HTTP method ie. GET, POST, PUT, DELETE
 	std::string contentType;
 	Poco::URI uri;
-	bool isAnonymous;
+	bool requireAuth;
 };
 
 
 // ---------------------------------------------------------------------
 //
-class APIServices: public XML::Document 
-	/// Stores and parses the services descriptor from the Sourcey API.
-	/// TODO: Use JSON for service description.
-	/// The input XML should be in the following format:
+class APIMethods: public JSON::Value
+	/// Stores and parses the Anionu API method descriptions.
+	/// The internal JSON will look something like:
 	///
-	/// <services>
-	///		<service>
-	///			<name>SomeMethod</name>
-	///			<method>GET</method>
-	///			<uri>https://anionu.com/...</uri>
-	///		</service>
-	/// </services>
+	/// {
+	///		"endpoint": "https://anionu.com",
+	///		"formats": [ "json", "xml" ],
+	///		"methods": [
+	///			{
+	///				"name": "SomeMethod",			// API method name
+	///				"http": "GET",					// HTTP method
+	///				"auth": true,					// Authentication is required?
+	///				"uri": "/random/:id/.:format"	// Method uri. 
+	///			}									// Method params starting with ":" require 
+	///		]										// interpolation @see APIMethod::interpolate
+	///	{
+	///
 {
 public:
-	APIServices();
-	virtual ~APIServices();
+	APIMethods();
+	virtual ~APIMethods();
 
 	virtual void update();
-	virtual bool valid();
+	virtual bool valid() const;
 
-	virtual APIService get(const std::string& name, const std::string& format = "json", const StringMap& params = StringMap());
+	virtual std::string endpoint();
+	
+	virtual APIMethod get(const std::string& name, const std::string& format = "json", const StringMap& params = StringMap());
+
+	void print(std::ostream& os) const;
 
 private:
 	mutable Poco::FastMutex	_mutex;
@@ -114,10 +123,10 @@ struct APICredentials
 struct APIRequest: public HTTP::Request
 {
 	APIRequest() : HTTP::Request(HTTPMessage::HTTP_1_1) {} 	
-	APIRequest(const APIService& service, 
+	APIRequest(const APIMethod& method, 
 			   const APICredentials& credentials) :
 		HTTP::Request(HTTPMessage::HTTP_1_1),
-		service(service), 
+		method(method), 
 		credentials(credentials) {}
 	virtual ~APIRequest() {}
 
@@ -125,7 +134,7 @@ struct APIRequest: public HTTP::Request
 		// MUST be called after setting all information and
 		// credentials before sending the request.
 
-	APIService service;
+	APIMethod method;
 
 	APICredentials credentials;
 		// HTTP authentication credentials.
@@ -144,10 +153,10 @@ public:
 	APITransaction(APIRequest* request = NULL);
 	virtual ~APITransaction();
 	
-	Signal2<APIService&, HTTP::Response&> APITransactionComplete;
+	Signal2<APIMethod&, HTTP::Response&> APITransactionComplete;
 
 protected:
-	virtual void processCallbacks();
+	virtual void dispatchCallbacks();
 };
 
 	
@@ -166,31 +175,31 @@ public:
 	virtual void setCredentials(const std::string& username, const std::string& password);
 		// Sets the credentials for authenticating HTTP requests.
 
-	virtual bool loadServices(bool whiny = true);
-		// Loads the service descriptions from the Anionu server.
-		// This must be called before calling any services.
+	virtual bool loadMethods(bool whiny = true);
+		// Loads the method descriptions from the Anionu server.
+		// This must be called before calling any methods.
 
 	virtual bool isOK();
-		// Returns true when services descriptions are loaded and
+		// Returns true when methods descriptions are loaded and
 		// the API is avilable.
 
-	virtual APIServices& services();
-		// Returns the services descriptions XML.
+	virtual APIMethods& methods();
+		// Returns the methods descriptions XML.
 	
-	virtual APIRequest* createRequest(const APIService& service);
-	virtual APIRequest* createRequest(const std::string& service, 
+	virtual APIRequest* createRequest(const APIMethod& method);
+	virtual APIRequest* createRequest(const std::string& method, 
 									  const std::string& format = "json", 
 									  const StringMap& params = StringMap());
 
 	virtual APITransaction* call(APIRequest* request);
-	virtual APITransaction* call(const APIService& service);
-	virtual APITransaction* call(const std::string& service, 
+	virtual APITransaction* call(const APIMethod& method);
+	virtual APITransaction* call(const std::string& method, 
 								 const std::string& format = "json", 
 								 const StringMap& params = StringMap());
 	
 	virtual AsyncTransaction* callAsync(APIRequest* request);
-	virtual AsyncTransaction* callAsync(const APIService& service);
-	virtual AsyncTransaction* callAsync(const std::string& service, 
+	virtual AsyncTransaction* callAsync(const APIMethod& method);
+	virtual AsyncTransaction* callAsync(const std::string& method, 
 										const std::string& format = "json", 
 										const StringMap& params = StringMap());
 protected:
@@ -198,7 +207,7 @@ protected:
 	void onTransactionComplete(void* sender, HTTP::Response& response);
 
 private:
-	APIServices			_services;
+	APIMethods			_methods;
 	APICredentials		_credentials;
 	APITransactionList	_transactions;
 	mutable Poco::FastMutex _mutex;

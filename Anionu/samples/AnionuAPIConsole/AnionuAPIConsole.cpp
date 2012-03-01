@@ -1,6 +1,6 @@
 #include "Sourcey/Anionu/APIClient.h"
-#include "Sourcey/Base/TaskRunner.h"
-#include "Sourcey/Base/Util.h"
+#include "Sourcey/Runner.h"
+#include "Sourcey/Util.h"
 
 #include "Poco/format.h"
 #include "Poco/Path.h"
@@ -43,118 +43,147 @@ public:
 	{
 	}
 
-
-	void onAPITransactionComplete(void*, APIService& service, HTTP::Response& response)
+	void onAPITransactionComplete(void*, APIMethod& service, HTTP::Response& response)
 	{
 		Log("trace") << "Anionu API Response:" 
-			<< "\n\tService: " << service.name
+			<< "\n\tMethod: " << service.name
 			<< "\n\tStatus: " << response.getStatus()
 			<< "\n\tReason: " << response.getReason()
 			<< "\n\tSuccess: " << response.success()
 			<< endl;
 		
-		Log("trace") << "Anionu API Response Header:" << endl;
+		Log("trace") << "Anionu API Response Headers:" << endl;
 		response.write(cout);
 
 		Log("trace") << "Anionu API Response Body:" << endl;
-		cout << response.data.str() << endl;
+		cout << response.body.str() << endl;
 	}
 };
 
 
+string selectListItem(const string& hint, const vector<string>& list)
+{
+	cout << hint << ": " << endl;
+	for (int i = 0; i < list.size(); i++) {
+		cout << "[" << i << "]" << "	" << list[i] << endl;
+	}      
+	int n = 0;
+	cin >> n;
+	cout << "Selected: " << n << endl;
+	if (list.size() > n)
+		return list[n];
+	return "";
+}
+
+
+void printList(const string& hint, const vector<string>& list, ostream& ost)
+{
+	ost << hint << ":\n\n";
+	for (unsigned int i = 0; i < list.size(); i++)
+		ost << "[" << i << "]" << "	" << list[i] << endl;
+	ost << "\n";
+}
+
+
+vector<string> getInputList()
+{
+	cout << "Please enter comma separated values: " << endl;
+	string s;
+	getline(cin,s);
+	return split(s, ",");
+}
+
+
+bool getYesNoAnswer(const string& question)
+{
+	cout << question << " [Y/N]" << endl;	
+	char ch = toupper(getch());
+	if (ch == 'Y')
+		return true;
+	return false;
+}
+
+
+
 int main(int argc, char** argv)
 {
-	Logger::instance().add(new ConsoleChannel("debug", VerboseLevel));
+	Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
 	
 	AnionuAPIConsole api;	
 	api.setCredentials("admin", "inusuvup");
-	//api.loadServices();
-
-	string service("GetAccount");
+	api.loadMethods();
 	
+	string service("GetAccount");
+	string assetPath("D:/test.avi");
+	string assetType("Video");
+	vector<string> assetTypes;
+	assetTypes.push_back("Video");
+	assetTypes.push_back("Audio");
+	assetTypes.push_back("Image");
+	assetTypes.push_back("Archive");
+
 	char o = 0;
 	while (o != 'Q') 
 	{	
 		cout << 
 			"COMMANDS:\n\n"
-			"  A	Set Target Service.\n"
-			"  C	Call Basic Service.\n"
-			"  U	Call Upload Asset Service.\n"
-			"  L	List Services.\n"
-			//"  K	List Remote Packages.\n"
-			//"  R	Reload Service List.\n"
-			//"  I	Install Packages.\n"
-			//"  U	Uninstall Packages.\n"
-			//"  D	Update All Packages.\n"
+			"  A	Set Target API Method\n"
+			"  C	Call Basic Method\n"
+			"  T	Set Asset Type\n"
+			"  Y	Set Asset Path\n"
+			"  U	Call Upload Asset Method\n"
+			"  L	List Methods\n"
 			"  Q	Quit.\n\n";
 		
 		o = toupper(getch());
 		
-		// Set Target Service
+		// Set Target API Method
 		if (o == 'A') {	
 			cout << "Enter target service name: " << endl;
 			getline(cin, service);
 		}
 
-		// Call Basic Service
+		// Call Basic Method
 		else if (o == 'C') {
 			assert(!service.empty());
 			APITransaction* transaction = api.call(service);
 			transaction->APITransactionComplete += delegate(&api, &AnionuAPIConsole::onAPITransactionComplete);
-			transaction->start();	
-		} 
-
-		// Call Upload Asset Service
-		else if (o == 'U') {
-
-			Path file("D:/test.avi");
-			
-			HTMLForm* form = new HTMLForm(HTMLForm::ENCODING_MULTIPART);
-			form->set("asset[type]", "Video");
-			form->addPart("asset[file]", new FilePartSource(file.toString()));
-
-			APITransaction* transaction = api.upload("UploadAsset", form); //file.toString(), 
-			transaction->APITransactionComplete += delegate(&api, &AnionuAPIConsole::onAPITransactionComplete);
-			transaction->start();
-		} 
-
-		// List Services
-		else if (o == 'L') {
-			api.services().print(cout);
-		} 
-
-		// Reload Service List
-		else if (o == 'R') {
-			api.loadServices();
-		} 
-		
-		/*
-			LocalPackageMapT items = api.localPackages().items();
-			for (LocalPackageMapT::const_iterator it = items.begin(); it != items.end(); ++it) {				
-				cout << "Package: " << it->first << endl;
-			}
-
-		// Install Packages
-		else if (o == 'I') {
-			assert(!service.empty());
-			api.installPackages(service);
-		} 
-
-		// Uninstall Packages
-		else if (o == 'U') {
-			assert(!service.empty());
-			//assert(false);
-			api.uninstallPackages(service);
-		} 
-
-		// Update All Packages
-		else if (o == 'D') {
-			api.updateAllPackages();
+			transaction->send();	
 		}
-		*/
+		
+		// Set Asset Type
+		else if (o == 'T') {
+			selectListItem("Select asset type", assetTypes);
+		}
+
+		// Set Asset Path
+		else if (o == 'Y') {
+			cout << "Enter asset path: " << endl;
+			getline(cin, assetPath);
+		}
+
+		// Call Upload Asset Method
+		else if (o == 'U') {
+			APITransaction* transaction = api.call("UploadAsset");
+			transaction->request().form = new HTMLForm(HTMLForm::ENCODING_MULTIPART);
+			transaction->request().form->set("asset[type]", assetType);
+			transaction->request().form->addPart("asset[file]", new FilePartSource(assetPath));
+			transaction->APITransactionComplete += delegate(&api, &AnionuAPIConsole::onAPITransactionComplete);
+			transaction->send();
+		} 
+
+		// List Methods
+		else if (o == 'L') {
+			Log("trace") << "Listing Methods:" << endl;
+			api.methods().print(cout);
+		} 
+
+		// Reload Method List
+		else if (o == 'R') {
+			api.loadMethods();
+		}
 	}
-
-	system("pause");
-
+	
+	Log("trace") << "Bye!" << endl;
 	return 0;
 }

@@ -22,8 +22,7 @@ StreamingParams::StreamingParams(
 	const std::string& encoding,	// None, Base64, ...
 	const Media::Format& iformat,
 	const Media::Format& oformat,		
-	int timeout
-	) :
+	int timeout) :
 		Media::EncoderParams(iformat, oformat),
 		token(CryptoProvider::generateRandomKey(32)),
 		//channel(channel),

@@ -80,7 +80,7 @@ public:
 											int height = 0, 
 											bool base64 = false) const;
 		// Returns a current JPEG image from the channel video
-		// device with optional Base64 protocol. For preformance 
+		// device with optional Base64 protocol. For performance 
 		// reasons this method is only meant for constant use.
 	
 	virtual void setName(const std::string& name);

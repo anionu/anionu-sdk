@@ -1,5 +1,5 @@
-#ifndef SPOT_BASE_IStreamingSession_H
-#define SPOT_BASE_IStreamingSession_H
+#ifndef ANIONU_SPOT_IStreamingSession_H
+#define ANIONU_SPOT_IStreamingSession_H
 
 
 #include "Sourcey/Base.h"
@@ -87,7 +87,7 @@ public:
 	IStreamingSession(IStreamingManager& service, 
 					  IChannel& channel, 
 					  const StreamingParams& params, 
-					  Symple::Peer& peer = Symple::Peer(),
+					  Symple::Peer& peer/* = Symple::Peer()*/,
 					  const Symple::Command& command = Symple::Command());
 
 	virtual ~IStreamingSession();
@@ -151,7 +151,7 @@ protected:
 } } // namespace Sourcey::Spot
 
 
-#endif // SPOT_BASE_IStreamingSession_H
+#endif // ANIONU_SPOT_IStreamingSession_H
 
 
 

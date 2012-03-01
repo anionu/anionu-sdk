@@ -82,7 +82,7 @@ class MotionDetector: public StatefulSignal<MotionDetectorState>, public IPacket
 		double stableMotionLifetime;	
 		int captureFPS;
 		bool useFastAlgorithm;
-		MotionDetector::Options() {		
+		Options() {		
 			motionThreshold			= 10000;	// 10000 [50 - 500000]
 			minPixelValue			= 30;		// 30 [0 - 255]
 			preSurveillanceDelay	= 0;		// 0 seconds
