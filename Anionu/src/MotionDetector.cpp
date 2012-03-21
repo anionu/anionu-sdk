@@ -1,5 +1,11 @@
 //
-// This software is copyright by Sourcey <mail@sourcey.com> and is distributed under a dual license:
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open-source use under a GPL-like license and closed-source use under 
+// a standard commercial license. 
+
 // Copyright (C) 2002 Sourcey
 //
 // Non-Commercial Use:

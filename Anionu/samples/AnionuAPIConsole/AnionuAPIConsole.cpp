@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
 	
 	AnionuAPIConsole api;	
-	api.setCredentials("admin", "inusuvup");
+	api.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD);
 	api.loadMethods();
 	
 	string service("GetAccount");
