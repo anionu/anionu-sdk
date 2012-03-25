@@ -1,8 +1,8 @@
-#ifndef ANIONU_SPOT_SYNC_QUEUE_H
-#define ANIONU_SPOT_SYNC_QUEUE_H
+#ifndef ANIONU_SPOT_ISynchronizer_H
+#define ANIONU_SPOT_ISynchronizer_H
 
 
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Poco/DateTimeFormatter.h"
 
 #include <string>
@@ -80,10 +80,10 @@ struct Job
 };
 
 
-class ISynchronizer: public ILoggable
+class ISynchronizer: public IModule
 {
 public:
-	ISynchronizer(/*IEnvironment& env*/);
+	ISynchronizer(IEnvironment& env);
 	virtual ~ISynchronizer() {};
 
 	virtual void push(const Job& job) = 0;
@@ -100,4 +100,4 @@ public:
 } } // namespace Sourcey::Spot
 
 
-#endif // ANIONU_SPOT_SYNC_QUEUE_H
+#endif // ANIONU_SPOT_ISynchronizer_H

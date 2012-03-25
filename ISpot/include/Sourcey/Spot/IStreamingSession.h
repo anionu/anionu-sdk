@@ -6,7 +6,7 @@
 #include "Sourcey/Stateful.h"
 #include "Sourcey/Timer.h"
 #include "Sourcey/PacketStream.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Net/TCPPacketStreamConnection.h"
 #include "Sourcey/Net/Address.h"
 #include "Sourcey/JSON/ISerializable.h"
@@ -81,10 +81,11 @@ struct StreamingState: public StateT
 };
 
 
-class IStreamingSession: public StatefulSignal<StreamingState>, public ILoggable
+class IStreamingSession: public StatefulSignal<StreamingState>, public IModule
 {
 public:
-	IStreamingSession(IStreamingManager& service, 
+	IStreamingSession(IEnvironment& env, 
+					  IStreamingManager& service, 
 					  IChannel& channel, 
 					  const StreamingParams& params, 
 					  Symple::Peer& peer/* = Symple::Peer()*/,

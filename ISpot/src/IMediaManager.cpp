@@ -12,7 +12,8 @@ namespace Sourcey {
 namespace Spot {
 
 
-IMediaManager::IMediaManager()
+IMediaManager::IMediaManager(IEnvironment& env) :
+	IModule(env)
 {
 }
 

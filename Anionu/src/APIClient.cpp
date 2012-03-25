@@ -29,9 +29,6 @@
 #include "Sourcey/HTTP/Authenticator.h"
 #include "Sourcey/Logger.h"
 
-#include "Poco/Net/SSLManager.h"
-#include "Poco/Net/KeyConsoleHandler.h"
-#include "Poco/Net/ConsoleCertificateHandler.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/Format.h"
@@ -56,13 +53,6 @@ namespace Anionu {
 APIClient::APIClient()
 {
 	Log("debug") << "[APIClient] Creating" << endl;
-
-//#ifndef _DEBUG		
-	SharedPtr<InvalidCertificateHandler> ptrCert;
-	Context::Ptr ptrContext = new Context(Context::CLIENT_USE, "", "", "", Context::VERIFY_NONE, 9, false, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");		
-	SSLManager::instance().initializeClient(0, ptrCert, ptrContext);
-//#endif //_DEBUG	
-
 	//loadMethods(false);
 }
 
@@ -71,7 +61,9 @@ APIClient::~APIClient()
 {
 	Log("debug") << "[APIClient] Destroying" << endl;
 
-	stopWorkers();
+	cancelTransactions();
+
+	Log("debug") << "[APIClient] Destroying: OK" << endl;
 }
 
 
@@ -115,7 +107,7 @@ void APIClient::setCredentials(const string& username, const string& password)
 }
 
 
-void APIClient::stopWorkers()
+void APIClient::cancelTransactions()
 {
 	Log("debug") << "[APIClient] Stopping Workers" << endl;
 	

@@ -6,7 +6,7 @@
 #include "Sourcey/Signal.h"
 #include "Sourcey/Spot/IModeManager.h"
 #include "Sourcey/Spot/IMediaManager.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Media/VideoCapture.h"
 #include "Sourcey/Media/AudioCapture.h"
 #include "Sourcey/Media/DeviceManager.h"
@@ -18,11 +18,11 @@ namespace Sourcey {
 namespace Spot {
 
 
-class IChannel: public ILoggable
+class IChannel: public IModule
 {
 public:
-	IChannel(/*IEnvironment& env, */const std::string& name, const Media::Device& video, const Media::Device& audio);
-	IChannel(/*IEnvironment& env, */const std::string& name);
+	IChannel(IEnvironment& env, const std::string& name, const Media::Device& video, const Media::Device& audio);
+	IChannel(IEnvironment& env, const std::string& name);
 	virtual ~IChannel();
 
 	virtual bool valid() const;	

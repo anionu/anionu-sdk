@@ -3,7 +3,7 @@
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfiguration.h"
 #include "Sourcey/Symple/Form.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Poco/Format.h"
 
 
@@ -16,8 +16,7 @@ namespace Spot {
 
 
 IMode::IMode(IEnvironment& env, IChannel& channel, const string& name) : 
-	//IModule(channel.env()), 
-	_env(env), 
+	IModule(env), 
 	_channel(channel), 
 	_name(name), 
 	_config(*this)

@@ -4,7 +4,7 @@
 
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 #include "Poco/Path.h"
 
@@ -23,6 +23,7 @@ struct SessionState: public StateT
 	{
 		None = 0,
 		Authenticating,
+		ActiveConnecting,
 		ActiveOffline,
 		ActiveOnline,
 		Failed,
@@ -33,6 +34,7 @@ struct SessionState: public StateT
 		switch(id) {
 		case None:				return "None";
 		case Authenticating:	return "Authenticating";
+		case ActiveConnecting:	return "Active (Connecting)";
 		case ActiveOffline:		return "Active (Offline)";
 		case ActiveOnline:		return "Active (Online)";
 		case Failed:			return "Failed";
@@ -46,10 +48,10 @@ struct SessionState: public StateT
 class IClient;
 
 
-class ISession: public StatefulSignal<SessionState>, public ILoggable
+class ISession: public StatefulSignal<SessionState>, public IModule
 {		
 public:
-	ISession(/*IEnvironment& env*/);
+	ISession(IEnvironment& env);
 	virtual ~ISession();
 	
 	virtual std::string name() const = 0;
@@ -60,7 +62,8 @@ public:
 
 	virtual bool isActive() const 
 	{ 
-		return stateEquals(SessionState::ActiveOffline)
+		return stateEquals(SessionState::ActiveConnecting)
+			|| stateEquals(SessionState::ActiveOffline)
 			|| stateEquals(SessionState::ActiveOnline); 
 	}
 	

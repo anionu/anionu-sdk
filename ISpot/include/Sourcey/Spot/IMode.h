@@ -4,8 +4,8 @@
 
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-#include "Sourcey/IRunnable.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/IStartable.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Spot/IConfigurable.h"
 #include "Sourcey/Symple/Form.h"
 
@@ -83,7 +83,7 @@ struct ModeState: public StateT
 };	
 
 
-class IMode: public ILoggable, public IConfigurable, public StatefulSignal<ModeState>
+class IMode: public IModule, public IConfigurable, public StatefulSignal<ModeState>
 	/// This class defines a specific operational mode for a
 	/// Spot Channel.
 {	
@@ -93,7 +93,7 @@ public:
 	
 	virtual void initialize();
 	virtual void uninitialize();
-		// If unrecoverable errors are enountered
+		// If unrecoverable errors are encountered
 		// during the initialization process, the
 		// mode state should be set to Failed and
 		// an Exception thrown.
@@ -120,8 +120,7 @@ public:
 	
 	virtual const char* className() const { return "Mode"; }
 
-protected:
-	IEnvironment&		_env;	
+protected:	
 	IChannel&			_channel;
 	ModeConfiguration	_config;
 	ModeOptions			_options;

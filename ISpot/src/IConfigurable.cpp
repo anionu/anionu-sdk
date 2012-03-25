@@ -3,7 +3,7 @@
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfiguration.h"
 #include "Sourcey/Symple/Form.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Poco/Format.h"
 
 

@@ -11,9 +11,8 @@ namespace Sourcey {
 namespace Spot {
 
 	
-IChannel::IChannel(/*IEnvironment& env*//*, int id,*/ const string& name, const Media::Device& video, const Media::Device& audio) :
-	//IModule(env),
-	//_id(id),
+IChannel::IChannel(IEnvironment& env, const string& name, const Media::Device& video, const Media::Device& audio) :
+	IModule(env),
 	_name(name),
 	_videoDevice(video),
 	_audioDevice(audio)
@@ -22,9 +21,8 @@ IChannel::IChannel(/*IEnvironment& env*//*, int id,*/ const string& name, const 
 }
 
 	
-IChannel::IChannel(/*IEnvironment& env*//*, int id,*/ const string& name) :
-	//IModule(env),
-	//_id(id),
+IChannel::IChannel(IEnvironment& env, const string& name) :
+	IModule(env),
 	_name(name)
 {	
 	assert(!_name.empty());
@@ -34,16 +32,6 @@ IChannel::IChannel(/*IEnvironment& env*//*, int id,*/ const string& name) :
 IChannel::~IChannel() 
 {
 }
-
-
-/*
-string IChannel::id() const   
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-
-	return _id; 
-}
-*/
 
 
 string IChannel::name() const   
@@ -134,7 +122,7 @@ void IChannel::print(ostream& ost) const
 #include "Sourcey/Spot/IModeManager.h"
 
 #include "Sourcey/Util.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Poco/Format.h"
 #include "Poco/Base64Encoder.h"
 // ---------------------------------------------------------------------

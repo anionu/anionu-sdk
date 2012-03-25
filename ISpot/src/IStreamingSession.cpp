@@ -2,7 +2,6 @@
 #include "Sourcey/Spot/IStreamingManager.h"
 #include "Sourcey/Spot/IChannel.h"
 #include "Sourcey/CryptoProvider.h"
-#include "Sourcey/Logger.h"
 
 
 using namespace std;
@@ -117,11 +116,13 @@ bool StreamingParams::valid()
 
 // ---------------------------------------------------------------------
 //
-IStreamingSession::IStreamingSession(IStreamingManager& service, 
+IStreamingSession::IStreamingSession(IEnvironment& env, 
+									 IStreamingManager& service, 
 									 IChannel& channel, 
 									 const StreamingParams& params, 
 									 Symple::Peer& peer, 
 									 const Symple::Command& command) :
+	IModule(env),
 	_service(service),
 	_channel(channel),
 	_params(params),

@@ -3,7 +3,7 @@
 
 
 #include "Sourcey/Stateful.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfigurable.h"
 
@@ -40,7 +40,7 @@ struct PluginState: public StateT
 };	
 
 
-class IPlugin: public IConfigurable, public Stateful<PluginState> //public ILoggable, 
+class IPlugin: public IConfigurable, public Stateful<PluginState> //public IModule, 
 {
 public:
 	IPlugin();
@@ -89,7 +89,7 @@ protected:
 #endif // ANIONU_SPOT_IPlugin_H
 
 
-	/*//, public IRunnable
+	/*//, public IStartable
 	enum State 
 	{
 		None = 0,

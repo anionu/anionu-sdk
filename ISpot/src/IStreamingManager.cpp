@@ -1,5 +1,5 @@
 #include "Sourcey/Spot/IStreamingManager.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 
 using namespace std;
@@ -9,8 +9,9 @@ using namespace Poco;
 namespace Sourcey {
 namespace Spot {
 
-
-IStreamingManager::IStreamingManager()
+	
+IStreamingManager::IStreamingManager(IEnvironment& env) :
+	IModule(env)
 {
 	log() << "Creating" << endl;
 }

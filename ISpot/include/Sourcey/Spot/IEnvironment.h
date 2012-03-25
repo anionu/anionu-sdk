@@ -2,7 +2,7 @@
 #define ANIONU_SPOT_IEnvironment_H
 
 
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 
 namespace Sourcey {
@@ -23,6 +23,7 @@ class IModeRegistry;
 class IStreamingManager;
 class IStreamingSession;
 class IMediaManager;
+class IDiagnosticManager;
 
 
 class IEnvironment 
@@ -38,6 +39,7 @@ public:
 	virtual IModeRegistry& modes() /*const*/ = 0;
 	virtual IStreamingManager& streaming() /*const*/ = 0;
 	virtual IMediaManager& media() /*const*/ = 0;
+	virtual IDiagnosticManager& diagnostics() /*const*/ = 0;
 	virtual Logger& logger() /*const*/ = 0;
 
 	virtual std::string version() const = 0;

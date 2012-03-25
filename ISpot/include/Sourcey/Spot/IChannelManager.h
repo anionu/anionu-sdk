@@ -4,21 +4,21 @@
 
 #include "Sourcey/EventfulManager.h"
 #include "Sourcey/Spot/IChannel.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 
 namespace Sourcey { 
 namespace Spot {
 
 
-class IChannelManager: protected EventfulManager<std::string, IChannel>, public ILoggable
+class IChannelManager: protected EventfulManager<std::string, IChannel>, public IModule
 {
 public:
 	typedef EventfulManager<std::string, IChannel>	Manager;
 	typedef Manager::Map							Map;
 	
 public:
-	IChannelManager();
+	IChannelManager(IEnvironment& env);
 	virtual ~IChannelManager();
 
 	virtual IChannel* getChannel(const std::string& name);
@@ -34,7 +34,7 @@ public:
 
 protected:
 	bool addChannel(IChannel* channel);
-	bool removeChannel(const std::string& name);	
+	bool freeChannel(const std::string& name);	
 };
 
 

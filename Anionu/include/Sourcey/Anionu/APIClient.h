@@ -3,10 +3,8 @@
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
 // LibSourcey is is distributed under a dual license that allows free, 
-// open-source use under a GPL-like license and closed-source use under 
-// a standard commercial license. 
-
-// Copyright (C) 2002 Sourcey
+// open source use and closed source use under a standard commercial
+// license.
 //
 // Non-Commercial Use:
 // This program is free software: you can redistribute it and/or modify
@@ -27,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_API_CLIENT_H
-#define ANIONU_API_CLIENT_H
+#ifndef ANIONU_APIClient_H
+#define ANIONU_APIClient_H
 
 
 #include "Sourcey/Base.h"
@@ -187,7 +185,7 @@ public:
 
 	virtual bool isOK();
 		// Returns true when methods descriptions are loaded and
-		// the API is avilable.
+		// the API is available.
 
 	virtual APIMethods& methods();
 		// Returns the methods descriptions XML.
@@ -209,7 +207,7 @@ public:
 										const std::string& format = "json", 
 										const StringMap& params = StringMap());
 protected:
-	void stopWorkers();
+	void cancelTransactions();
 	void onTransactionComplete(void* sender, HTTP::Response& response);
 
 private:
@@ -218,7 +216,6 @@ private:
 	APITransactionList	_transactions;
 	mutable Poco::FastMutex _mutex;
 };
-
 
 
 } } // namespace Sourcey::Anionu

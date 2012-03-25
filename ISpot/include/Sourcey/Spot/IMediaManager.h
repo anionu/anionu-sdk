@@ -6,7 +6,7 @@
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Media/IEncoder.h"
 #include "Sourcey/Media/Format.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 #include "Sourcey/Media/CaptureFactory.h"
 #include "Sourcey/Media/FormatRegistry.h"
@@ -30,14 +30,14 @@ struct RecordingInfo
 };
 
 
-class IMediaManager: public TimedManager<std::string, PacketStream>, public ILoggable
+class IMediaManager: public TimedManager<std::string, PacketStream>, public IModule
 {
 public:
 	typedef TimedManager<std::string, PacketStream>	Manager;
 	typedef Manager::Base::Map						Map;
 
 public:
-	IMediaManager();
+	IMediaManager(IEnvironment& env);
 	virtual ~IMediaManager();
 
 	virtual void initializeParams(IChannel& channel, Media::RecorderParams& params) = 0;

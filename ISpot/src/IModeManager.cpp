@@ -11,7 +11,7 @@ namespace Spot {
 
 
 IModeManager::IModeManager(IChannel& channel) :
-	//IModule(channel.env()), 
+	IModule(channel.env()), 
 	_channel(channel)
 {
 }

@@ -4,7 +4,7 @@
 
 #include "Sourcey/EventfulManager.h"
 #include "Sourcey/Spot/IMode.h"
-#include "Sourcey/Logger.h"
+#include "Sourcey/Spot/IModule.h"
 
 #include "Poco/Format.h"
 
@@ -23,7 +23,7 @@ typedef EventfulManager<std::string, IMode>	ModeBase;
 typedef ModeBase::Map					ModeMap;
 
 
-class IModeManager: public ModeBase, public ILoggable
+class IModeManager: public ModeBase, public IModule
 {
 public:
 	IModeManager(IChannel& channel);

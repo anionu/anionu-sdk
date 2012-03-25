@@ -1,8 +1,6 @@
 #include "Sourcey/Spot/ISynchronizer.h"
 #include "Sourcey/CryptoProvider.h"
 
-#include "Poco/Path.h"
-
 #include <sstream>
 
 
@@ -16,7 +14,7 @@ namespace Spot {
 
 // ---------------------------------------------------------------------
 //
-// Suncronization Queue Job
+// Synchronization Queue Job
 //
 // ---------------------------------------------------------------------
 Job::Job() :
@@ -26,25 +24,6 @@ Job::Job() :
 	time(Poco::DateTimeFormatter::format(Poco::Timestamp(), "%Y-%m-%d %H:%M:%S"))
 {
 }
-
-	
-/*
-		 const std::string& state,
-		 const std::string& message,
-Job::Job(int priority,
-		 const std::string& type,
-		 const std::string& file,
-		 const std::string& state,
-		 const std::string& message,
-		 const std::string& time) :
-	type(type), 
-	file(file), 
-	state(state), 
-	message(message), 
-	time(time)
-{
-}
-*/
 
 
 Job::Job(const std::string& type,
@@ -105,13 +84,37 @@ string Job::toString() const
 
 // ---------------------------------------------------------------------
 //
-// Suncronization Queue
+// Synchronization Queue
 //
 // ---------------------------------------------------------------------
-ISynchronizer::ISynchronizer(/*IEnvironment& env*/) //:
-	//IModule(env)
+ISynchronizer::ISynchronizer(IEnvironment& env) :
+	IModule(env)
 {	
 }
+
+
+} } // namespace Sourcey::Spot
+
+
+
+	
+/*
+		 const std::string& state,
+		 const std::string& message,
+Job::Job(int priority,
+		 const std::string& type,
+		 const std::string& file,
+		 const std::string& state,
+		 const std::string& message,
+		 const std::string& time) :
+	type(type), 
+	file(file), 
+	state(state), 
+	message(message), 
+	time(time)
+{
+}
+*/
 	
 /*
 ISynchronizer::~ISynchronizer() 
@@ -164,7 +167,3 @@ ISynchronizer& ISynchronizer::operator >> (const Job& job)
 	return *this;
 }
 */
-
-
-
-} } // namespace Sourcey::Spot
