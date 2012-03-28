@@ -61,7 +61,7 @@ struct StreamingState: public StateT
 		Initializing,
 		Ready,
 		Active,
-		Failed,
+		Error,
 		Terminating
 	};
 
@@ -72,7 +72,7 @@ struct StreamingState: public StateT
 		case Initializing:		return "Initializing";
 		case Ready:				return "Ready";
 		case Active:			return "Active";
-		case Failed:			return "Failed";
+		case Error:				return "Error";
 		case Terminating:		return "Terminating";
 		default:				assert(false);
 		}
@@ -128,7 +128,10 @@ public:
 	virtual StreamingParams& params();
 	virtual ConnectionStreamList connections() const;
 
+	virtual void setError(const std::string& reason);
+	
 	virtual bool isActive() const;
+	virtual bool isError() const;
 	virtual bool isTerminating() const;
 
 	virtual const char* className() const { return "StreamingSession"; }
@@ -138,6 +141,8 @@ protected:
 		// Sub-classes must use this method for setting state
 		// because the sender instance must match the base.
 
+	mutable Poco::FastMutex _mutex;
+
 	IStreamingManager&		_service;
 	IChannel&				_channel; 
 	PacketStream			_stream;
@@ -145,7 +150,8 @@ protected:
 	Symple::Command			_command;
 	StreamingParams			_params;
 	ConnectionStreamList	_connections;
-	mutable Poco::FastMutex _mutex;
+
+	friend class IStreamingManager;
 };
 
 

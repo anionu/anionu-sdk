@@ -15,10 +15,10 @@ namespace Spot {
 // ---------------------------------------------------------------------
 //
 StreamingParams::StreamingParams(
-	//const std::string& channel,
-	const std::string& transport,	// UDP, TCP, TLS
-	const std::string& protocol,	// Raw, HTTP, RTP/AVP
-	const std::string& encoding,	// None, Base64, ...
+	//const string& channel,
+	const string& transport,	// UDP, TCP, TLS
+	const string& protocol,	// Raw, HTTP, RTP/AVP
+	const string& encoding,	// None, Base64, ...
 	const Media::Format& iformat,
 	const Media::Format& oformat,		
 	int timeout) :
@@ -191,15 +191,23 @@ void IStreamingSession::terminate()
 }
 
 
-bool IStreamingSession::setState(unsigned int id, const std::string& message) 
+void IStreamingSession::setError(const string& reason)
 {
+	setState(StreamingState::Error, reason);
+}
+
+
+bool IStreamingSession::setState(unsigned int id, const string& message) 
+{
+	// Overriding this method so the state signal
+	// will always be sent from the session base.
 	return StatefulSignal<StreamingState>::setState(this, id, message);
 }
 
 
-void IStreamingSession::addCandidate(const std::string& type, 
+void IStreamingSession::addCandidate(const string& type, 
 									 const Net::Address& address, 
-									 const std::string& uri)
+									 const string& uri)
 {
 	// TODO: Remove matches to avoid doubling up.
 	JSON::Value cand;
@@ -210,7 +218,7 @@ void IStreamingSession::addCandidate(const std::string& type,
 }
 
 
-bool IStreamingSession::removeCandidate(const std::string& type, 
+bool IStreamingSession::removeCandidate(const string& type, 
 										const Net::Address& address)
 {
 	bool res = false;
@@ -270,6 +278,12 @@ bool IStreamingSession::isActive() const
 }
 
 
+bool IStreamingSession::isError() const
+{
+	return stateEquals(StreamingState::Error); 
+}
+
+
 bool IStreamingSession::isTerminating() const		
 { 
 	return stateEquals(StreamingState::Terminating); 
@@ -297,7 +311,7 @@ ConnectionStreamList IStreamingSession::connections() const
 }
 
 
-std::string IStreamingSession::token() const		
+string IStreamingSession::token() const		
 { 
 	FastMutex::ScopedLock lock(_mutex);
 	return _params.token; 
@@ -345,7 +359,7 @@ void IStreamingSession::onConnectionClosing(void* sender, int)
 */
 
 /*
-std::string IStreamingSession::token() const		
+string IStreamingSession::token() const		
 { 
 	return _command.data("token"];
 }
@@ -379,7 +393,7 @@ bool IStreamingSession::setState(unsigned int id)
 		//stopTimer();
 		break;
 
-	//case StreamingState::Failed:
+	//case StreamingState::Error:
 		//startTimer();
 		//stop();
 		//break;

@@ -8,7 +8,7 @@
 #include "Sourcey/Media/Format.h"
 #include "Sourcey/Spot/IModule.h"
 
-#include "Sourcey/Media/CaptureFactory.h"
+#include "Sourcey/Media/MediaFactory.h"
 #include "Sourcey/Media/FormatRegistry.h"
 #include "Sourcey/Media/DeviceManager.h"
 
@@ -40,9 +40,9 @@ public:
 	IMediaManager(IEnvironment& env);
 	virtual ~IMediaManager();
 
-	virtual void initializeParams(IChannel& channel, Media::RecorderParams& params) = 0;
-		/// Initializes default recorder parameters based on the
-		/// current configuration.
+	virtual void initRecorderParams(IChannel& channel, Media::RecorderParams& params) = 0;
+		/// Initializes default recorder parameters from the user
+		/// configuration for the current session.
 	
 	virtual RecordingInfo startRecording(IChannel& channel, const Media::RecorderParams& params) = 0;
 		/// Initializes a recorder instance for the current channel.
@@ -60,8 +60,36 @@ public:
 		/// instance must be returned. Encoders should always use
 		/// the channel's device sources.
 	
-	virtual Media::FormatRegistry& streamingFormats() = 0;
 	virtual Media::FormatRegistry& recordingFormats() = 0;
+		/// Media formats for recording media.
+
+	virtual Media::FormatRegistry& localStreamingFormats() = 0;
+		/// Media formats for streaming media over the local network.
+
+	virtual Media::FormatRegistry& remoteStreamingFormats() = 0;
+		/// Media formats for streaming media over the internet.
+
+	virtual Media::Format getRecordingFormat() = 0;
+		/// Returns she current user configured recording media format.
+		
+	virtual Media::Format getLocalStreamingFormat() = 0;
+		/// Returns the current user configured local network streaming
+		/// media format.
+
+	virtual Media::Format getRemoteStreamingFormat() = 0;
+		/// The current user configured internet streaming media format.
+
+	virtual void setRecordingFormat(const Media::Format& format) = 0;
+		/// Sets the recording media format for the current user
+		/// and updates configuration.
+		
+	virtual void setLocalStreamingFormat(const Media::Format& format) = 0;
+		/// Sets the local network streaming media format for the
+		/// current user and updates configuration.
+
+	virtual void setRemoteStreamingFormat(const Media::Format& format) = 0;
+		/// Sets the internet streaming media format for the current
+		/// user and updates configuration.
 	
 	virtual const char* className() const { return "MediaManager"; }
 };

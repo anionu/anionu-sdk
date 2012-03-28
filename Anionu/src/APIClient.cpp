@@ -221,7 +221,7 @@ void APIRequest::prepare()
 		method.httpMethod == "PUT")
 		set("Content-Type", "application/xml");
 
-	if (method.requireAuth) {
+	if (!method.anonymous) {
 		set("Authorization", 
 			HTTP::AnionuAuthenticator::generateAuthHeader(
 				credentials.username,
@@ -318,23 +318,6 @@ void APIMethods::update()
 		JSON::Reader reader;
 		if (!reader.parse(data, *this))
 			throw Exception(reader.getFormatedErrorMessages());
-		
-		/*
-		for (JSON::ValueIterator it = root.begin(); it != root.end(); it++) {		
-			RemotePackage* package = new RemotePackage(*it);
-			if (!package->valid()) {
-				Log("error") << "[PackageManager] Unable to parse package: " << package->name() << endl;
-				delete package;
-				continue;
-			}
-			_remotePackages.add(package->name(), package);
-		}
-		*/
-
-		//load(xml.data());
-
-		//Log("debug") << "[APIMethods] API Methods XML:\n" << endl;
-		//print(cout);
 	} 
 	catch (Exception& exc) 
 	{
@@ -377,35 +360,12 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 				method.uri = (isMember("endpoint") ? 
 					(*this)["endpoint"].asString() : 
 					ANIONU_API_ENDPOINT) + meth["uri"].asString();
-				method.requireAuth = meth["auth"].asBool();
+				method.anonymous = meth["anon"].asBool();
 			}
 		}
 
 		if (method.name.empty())
 			throw Exception("No method description available for: " + name);
-
-		/*
-		XML::Node node = select_single_node(Poco::format("//name[text()='%s']/..", name).data()).node();
-		if (node.empty())
-			throw Exception("No method description available for: " + name);
-
-		// Parse the Name value
-		method.name = node.child("name").child_value();
-
-		// Parse the Method value
-		method.method = node.child("method").child_value();
-
-		// Parse the URI value
-		method.uri = URI(node.child("uri").child_value());
-
-		// Set the URI from our config value in debug mode.
-#ifdef _DEBUG 
-		URI endpoint = URI(ANIONU_API_ENDPOINT);
-		method.uri.setScheme(endpoint.getScheme());
-		method.uri.setHost(endpoint.getHost());
-		method.uri.setPort(endpoint.getPort());
-#endif
-		*/
 
 		// Update the format and interpolate parameters
 		method.format(format);
@@ -415,7 +375,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 			 << "Name: " << method.name << "\n"
 			 << "Method: " << method.httpMethod << "\n"
 			 << "Uri: " << method.uri.toString() << "\n"
-			 << "Authenticated: " << method.requireAuth << "\n"
+			 << "Anonymous: " << method.anonymous << "\n"
 			 << endl;
 	}
 	catch (Exception& exc)
@@ -465,3 +425,45 @@ void APITransaction::dispatchCallbacks()
 
 
 } } // namespace Sourcey::Anionu
+
+
+		
+		/*
+		for (JSON::ValueIterator it = root.begin(); it != root.end(); it++) {		
+			RemotePackage* package = new RemotePackage(*it);
+			if (!package->valid()) {
+				Log("error") << "[PackageManager] Unable to parse package: " << package->name() << endl;
+				delete package;
+				continue;
+			}
+			_remotePackages.add(package->name(), package);
+		}
+		*/
+
+		/*
+		XML::Node node = select_single_node(Poco::format("//name[text()='%s']/..", name).data()).node();
+		if (node.empty())
+			throw Exception("No method description available for: " + name);
+
+		// Parse the Name value
+		method.name = node.child("name").child_value();
+
+		// Parse the Method value
+		method.method = node.child("method").child_value();
+
+		// Parse the URI value
+		method.uri = URI(node.child("uri").child_value());
+
+		// Set the URI from our config value in debug mode.
+#ifdef _DEBUG 
+		URI endpoint = URI(ANIONU_API_ENDPOINT);
+		method.uri.setScheme(endpoint.getScheme());
+		method.uri.setHost(endpoint.getHost());
+		method.uri.setPort(endpoint.getPort());
+#endif
+		*/
+
+		//load(xml.data());
+
+		//Log("debug") << "[APIMethods] API Methods XML:\n" << endl;
+		//print(cout);

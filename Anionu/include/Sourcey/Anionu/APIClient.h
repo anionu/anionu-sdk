@@ -66,7 +66,7 @@ public:
 	std::string httpMethod; // HTTP method ie. GET, POST, PUT, DELETE
 	std::string contentType;
 	Poco::URI uri;
-	bool requireAuth;
+	bool anonymous;
 };
 
 
@@ -83,7 +83,7 @@ class APIMethods: public JSON::Value
 	///			{
 	///				"name": "SomeMethod",			// API method name
 	///				"http": "GET",					// HTTP method
-	///				"auth": true,					// Authentication is required?
+	///				"anon": true,					// Authentication is required?
 	///				"uri": "/random/:id/.:format"	// Method uri. 
 	///			}									// Method params starting with ":" require 
 	///		]										// interpolation @see APIMethod::interpolate

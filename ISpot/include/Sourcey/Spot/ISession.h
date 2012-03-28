@@ -56,7 +56,7 @@ public:
 	
 	virtual std::string name() const = 0;
 	virtual std::string username() const = 0;
-	virtual std::string password() const = 0;
+	//virtual std::string password() const = 0;
 
 	virtual Poco::Path storagePath() const = 0;
 

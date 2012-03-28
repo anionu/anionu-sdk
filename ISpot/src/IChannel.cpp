@@ -1,5 +1,5 @@
 #include "Sourcey/Spot/IChannel.h"
-#include "Sourcey/Media/CaptureFactory.h"
+#include "Sourcey/Media/MediaFactory.h"
 
 
 using namespace std; 
@@ -79,9 +79,9 @@ VideoCapture* IChannel::videoCapture(bool whiny) const
 	FastMutex::ScopedLock lock(_mutex);
 
 	VideoCapture* capture = !_videoInputFile.empty() ?
-		CaptureFactory::instance()->video.getCapture(_videoInputFile) : 
+		MediaFactory::instance()->video.getCapture(_videoInputFile) : 
 		_videoDevice.id >= 0 ? 
-			CaptureFactory::instance()->video.getCapture(_videoDevice.id) : NULL;
+			MediaFactory::instance()->video.getCapture(_videoDevice.id) : NULL;
 		
 	if (whiny && capture == NULL) 
 		throw NotFoundException(_name + ": No video device");
@@ -95,7 +95,7 @@ AudioCapture* IChannel::audioCapture(bool whiny) const
 	FastMutex::ScopedLock lock(_mutex);
 
 	AudioCapture* capture = _audioDevice.id >= 0 ? 
-		CaptureFactory::instance()->audio.getCapture(_audioDevice.id) : NULL;
+		MediaFactory::instance()->audio.getCapture(_audioDevice.id) : NULL;
 		
 	if (whiny && capture == NULL) 
 		throw NotFoundException(_name + ": No audio device");
@@ -193,13 +193,13 @@ void IChannel::setIModeManager(IModeManager* modes)
 
 VideoCapture* IChannel::videoCapture() const 
 {
-	return _videoDevice.id >= 0 ? CaptureFactory::instance()->video.getCapture(_videoDevice.id) : 0;
+	return _videoDevice.id >= 0 ? MediaFactory::instance()->video.getCapture(_videoDevice.id) : 0;
 }
 
 
 AudioCapture* IChannel::audioCapture() const
 {
-	return _audioDevice.id >= 0 ? CaptureFactory::instance()->audio.getCapture(_audioDevice.id) : 0;
+	return _audioDevice.id >= 0 ? MediaFactory::instance()->audio.getCapture(_audioDevice.id) : 0;
 }
 
 

@@ -48,7 +48,7 @@ public:
 	
 	virtual void initialize();
 	virtual void uninitialize();
-		// If unrecoverable errors are enountered during
+		// If unrecoverable errors are encountered during
 		// the initialization process, the internal state
 		// should be set to Error, and an Exception thrown.
 
@@ -63,12 +63,12 @@ public:
 	virtual IEnvironment& env() const;
 	virtual void setEnvironment(IEnvironment* env);
 		// An IEnvironment instance will be set by the 
-		// application before plugin initialization.
+		// application before plug-in initialization.
 
 	virtual std::string path() const;
 	virtual void setPath(const std::string& path);
-		// The plugin's system path will be set by the
-		// application before plugin initialization.
+		// The plug-in's system path will be set by the
+		// application before plug-in initialization.
 		
 	virtual LogStream log(const char* level = "debug") const;
 	virtual void printLog(LogStream& ost) const;

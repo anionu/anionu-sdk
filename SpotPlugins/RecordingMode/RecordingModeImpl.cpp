@@ -90,7 +90,7 @@ void RecordingModeImpl::startRecording()
 	FastMutex::ScopedLock lock(_mutex); 
 
 	Media::RecorderParams params;
-	env().media().initializeParams(_channel, params);
+	env().media().initRecorderParams(_channel, params);
 	params.stopAt = time(0) + _segmentDuration;
 	_recordingInfo = env().media().startRecording(_channel, params);
 	_recordingInfo.encoder->StateChange += delegate(this, &RecordingModeImpl::onEncoderStateChange);
