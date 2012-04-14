@@ -40,6 +40,7 @@ void StreamingParams::serialize(JSON::Value& root)
 	root["transport"] = transport;
 	root["protocol"] = protocol;
 	root["encoding"] = encoding;
+	root["format"] = oformat.label;
 
 	// BUG: JSON Value does not seem to support
 	// switching references after assignment.

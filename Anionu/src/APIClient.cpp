@@ -432,7 +432,7 @@ void APITransaction::dispatchCallbacks()
 		for (JSON::ValueIterator it = root.begin(); it != root.end(); it++) {		
 			RemotePackage* package = new RemotePackage(*it);
 			if (!package->valid()) {
-				Log("error") << "[PackageManager] Unable to parse package: " << package->name() << endl;
+				Log("error") << "[PackageManager] Invalid package: " << package->name() << endl;
 				delete package;
 				continue;
 			}

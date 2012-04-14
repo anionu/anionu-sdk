@@ -3,7 +3,6 @@
 
 
 #include "Sourcey/Stateful.h"
-#include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfigurable.h"
 
@@ -13,69 +12,45 @@
 namespace Sourcey {
 namespace Spot {
 
-	
-//class IEnvironment;
 
-
-struct PluginState: public StateT 
-{
-	enum Type
-	{
-		None = 0,
-		Disabled,
-		Enabled,
-		Error
-	};
-
-	std::string str(unsigned int id) const 
-	{ 
-		switch (id) {
-		case None:		return "None";
-		case Disabled:	return "Disabled";
-		case Enabled:	return "Enabled";
-		case Error:		return "Error";
-		}
-		return "undefined"; 
-	};
-};	
-
-
-class IPlugin: public IConfigurable, public Stateful<PluginState> //public IModule, 
+class IPlugin: public IConfigurable
+	/// A plugin is a runtime module that may be loaded to extend 
+	/// the core functionality of the Spot client.
+	/// An IEnvironment instance is available to the plugin before
+	/// initialization which exposes the ISpot API and class tree
+	/// to the plugin instance.
 {
 public:
 	IPlugin();
 	virtual ~IPlugin();
+
+	virtual std::string name() const = 0;
+		/// The display name of this plugin.
+		/// Other information is contained within manifest.json
 	
 	virtual void initialize();
-	virtual void uninitialize();
-		// If unrecoverable errors are encountered during
-		// the initialization process, the internal state
-		// should be set to Error, and an Exception thrown.
+		/// If the plugin needs to run any system compatibility
+		/// or runtime checks they should be done here. 
+		/// An Exception with a descriptive message should be
+		/// thrown on failure to notify Spot that the plugin
+		/// has failed.
 
-	virtual void enable() = 0;
-	virtual void disable() = 0;
-	
-	virtual std::string name() const = 0;
-	virtual std::string title() const = 0;
-	virtual std::string author() const = 0;
-	virtual std::string version() const = 0;
+	virtual void uninitialize();
 
 	virtual IEnvironment& env() const;
 	virtual void setEnvironment(IEnvironment* env);
-		// An IEnvironment instance will be set by the 
-		// application before plug-in initialization.
+		/// The IEnvironment instance will be set by Spot 
+		/// before plugin initialization.
 
 	virtual std::string path() const;
 	virtual void setPath(const std::string& path);
-		// The plug-in's system path will be set by the
-		// application before plug-in initialization.
+		/// The system path of the plugin will be set by
+		/// Spot before plugin initialization.
 		
 	virtual LogStream log(const char* level = "debug") const;
-	virtual void printLog(LogStream& ost) const;
+		/// This method sends log messages the Spot logger.
 
-	virtual bool isDisabled() const { return stateEquals(PluginState::Disabled); };
-	virtual bool isEnabled() const { return stateEquals(PluginState::Enabled); };
-	virtual bool isError() const { return stateEquals(PluginState::Error); };
+	virtual void printLog(LogStream& ost) const;
 
 protected: 
 	IEnvironment* _env;
@@ -83,11 +58,29 @@ protected:
 };
 
 
-} } // namespace Sourcey::Spot
+} } /// namespace Sourcey::Spot
 
 
-#endif // ANIONU_SPOT_IPlugin_H
+#endif /// ANIONU_SPOT_IPlugin_H
 
+	
+
+	
+//class IEnvironment;
+
+/*
+*/
+	//, public Stateful<PluginState> //public IModule, 
+
+	//virtual void enable() = 0;
+	//virtual void disable() = 0;
+	
+	//virtual std::string title() const = 0;
+	//virtual std::string author() const = 0;
+	//virtual std::string version() const = 0;
+	//virtual bool isDisabled() const { return stateEquals(PluginState::Disabled); };
+	//virtual bool isEnabled() const { return stateEquals(PluginState::Enabled); };
+	//virtual bool isError() const { return stateEquals(PluginState::Error); };
 
 	/*//, public IStartable
 	enum State 

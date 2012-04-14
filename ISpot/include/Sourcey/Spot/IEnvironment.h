@@ -2,14 +2,19 @@
 #define ANIONU_SPOT_IEnvironment_H
 
 
+#include "Sourcey/Signal.h"
 #include "Sourcey/Spot/IModule.h"
 
 
 namespace Sourcey {
-
+	
 
 namespace Media {
 class FormatRegistry;
+}
+
+namespace Anionu {
+struct Event;
 }
 
 namespace Spot {
@@ -32,6 +37,7 @@ public:
 	IEnvironment() {};	
 	virtual ~IEnvironment() {};
 	
+	virtual IConfiguration& appConfig() /*const*/ = 0;
 	virtual IConfiguration& config() /*const*/ = 0;
 	virtual ISession& session() /*const*/ = 0;
 	virtual ISynchronizer& synchronizer() /*const*/ = 0;
@@ -43,9 +49,18 @@ public:
 	virtual Logger& logger() /*const*/ = 0;
 
 	virtual std::string version() const = 0;
+		/// Returns the version number string of the library.
 	
-	virtual void createEvent(const std::string& name, 
-							 const std::string& message = "") = 0;
+	virtual void notifyEvent(const Anionu::Event& event) = 0;
+		/// Notifies the system about an event.
+		/// If the event severity is higher than the minimum 
+		/// severity defined by the user then the event will
+		/// be broadcast over the remote network and saved on
+		/// the user account. If the event is not broadcast
+		/// then event notifications will not be triggered.
+	
+	Signal<const Anionu::Event&> OnEvent;
+		/// Signals an event. Called internally by notifyEvent()
 };
 
 

@@ -16,10 +16,11 @@ macro(define_spot_plugin name)
     include_dependency(Poco REQUIRED)
     include_dependency(OpenSSL REQUIRED)
     include_dependency(JsonCpp REQUIRED)
-    include_dependency(FFmpeg REQUIRED)
+    #include_dependency(FFmpeg REQUIRED)
     include_dependency(OpenCV REQUIRED)
     include_dependency(RtAudio REQUIRED)
     
+    #message(${LibSourcey_INCLUDE_DIRS})
     include_directories(${LibSourcey_INCLUDE_DIRS})    
     link_directories(${LibSourcey_LIBRARY_DIRS})
     
@@ -33,6 +34,7 @@ macro(define_spot_plugin name)
     # Plug-ins can not have a debug prefix
     set_target_properties(${name} PROPERTIES DEBUG_POSTFIX "")
     
+    #message(${LibSourcey_INCLUDE_LIBRARIES})
     target_link_libraries(${name} ${LibSourcey_INCLUDE_LIBRARIES}) 
     
     install(TARGETS ${name} 

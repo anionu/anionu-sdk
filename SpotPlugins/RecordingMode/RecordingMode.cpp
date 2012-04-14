@@ -56,7 +56,7 @@ void RecordingMode::initialize()
 	}
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error);
+		//setState(PluginState::Error);
 		throw exc;
 	}
 }
@@ -71,11 +71,11 @@ void RecordingMode::enable()
 	{
 		env().modes().registerMode<RecordingModeImpl>("Recording Mode");
 
-		setState(PluginState::Enabled);
+		//setState(PluginState::Enabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error);
+		//setState(PluginState::Error);
 		throw exc;
 	}
 }
@@ -89,11 +89,11 @@ void RecordingMode::disable()
 	{
 		env().modes().unregisterMode("Recording Mode");
 	
-		setState(PluginState::Disabled);
+		//setState(PluginState::Disabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error);
+		//setState(PluginState::Error);
 		throw exc;
 	}
 }

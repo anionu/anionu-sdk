@@ -40,11 +40,11 @@ void SurveillanceMode::enable()
 	try 
 	{
 		env().modes().registerMode<SurveillanceModeImpl>("Surveillance Mode");
-		setState(PluginState::Enabled);
+		//setState(PluginState::Enabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error, exc.displayText());
+		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
 }
@@ -57,11 +57,11 @@ void SurveillanceMode::disable()
 	try 
 	{
 		env().modes().unregisterMode("Surveillance Mode");
-		setState(PluginState::Disabled);
+		//setState(PluginState::Disabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error, exc.displayText());
+		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
 }

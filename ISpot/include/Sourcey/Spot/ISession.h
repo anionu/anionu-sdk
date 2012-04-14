@@ -23,8 +23,8 @@ struct SessionState: public StateT
 	{
 		None = 0,
 		Authenticating,
-		ActiveConnecting,
 		ActiveOffline,
+		ActiveConnecting,
 		ActiveOnline,
 		Failed,
 	};
@@ -34,8 +34,8 @@ struct SessionState: public StateT
 		switch(id) {
 		case None:				return "None";
 		case Authenticating:	return "Authenticating";
-		case ActiveConnecting:	return "Active (Connecting)";
 		case ActiveOffline:		return "Active (Offline)";
+		case ActiveConnecting:	return "Active (Connecting)";
 		case ActiveOnline:		return "Active (Online)";
 		case Failed:			return "Failed";
 		default:				assert(false);

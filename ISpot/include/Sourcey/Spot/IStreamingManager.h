@@ -36,7 +36,7 @@ public:
 		/// the session pointer or NULL.
 		
 	Signal2<IStreamingSession&, bool&> InitializeStreamingSession;
-		/// Provides plug-ins with the ability to override the
+		/// Provides plugins with the ability to override the
 		/// creation of source and encoder objects for the
 		/// given session. Overriding may be partial or
 		/// complete. If stream creation is to be completely
@@ -57,7 +57,7 @@ public:
 		///
 
 	Signal3<IStreamingSession&, ConnectionStream&, bool&> InitializeStreamingConnection;
-		/// Provides plug-in with the ability to override the
+		/// Provides plugin with the ability to override the
 		/// session connection objects. Methodology is the same
 		/// as the InitializeStreamingSession signal same except
 		/// that stream objects should derive from:

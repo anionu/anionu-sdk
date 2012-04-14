@@ -1,6 +1,4 @@
 #include "Sourcey/Spot/IPlugin.h"
-#include "Sourcey/Spot/IEnvironment.h"
-#include "Sourcey/Spot/IEnvironment.h"
 
 
 using namespace std;
@@ -59,7 +57,9 @@ void IPlugin::setPath(const std::string& path)
 LogStream IPlugin::log(const char* level) const 
 { 
 	// The Environment instance will be NULL until
-	// after the constructor has been called.
+	// the constructor has been called, therefore
+	// messages logged inside the constructor will
+	// be lost.
 	if (_env == NULL)
 		return LogStream();
 

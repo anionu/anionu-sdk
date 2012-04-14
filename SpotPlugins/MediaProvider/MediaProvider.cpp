@@ -84,11 +84,11 @@ void MediaProvider::enable()
 #endif
 		}
 
-		setState(PluginState::Enabled);
+		//setState(PluginState::Enabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error, exc.displayText());
+		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
 }
@@ -111,11 +111,11 @@ void MediaProvider::disable()
 		env().media().remoteStreamingFormats().unregisterFormat("Flash H264");
 #endif
 	
-		setState(PluginState::Disabled);
+		//setState(PluginState::Disabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
-		setState(PluginState::Error, exc.displayText());
+		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
 }

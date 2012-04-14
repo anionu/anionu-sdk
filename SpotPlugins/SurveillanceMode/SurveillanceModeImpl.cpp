@@ -7,6 +7,7 @@
 #include "Sourcey/Spot/IStreamingManager.h"
 #include "Sourcey/Spot/ISynchronizer.h"
 #include "Sourcey/CryptoProvider.h"
+#include "Sourcey/Anionu/Event.h"
 
 
 using namespace std;
@@ -181,9 +182,8 @@ void SurveillanceModeImpl::onMotionStateChange(void* sender, Anionu::MotionDetec
 
 			// Create a surveillance event via the Anionu API
 			// to notify account clients.
-			_env.createEvent(
-				"Motion Detected", 
-				"Motion detected on channel: " + _channel.name());
+			Anionu::Event event(Anionu::Event::High, "Motion Detected", "Motion detected on channel: " + _channel.name());
+			_env.notifyEvent(event);
 
 		break;
 	}

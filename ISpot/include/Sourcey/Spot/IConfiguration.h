@@ -5,7 +5,6 @@
 #include "Sourcey/Signal.h"
 #include "Sourcey/JSON/Configuration.h"
 #include "Sourcey/Spot/IModule.h"
-#include "Sourcey/Symple/Form.h"
 
 
 namespace Sourcey { 

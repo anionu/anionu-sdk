@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_MEDIA_MotionDetector_H
-#define ANIONU_MEDIA_MotionDetector_H
+#ifndef ANIONU_MotionDetector_H
+#define ANIONU_MotionDetector_H
 
 
 #include "Sourcey/Stateful.h"
