@@ -20,16 +20,6 @@ IPlugin::~IPlugin()
 }
 
 
-void IPlugin::initialize()
-{
-}
-
-
-void IPlugin::uninitialize()
-{
-}
-
-
 IEnvironment& IPlugin::env() const 
 { 
 	return *_env; 
@@ -39,6 +29,10 @@ IEnvironment& IPlugin::env() const
 void IPlugin::setEnvironment(IEnvironment* env) 
 { 
 	_env = env; 
+
+	// Set the default logger instance.
+	Logger::uninitialize();
+	Logger::instance().add(&_env->logger().getDefault());
 }
 
 
@@ -62,13 +56,15 @@ LogStream IPlugin::log(const char* level) const
 	// be lost.
 	if (_env == NULL)
 		return LogStream();
-
-	LogStream stream(_env->logger().send(level));
-	printLog(stream);
-	return stream;
+	
+	return _env->logger().send(this, level); 
+	//LogStream stream(_env->logger().send(level));
+	//printLog(stream);
+	//return stream;
 }
 
 
+/*
 void IPlugin::printLog(LogStream& ost) const
 {
 	ost << "["
@@ -77,6 +73,7 @@ void IPlugin::printLog(LogStream& ost) const
 		<< this
 		<< "] ";
 }
+*/
 
 
 } } // namespace Sourcey::Spot

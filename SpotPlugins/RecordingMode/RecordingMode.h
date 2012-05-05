@@ -13,10 +13,10 @@ class RecordingMode: public IPlugin
 {
 public:
 	RecordingMode();
-	~RecordingMode();
+	virtual ~RecordingMode();
 
-	void enable();
-	void disable();
+	void initialize();
+	void uninitialize();
 	
 	std::string name() const
 	{

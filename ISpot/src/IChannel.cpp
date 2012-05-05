@@ -90,12 +90,12 @@ VideoCapture* IChannel::videoCapture(bool whiny) const
 }
 
 
-AudioCapture* IChannel::audioCapture(bool whiny) const
+AudioCapture* IChannel::audioCapture(int channels, int sampleRate, bool whiny) const
 {
 	FastMutex::ScopedLock lock(_mutex);
 
 	AudioCapture* capture = _audioDevice.id >= 0 ? 
-		MediaFactory::instance()->audio.getCapture(_audioDevice.id) : NULL;
+		MediaFactory::instance()->audio.getCapture(_audioDevice.id, channels, sampleRate) : NULL;
 		
 	if (whiny && capture == NULL) 
 		throw NotFoundException(_name + ": No audio device");

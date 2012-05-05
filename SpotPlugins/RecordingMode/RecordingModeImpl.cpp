@@ -13,9 +13,7 @@
 
 using namespace std;
 using namespace Poco;
-//using namespace Poco::Util;
 using namespace Sourcey::Media;
-//using namespace Sourcey::XMPP;
 
 
 namespace Sourcey {
@@ -132,7 +130,7 @@ void RecordingModeImpl::onEncoderStateChange(void* sender, Media::EncoderState& 
 		case Media::EncoderState::Failed:
 		break;
 
-		case Media::EncoderState::Closing:
+		case Media::EncoderState::Stopped:
 			FastMutex::ScopedLock lock(_mutex); 
 
 			// Start a new recording segment if the mode is 

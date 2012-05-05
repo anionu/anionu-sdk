@@ -31,7 +31,7 @@ public:
 	virtual std::string name() const;
 	virtual std::string videoInputFile() const;
 	virtual Media::VideoCapture* videoCapture(bool whiny = false) const;
-	virtual Media::AudioCapture* audioCapture(bool whiny = false) const;
+	virtual Media::AudioCapture* audioCapture(int channels = 2, int sampleRate = 44100, bool whiny = false) const;
 	virtual Media::Device videoDevice() const;
 	virtual Media::Device audioDevice() const;
 	

@@ -94,7 +94,7 @@ void StreamingParams::deserialize(JSON::Value& root)
 	
 	// Audio
 	JSON::Value& a = root["audio"];
-	oformat.audio.enabled = !a.isNull() && a["enabled"].asBool();
+	//oformat.audio.enabled = !a.isNull() && a["enabled"].asBool();
 	if (oformat.audio.enabled) {
 		if (a.isMember("codec")) oformat.audio.id = Media::Codec::toID(a["codec"].asString());
 		if (a.isMember("bit-rate")) oformat.audio.bitRate = Util::atoi(a["bit-rate"].asString());
@@ -135,6 +135,7 @@ IStreamingSession::IStreamingSession(IEnvironment& env,
 	log() << "Creating:"		
 		<< "\n\tPID: " << this	
 		<< "\n\tChannel: " << _channel.name()
+		<< "\n\tFormat: " << _params.oformat.label
 		<< "\n\tUsing Video: " << _params.oformat.video.enabled
 		<< "\n\tUsing Audio: " << _params.oformat.audio.enabled
 		<< "\n\tPeer: " << _peer.id()

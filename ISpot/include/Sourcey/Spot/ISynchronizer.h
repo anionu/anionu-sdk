@@ -3,6 +3,7 @@
 
 
 #include "Sourcey/Spot/IModule.h"
+#include "Sourcey/JSON/JSON.h"
 #include "Poco/DateTimeFormatter.h"
 
 #include <string>
@@ -40,14 +41,17 @@ struct JobState: public StateT
 struct Job
 {
 	std::string	id;		// Unique ID
+	std::string	parent;	// Parent ID (optional)
 	std::string	type;	// Video, Audio, Image, Archive
 	std::string	path;	// The asset file system path
-	std::string	state;	// Ready, Running, Complete, Failed
+	std::string	state;	// Pending, Ready, Running, Complete, Failed
 	std::string	time;	// The asset timestamp
 	int priority;		// Value between 0 - 100
+
+	JSON::Value params; // Optional API request parameters
+	JSON::Value	data;	// API response data
 	
 	std::string	error;	// Set when Failed
-	std::string	data;	// API response data
 
 	Job();
 	Job(const std::string& type,
@@ -56,7 +60,7 @@ struct Job
 		const std::string& time = 
 			Poco::DateTimeFormatter::format(
 			Poco::Timestamp(), "%Y-%m-%d %H:%M:%S"));
-	Job(const Job& r);
+	//Job(const Job& r);
 	virtual ~Job() {};	
 
 	virtual Job* clone() const;
@@ -87,11 +91,12 @@ public:
 	virtual ~ISynchronizer() {};
 
 	virtual void push(const Job& job) = 0;
-		// Pushes a Job onto the synchronization queue
-		// and returns the assigned Job ID;
+		// Pushes a Job onto the synchronization queue;
 
 	virtual ISynchronizer& operator >> (const Job& job) = 0;
-		// Pushes a job onto the synchroniation queue.	
+		// Pushes a job onto the synchronization queue.	
+
+	Signal<const Job&> SyncComplete;
 	
 	virtual const char* className() const { return "Synchronizer"; }
 };

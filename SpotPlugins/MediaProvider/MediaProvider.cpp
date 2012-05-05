@@ -29,9 +29,9 @@ MediaProvider::~MediaProvider()
 }
 
 
-void MediaProvider::enable() 
+void MediaProvider::initialize() 
 {
-	log() << "Enabling" << endl;	
+	log() << "Initializing" << endl;	
 
 	try 
 	{
@@ -43,13 +43,18 @@ void MediaProvider::enable()
 			
 		// MP4
 		Format mp4("MP4", Format::MP4, 
-			VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 20 /* 30 */), 
+			VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 20), 
 			AudioCodec(Codec::AAC, "AAC")
 		);
 
 		// FLV
-		Format flv("FLV", Format::FLV, VideoCodec(Codec::FLV, "FLV", 400, 300, 15), 100);
-
+		Format flv("FLV", Format::FLV, 
+			VideoCodec(Codec::FLV, "FLV", 400, 300, 15), 
+			//AudioCodec(Codec::NellyMoser, "NellyMoser", 1, 11025)
+			AudioCodec(Codec::Speex, "Speex", 1, 16000)
+			//AudioCodec(Codec::Speex, "Speex", 2, 44100)
+			//AudioCodec(Codec::AAC, "AAC")
+			, 100);
 
 		//
 		// Recording Formats
@@ -62,10 +67,10 @@ void MediaProvider::enable()
 		// Streaming Formats
 		//
 		{
-			env().media().localStreamingFormats().registerFormat(flv);
-			env().media().remoteStreamingFormats().registerFormat(flv);
-			env().media().localStreamingFormats().setDefault("FLV");
-			env().media().remoteStreamingFormats().setDefault("FLV");
+			env().media().localVideoStreamingFormats().registerFormat(flv);
+			env().media().remoteVideoStreamingFormats().registerFormat(flv);
+			env().media().localVideoStreamingFormats().setDefault("FLV");
+			env().media().remoteVideoStreamingFormats().setDefault("FLV");
 
 #if HAVE_H264
 
@@ -75,12 +80,14 @@ void MediaProvider::enable()
 			// H.264 video, up to 1.5 Mbps, 640 by 480 pixels, 30 frames per second,
 			// Low-Complexity version of the H.264 Baseline Profile with AAC-LC audio
 			// up to 160 Kbps, 48kHz, stereo audio in .m4v, .mp4, and .mov file formats.
-			Format fh264("Flash H264", Format::FLV, VideoCodec(Codec::H264, "H264"));
+			Format fh264("Flash H264", Format::FLV, 
+				VideoCodec(Codec::H264, "H264"), 
+				AudioCodec(Codec::AAC, "AAC"));
 		
-			env().media().localStreamingFormats().registerFormat(fh264);
-			env().media().remoteStreamingFormats().registerFormat(fh264);
-			env().media().localStreamingFormats().setDefault("Flash H264");
-			env().media().remoteStreamingFormats().setDefault("Flash H264");
+			env().media().localVideoStreamingFormats().registerFormat(fh264);
+			env().media().remoteVideoStreamingFormats().registerFormat(fh264);
+			env().media().localVideoStreamingFormats().setDefault("Flash H264");
+			env().media().remoteVideoStreamingFormats().setDefault("Flash H264");
 #endif
 		}
 
@@ -94,22 +101,24 @@ void MediaProvider::enable()
 }
 
 
-void MediaProvider::disable() 
+void MediaProvider::uninitialize() 
 {	
-	log() << "Disabling" << endl;
+	log() << "Uninitializing" << endl;
 
 	try 
 	{
 		env().streaming().InitializeStreamingSession -= delegate(this, &MediaProvider::onInitializeStreamingSession);
-		env().media().InitializeEncoder += delegate(this, &MediaProvider::onInitializeRecordingEncoder);
+		env().media().InitializeEncoder -= delegate(this, &MediaProvider::onInitializeRecordingEncoder);
 		
+		/*
 		env().media().recordingFormats().unregisterFormat("MP4");
-		env().media().localStreamingFormats().unregisterFormat("FLV");
-		env().media().remoteStreamingFormats().unregisterFormat("FLV");
+		env().media().localVideoStreamingFormats().unregisterFormat("FLV");
+		env().media().remoteVideoStreamingFormats().unregisterFormat("FLV");
 #if HAVE_H264
-		env().media().localStreamingFormats().unregisterFormat("Flash H264");
-		env().media().remoteStreamingFormats().unregisterFormat("Flash H264");
+		env().media().localVideoStreamingFormats().unregisterFormat("Flash H264");
+		env().media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
 #endif
+		*/
 	
 		//setState(PluginState::Disabled);
 	} 

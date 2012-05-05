@@ -7,7 +7,7 @@
 #include "Sourcey/Spot/IMediaManager.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Timeout.h"
-#include "Sourcey/Anionu/MotionDetector.h"
+#include "Sourcey/Media/MotionDetector.h"
 
 
 namespace Sourcey {
@@ -34,7 +34,7 @@ public:
 	void startRecording();
 	void stopRecording();
 
-	void onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&);
+	void onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&);
 	void onInitializeStreamingSession(void*, IStreamingSession& session, bool& handled);
 	void onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled);
 	void onSessionStreamStateChange(void*, PacketStreamState& state, const PacketStreamState&);	
@@ -58,7 +58,7 @@ public:
 	
 protected:
 
-	Anionu::MotionDetector	_motionDetector;
+	Media::MotionDetector	_motionDetector;
 	PacketStream	_motionStream;
 	std::string		_mediaToken;
 	Timeout			_mediaTokenTimeout;

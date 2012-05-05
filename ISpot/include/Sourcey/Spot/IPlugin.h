@@ -13,9 +13,9 @@ namespace Sourcey {
 namespace Spot {
 
 
-class IPlugin: public IConfigurable
+class IPlugin: public IConfigurable, public ILoggable
 	/// A plugin is a runtime module that may be loaded to extend 
-	/// the core functionality of the Spot client.
+	/// the core functionality of Spot.
 	/// An IEnvironment instance is available to the plugin before
 	/// initialization which exposes the ISpot API and class tree
 	/// to the plugin instance.
@@ -23,19 +23,15 @@ class IPlugin: public IConfigurable
 public:
 	IPlugin();
 	virtual ~IPlugin();
-
-	virtual std::string name() const = 0;
-		/// The display name of this plugin.
-		/// Other information is contained within manifest.json
 	
-	virtual void initialize();
+	virtual void initialize() = 0;
 		/// If the plugin needs to run any system compatibility
 		/// or runtime checks they should be done here. 
 		/// An Exception with a descriptive message should be
 		/// thrown on failure to notify Spot that the plugin
 		/// has failed.
 
-	virtual void uninitialize();
+	virtual void uninitialize() = 0;
 
 	virtual IEnvironment& env() const;
 	virtual void setEnvironment(IEnvironment* env);
@@ -49,8 +45,8 @@ public:
 		
 	virtual LogStream log(const char* level = "debug") const;
 		/// This method sends log messages the Spot logger.
-
-	virtual void printLog(LogStream& ost) const;
+	
+	virtual const char* className() const { return "Plugin"; }
 
 protected: 
 	IEnvironment* _env;
@@ -65,7 +61,12 @@ protected:
 
 	
 
-	
+
+	//virtual void printLog(LogStream& ost) const;	
+
+	//virtual std::string name() const = 0;
+		/// The display name of this plugin.
+		/// Other information is contained within manifest.json
 //class IEnvironment;
 
 /*

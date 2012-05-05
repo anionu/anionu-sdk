@@ -133,11 +133,6 @@ public:
 		//cv::imshow("hi", *packet.mat);
 		//cv::waitKey(20);
 	}
-	
-	double getDecibels(FFT::Complex& c, double scale = 10.0)
-	{
-		return scale * log10(abs(c));
-	}
 
 	void onAudio(void* sender, AudioPacket& packet)
 	{
@@ -162,7 +157,7 @@ public:
 		double max = -99999.9;
 		double avg = 0.0;
 		for (int i = 0; i < FFT_POINTS / 2; ++i) {
-	        level = _fft.getIntensity(frequencies[i]); //getDecibels(frequencies[i]); //
+	        level = _fft.getIntensity(frequencies[i]); //getDecibels(frequencies[i]);
 			if (level > max)
 				max = level;
 			if (level < min)

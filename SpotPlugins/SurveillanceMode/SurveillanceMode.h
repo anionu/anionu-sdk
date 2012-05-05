@@ -13,10 +13,10 @@ class SurveillanceMode: public IPlugin
 {
 public:
 	SurveillanceMode();
-	~SurveillanceMode();
+	virtual ~SurveillanceMode();
 
-	void enable();
-	void disable();
+	void initialize();
+	void uninitialize();
 	
 	std::string name() const
 	{

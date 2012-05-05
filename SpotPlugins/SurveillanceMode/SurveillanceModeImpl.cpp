@@ -152,7 +152,7 @@ bool SurveillanceModeImpl::stopMotionDetector()
 }
 
 
-void SurveillanceModeImpl::onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&)
+void SurveillanceModeImpl::onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&)
 {
 	log() << "Motion State Changed: " << state.toString() << endl;
 
@@ -166,16 +166,16 @@ void SurveillanceModeImpl::onMotionStateChange(void* sender, Anionu::MotionDetec
 	//}
 
 	switch (state.id()) {
-		case Anionu::MotionDetectorState::Idle:	
+		case Media::MotionDetectorState::Idle:	
 		break;
 
-		case Anionu::MotionDetectorState::Waiting:
+		case Media::MotionDetectorState::Waiting:
 		break;
 
-		case Anionu::MotionDetectorState::Vigilant:
+		case Media::MotionDetectorState::Vigilant:
 		break;
 
-		case Anionu::MotionDetectorState::Triggered:			
+		case Media::MotionDetectorState::Triggered:			
 			
 			// Start recording.
 			startRecording();
@@ -225,7 +225,7 @@ void SurveillanceModeImpl::onEncoderStateChange(void* sender, Media::EncoderStat
 
 	switch (state.id()) {
 
-		case Media::EncoderState::Closing:
+		case Media::EncoderState::Stopped:
 			FastMutex::ScopedLock lock(_mutex); 
 
 			// Start a new recording segment if the mode is 
@@ -270,7 +270,7 @@ void SurveillanceModeImpl::onInitializeStreamingSession(void*, IStreamingSession
 
 			// Initialize a new motion detector using existing
 			// options.
-			//Anionu::MotionDetector* detector = new Anionu::MotionDetector(_motionDetector.options());
+			//Media::MotionDetector* detector = new Media::MotionDetector(_motionDetector.options());
 			//session.stream().attach(detector, 3, true);
 			session.stream().attach(&_motionDetector, 3, false);
 			
@@ -308,7 +308,7 @@ void SurveillanceModeImpl::onSessionStreamStateChange(void* sender, PacketStream
 		/*
 		// Apply the updated configuration detector
 		// options to our main detector.
-		Anionu::MotionDetector* detector = stream->getProcessor<Anionu::MotionDetector>();
+		Media::MotionDetector* detector = stream->getProcessor<Media::MotionDetector>();
 		assert(detector);
 		if (detector)
 			_motionDetector.setOptions(detector->options());
@@ -323,7 +323,7 @@ void SurveillanceModeImpl::onInitializeStreamingConnection(void*, IStreamingSess
 
 	if (_mediaToken == session.token()) {
 			
-		//Anionu::MotionDetector* detector = session.stream().getProcessor<Anionu::MotionDetector>();
+		//Media::MotionDetector* detector = session.stream().getProcessor<Media::MotionDetector>();
 		//assert(detector);
 		//if (detector) {
 			// Override the connection packetizer if we are using HTTP.

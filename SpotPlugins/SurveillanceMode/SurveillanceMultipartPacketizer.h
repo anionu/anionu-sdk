@@ -5,7 +5,7 @@
 #include "Sourcey/IPacketizer.h"
 #include "Sourcey/Signal.h"
 #include "Sourcey/HTTP/MultipartPacketizer.h"
-#include "Sourcey/Anionu/MotionDetector.h"
+#include "Sourcey/Media/MotionDetector.h"
 
 
 namespace Sourcey {
@@ -15,7 +15,7 @@ namespace Spot {
 class SurveillanceMultipartPacketizer: public HTTP::MultipartPacketizer
 {
 public:
-	SurveillanceMultipartPacketizer(Anionu::MotionDetector& detector) :
+	SurveillanceMultipartPacketizer(Media::MotionDetector& detector) :
 		HTTP::MultipartPacketizer("image/jpeg"), _motionDetector(detector)
 	{
 	}
@@ -29,7 +29,7 @@ public:
 			<< "X-Motion-State: " << _motionDetector.state().toString() << "\r\n";
 	}
 
-	Anionu::MotionDetector& _motionDetector;
+	Media::MotionDetector& _motionDetector;
 };
 
 

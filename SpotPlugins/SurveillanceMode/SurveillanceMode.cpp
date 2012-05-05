@@ -29,17 +29,18 @@ SurveillanceMode::SurveillanceMode()
 
 SurveillanceMode::~SurveillanceMode()
 {
-	log() << "[SurveillanceMode] Destroying" << endl;
+	log() << "Destroying" << endl;
 }
 
 
-void SurveillanceMode::enable() 
+void SurveillanceMode::initialize() 
 {
-	log() << "[SurveillanceMode] Enabling" << endl;
+	log() << "Initializing" << endl;	
 
+		env().modes().registerMode<SurveillanceModeImpl>("Surveillance Mode");
+		/*
 	try 
 	{
-		env().modes().registerMode<SurveillanceModeImpl>("Surveillance Mode");
 		//setState(PluginState::Enabled);
 	} 
 	catch (Poco::Exception& exc) 
@@ -47,23 +48,28 @@ void SurveillanceMode::enable()
 		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
+	*/
 }
 
 
-void SurveillanceMode::disable() 
+void SurveillanceMode::uninitialize() 
 {	
-	log() << "[SurveillanceMode] Disabling" << endl;
+	log() << "Uninitializing" << endl;
 
+
+		env().modes().unregisterMode("Surveillance Mode");
+
+		/*
+		//setState(PluginState::Disabled);
 	try 
 	{
-		env().modes().unregisterMode("Surveillance Mode");
-		//setState(PluginState::Disabled);
 	} 
 	catch (Poco::Exception& exc) 
 	{
 		//setState(PluginState::Error, exc.displayText());
 		throw exc;
 	}
+	*/
 }
 
 
@@ -71,7 +77,7 @@ void SurveillanceMode::disable()
 void SurveillanceMode::onRecvStanza(Stanza& s)
 {	
 	Command c = static_cast<IQ&>(s).command();
-	Log("debug") << "[SurveillanceMode] onRecvStanza: " << c.node() << endl;
+	Log("debug") << "onRecvStanza: " << c.node() << endl;
 
 	if (c.matches("channels:*:modes:surveillance:activate")) 
 	{
@@ -99,7 +105,7 @@ void SurveillanceMode::onRecvStanza(Stanza& s)
 
 void SurveillanceMode::startMotionDetector(const Channel* channel, const MotionDetectorParams& params)
 {	
-	log() << "[SurveillanceMode] startMotionDetector: " << channel->name() << endl;
+	log() << "startMotionDetector: " << channel->name() << endl;
 	assert(!channel->name().empty());
 	
 	// Ensure the current channel is not already recording
@@ -139,7 +145,7 @@ void SurveillanceMode::startMotionDetector(const Channel* channel, const MotionD
 
 void SurveillanceMode::stopMotionDetector(std::string& channel)
 {
-	log() << "[SurveillanceMode] stopMotionDetector: " << channel << endl;
+	log() << "stopMotionDetector: " << channel << endl;
 
 	MotionDetectorMap::const_iterator it = _motionMap.find(channel);	
 	if (it == _motionMap.end())
@@ -153,7 +159,7 @@ void SurveillanceMode::stopMotionDetector(std::string& channel)
 
 void SurveillanceMode::onMotionStateChange(const void* sender, StateT& state)
 {
-	log() << "[SurveillanceMode] onMotionStateChange: " << state.str() << endl;
+	log() << "onMotionStateChange: " << state.str() << endl;
 
 	switch (state.id()) {
 		case MotionDetectorState::Idle:	

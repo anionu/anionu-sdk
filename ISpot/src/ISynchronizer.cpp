@@ -26,10 +26,10 @@ Job::Job() :
 }
 
 
-Job::Job(const std::string& type,
-		 const std::string& path,
+Job::Job(const string& type,
+		 const string& path,
 		 int priority,		 
-		 const std::string& time) :
+		 const string& time) :
 	id(CryptoProvider::generateRandomKey(16)), 
 	type(type), 
 	path(path), 
@@ -40,15 +40,18 @@ Job::Job(const std::string& type,
 }
 
 
+/*
 Job::Job(const Job& r) : 
 	id(r.id), 
-	priority(r.priority), 
+	parent(r.parent), 
 	type(r.type), 
 	path(r.path), 
 	state(r.state), 
-	time(r.time)
+	time(r.time),
+	priority(r.priority), 
 {
 }
+*/
 
 
 Job* Job::clone() const 
@@ -61,9 +64,11 @@ bool Job::valid() const
 {
 	return !path.empty() 
 		&& (type == "Video"
+		||  type == "VideoSpectrogram"
 		||  type == "Audio"
 		||  type == "Image"
 		||  type == "Archive"
+		||  type == "Log"
 		||  type == "Text");
 }
 
@@ -73,6 +78,7 @@ string Job::toString() const
 	ostringstream ost;
 	ost << "Job["
 		<< id << ":"
+		<< parent << ":"
 		<< type << ":"
 		<< path << ":"
 		<< state << ":"
@@ -99,14 +105,14 @@ ISynchronizer::ISynchronizer(IEnvironment& env) :
 
 	
 /*
-		 const std::string& state,
-		 const std::string& message,
+		 const string& state,
+		 const string& message,
 Job::Job(int priority,
-		 const std::string& type,
-		 const std::string& file,
-		 const std::string& state,
-		 const std::string& message,
-		 const std::string& time) :
+		 const string& type,
+		 const string& file,
+		 const string& state,
+		 const string& message,
+		 const string& time) :
 	type(type), 
 	file(file), 
 	state(state), 

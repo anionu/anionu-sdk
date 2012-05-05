@@ -3,10 +3,13 @@
 
 
 #include "Sourcey/Spot/IPlugin.h"
+
 #include "Sourcey/Spot/IStreamingManager.h"
 #include "Sourcey/Spot/IMediaManager.h"
 
 #include "Sourcey/Media/AVEncoder.h"
+/*
+*/
 
 #include "Poco/Thread.h"
 #include "Poco/ClassLibrary.h"
@@ -20,27 +23,30 @@ class MediaProvider: public IPlugin
 {
 public:
 	MediaProvider();
-	~MediaProvider();
+	virtual ~MediaProvider();
 
 public:
-	void enable();
-	void disable();
-
+	void initialize();
+	void uninitialize();
+	
 	Media::IPacketEncoder* createEncoder(const Media::RecorderParams& params);
 	
 	void onInitializeStreamingSession(void*, IStreamingSession& session, bool&);
 	void onInitializeRecordingEncoder(void*, const Media::RecorderParams& params, Media::IPacketEncoder*&);
 	
+	/*
 	std::string title() const
 	{
 		return "Media Provider";
 	}	
+	*/
 
 	std::string name() const
 	{
 		return "Media";
 	}
 	
+	/*
 	std::string author() const
 	{
 		return "Anionu";
@@ -50,6 +56,7 @@ public:
 	{
 		return "1";
 	}
+	*/
 };
 
 

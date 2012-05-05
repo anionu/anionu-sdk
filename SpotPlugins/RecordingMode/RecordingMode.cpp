@@ -63,13 +63,15 @@ void RecordingMode::initialize()
 */
 
 
-void RecordingMode::enable() 
+void RecordingMode::initialize() 
 {
-	log() << "Enabling" << endl;
+	log() << "Initializing" << endl;
+	
+		env().modes().registerMode<RecordingModeImpl>("Recording Mode");
 
+	/*
 	try 
 	{
-		env().modes().registerMode<RecordingModeImpl>("Recording Mode");
 
 		//setState(PluginState::Enabled);
 	} 
@@ -78,16 +80,19 @@ void RecordingMode::enable()
 		//setState(PluginState::Error);
 		throw exc;
 	}
+	*/
 }
 
 
-void RecordingMode::disable() 
+void RecordingMode::uninitialize() 
 {	
-	log() << "Disabling" << endl;
+	log() << "Uninitializing" << endl;
+	
+		env().modes().unregisterMode("Recording Mode");
 
+		/*
 	try 
 	{
-		env().modes().unregisterMode("Recording Mode");
 	
 		//setState(PluginState::Disabled);
 	} 
@@ -96,6 +101,7 @@ void RecordingMode::disable()
 		//setState(PluginState::Error);
 		throw exc;
 	}
+	*/
 }
 
 
