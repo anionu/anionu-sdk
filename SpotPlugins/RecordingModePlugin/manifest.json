@@ -1,0 +1,8 @@
+{
+   "title" : "Recording Mode Plugin",
+   "author" : "Sourcey",
+   "version" : "0.9.0",
+   "package-name" : "RecordingModePlugin",
+   "class-name" : "RecordingModePlugin",
+   "file-name" : "RecordingModePlugin.dll"
+}

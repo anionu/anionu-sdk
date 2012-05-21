@@ -1,5 +1,5 @@
+#include "RecordingModePlugin.h"
 #include "RecordingMode.h"
-#include "RecordingModeImpl.h"
 
 //#include "Sourcey/Spot/IPluginAPI.h"
 #include "Sourcey/Spot/IEnvironment.h"
@@ -15,7 +15,7 @@ using namespace Sourcey::Spot;
 
 
 POCO_BEGIN_MANIFEST(IPlugin)
-	POCO_EXPORT_CLASS(RecordingMode)
+	POCO_EXPORT_CLASS(RecordingModePlugin)
 POCO_END_MANIFEST
 
 
@@ -28,13 +28,13 @@ namespace Spot {
 // Recording Mode Plugin
 //
 // ----------------------------------------------------------------------------
-RecordingMode::RecordingMode()
+RecordingModePlugin::RecordingModePlugin()
 {
-	//log() << "[RecordingMode] RecordingMode()" << endl;
+	//log() << "[RecordingModePlugin] RecordingModePlugin()" << endl;
 }
 
 
-RecordingMode::~RecordingMode()
+RecordingModePlugin::~RecordingModePlugin()
 {	
 	//log() << "Destroying" << endl;
 	//if (isEnabled()) disable();
@@ -42,7 +42,7 @@ RecordingMode::~RecordingMode()
 
 
 /*
-void RecordingMode::initialize() 
+void RecordingModePlugin::initialize() 
 {
 	log() << "Initializing" << endl;	
 	try 
@@ -63,11 +63,11 @@ void RecordingMode::initialize()
 */
 
 
-void RecordingMode::initialize() 
+void RecordingModePlugin::initialize() 
 {
 	log() << "Initializing" << endl;
 	
-		env().modes().registerMode<RecordingModeImpl>("Recording Mode");
+		env().modes().registerMode<RecordingMode>("Recording Mode");
 
 	/*
 	try 
@@ -84,7 +84,7 @@ void RecordingMode::initialize()
 }
 
 
-void RecordingMode::uninitialize() 
+void RecordingModePlugin::uninitialize() 
 {	
 	log() << "Uninitializing" << endl;
 	

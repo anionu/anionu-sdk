@@ -1,4 +1,4 @@
-#include "SurveillanceModeImpl.h"
+#include "SurveillanceMode.h"
 #include "SurveillanceMultipartPacketizer.h"
 
 #include "Sourcey/Spot/IChannel.h"
@@ -19,7 +19,7 @@ namespace Sourcey {
 namespace Spot {
 
 
-SurveillanceModeImpl::SurveillanceModeImpl(IEnvironment& env, IChannel& channel) :
+SurveillanceMode::SurveillanceMode(IEnvironment& env, IChannel& channel) :
 	IMode(env, channel, "Surveillance Mode"),
 	_isConfiguring(false)
 {
@@ -27,29 +27,29 @@ SurveillanceModeImpl::SurveillanceModeImpl(IEnvironment& env, IChannel& channel)
 }
 
 
-SurveillanceModeImpl::~SurveillanceModeImpl()
+SurveillanceMode::~SurveillanceMode()
 {	
 	log() << "Destroying" << endl;	
 }
 
 
-void SurveillanceModeImpl::initialize() 
+void SurveillanceMode::initialize() 
 {
 	log() << "Initializing" << endl;	
 
 	loadConfig();
 	
-	_env.streaming().InitializeStreamingSession += delegate(this, &SurveillanceModeImpl::onInitializeStreamingSession);	
-	_env.streaming().InitializeStreamingConnection += delegate(this, &SurveillanceModeImpl::onInitializeStreamingConnection);	
+	_env.streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);	
+	_env.streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);	
 }
 
 
-void SurveillanceModeImpl::uninitialize() 
+void SurveillanceMode::uninitialize() 
 {
 	log() << "UnInitializing" << endl;
 	
-	_env.streaming().InitializeStreamingSession -= delegate(this, &SurveillanceModeImpl::onInitializeStreamingSession);
-	_env.streaming().InitializeStreamingConnection -= delegate(this, &SurveillanceModeImpl::onInitializeStreamingConnection);
+	_env.streaming().InitializeStreamingSession -= delegate(this, &SurveillanceMode::onInitializeStreamingSession);
+	_env.streaming().InitializeStreamingConnection -= delegate(this, &SurveillanceMode::onInitializeStreamingConnection);
 
 	// FIXME: For some reason delegates added accross the
 	// process boundary are causing the SignalBase to
@@ -58,7 +58,7 @@ void SurveillanceModeImpl::uninitialize()
 }
 
 
-void SurveillanceModeImpl::loadConfig()
+void SurveillanceMode::loadConfig()
 {
 	log() << "Loading Config: " << _channel.name() << endl;
 
@@ -74,11 +74,11 @@ void SurveillanceModeImpl::loadConfig()
 }
 
 
-void SurveillanceModeImpl::enable() 
+void SurveillanceMode::enable() 
 {
 	assert(&_channel);	
 
-	log() << "Starting"
+	log() << "Enabling:"
 		<< "\n\tPre Surveillance Delay: " << _motionDetector.options().preSurveillanceDelay
 		<< "\n\tPost Triggered Delay: " << _motionDetector.options().postMotionEndedDelay
 		<< "\n\tMinimum Motion Triggered Duration: " << _motionDetector.options().minTriggeredDuration
@@ -88,16 +88,16 @@ void SurveillanceModeImpl::enable()
 		<< endl;
 
 	//Signal2<IStreamingSession&, PacketStream&> InitializeStreamingSession;	
-	//_env.InitializeStreamingSession += delegate(this, &SurveillanceModeImpl::onInitializeStreamingSession);	
-	//_env.InitializeStreamingSession += delegate(this, &SurveillanceModeImpl::onInitializeStreamingSession);
+	//_env.InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);	
+	//_env.InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);
 	startMotionDetector();
 	setState(this, ModeState::Enabled);
 }
 
 
-void SurveillanceModeImpl::disable() 
+void SurveillanceMode::disable() 
 {
-	log() << "Stopping" << endl;
+	log() << "Disabling" << endl;
 	//assert(_channel != NULL);
 
 	//if (_motionDetector) {
@@ -109,10 +109,10 @@ void SurveillanceModeImpl::disable()
 }
 
 
-bool SurveillanceModeImpl::startMotionDetector()
+bool SurveillanceMode::startMotionDetector()
 {
 	if (_motionDetector.isRunning()) {
-		log() << "The motion detector is already running" << endl;
+		log("warn") << "The motion detector is already running" << endl;
 		return false;
 	}
 
@@ -120,13 +120,13 @@ bool SurveillanceModeImpl::startMotionDetector()
 
 	Media::VideoCapture* video = _channel.videoCapture(true);
 	//if (!video)
-	//	throw Exception("Unable to initialize video input.");
+	//	throw Exception("Cannot initialize video input.");
 		
 	_motionStream.attach(video, false);
 
 	// Attach the motion detector to the stream.
 	_motionStream.attach(&_motionDetector, 1, false);
-	_motionDetector.StateChange += delegate(this, &SurveillanceModeImpl::onMotionStateChange);
+	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
 	_motionStream.start();
 	//_motionDetector.setVideoCapture(video);
@@ -136,23 +136,22 @@ bool SurveillanceModeImpl::startMotionDetector()
 }
 
 
-bool SurveillanceModeImpl::stopMotionDetector()
+bool SurveillanceMode::stopMotionDetector()
 {
 	if (_motionDetector.isRunning()) {
-		_motionDetector.StateChange -= delegate(this, &SurveillanceModeImpl::onMotionStateChange);
+		_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
+		//_motionDetector.stop();
 		_motionStream.close();
-		//_motionDetector.disable();
-
 		return true;
 	}		
 
-	log() << "Unable to stop the motion detector because it is not running" << endl;
+	log("warn") << "Cannot stop the motion detector because it is not running." << endl;
 	_motionStream.close();
 	return false;
 }
 
 
-void SurveillanceModeImpl::onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&)
+void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&)
 {
 	log() << "Motion State Changed: " << state.toString() << endl;
 
@@ -190,7 +189,7 @@ void SurveillanceModeImpl::onMotionStateChange(void* sender, Media::MotionDetect
 }
 
 	
-void SurveillanceModeImpl::startRecording()
+void SurveillanceMode::startRecording()
 {	
 	FastMutex::ScopedLock lock(_mutex); 
 
@@ -198,18 +197,18 @@ void SurveillanceModeImpl::startRecording()
 	env().media().initRecorderParams(_channel, params);
 	//params.stopAt = time(0) + _segmentDuration;
 	_recordingInfo = env().media().startRecording(_channel, params);
-	_recordingInfo.encoder->StateChange += delegate(this, &SurveillanceModeImpl::onEncoderStateChange);
+	_recordingInfo.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
 
 	log() << "Started Recording: " << _recordingInfo.token << endl;
 }
 
 
-void SurveillanceModeImpl::stopRecording()
+void SurveillanceMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
 	if (!_recordingInfo.token.empty()) {
-		_recordingInfo.encoder->StateChange -= delegate(this, &SurveillanceModeImpl::onEncoderStateChange);
+		_recordingInfo.encoder->StateChange -= delegate(this, &SurveillanceMode::onEncoderStateChange);
 		env().media().stopRecording(_recordingInfo.token);
 		log() << "Stopped Recording: " << _recordingInfo.token << endl;
 		_recordingInfo.token = "";
@@ -218,7 +217,7 @@ void SurveillanceModeImpl::stopRecording()
 }
 
 
-void SurveillanceModeImpl::onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState)
+void SurveillanceMode::onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState)
 {
 	log() << "Recorder State Changed: " << state.toString() << endl;
 	IEncoder* encoder = reinterpret_cast<IEncoder*>(sender);
@@ -232,7 +231,7 @@ void SurveillanceModeImpl::onEncoderStateChange(void* sender, Media::EncoderStat
 			// still enabled.
 			//if (!isDisabled() &&
 			//	encoder == _recordingInfo.encoder) {
-			//	encoder->StateChange -= delegate(this, &SurveillanceModeImpl::onEncoderStateChange);
+			//	encoder->StateChange -= delegate(this, &SurveillanceMode::onEncoderStateChange);
 				
 			// Synchronize video's if required
 			//if (_synchronizeVideos) {
@@ -252,7 +251,7 @@ void SurveillanceModeImpl::onEncoderStateChange(void* sender, Media::EncoderStat
 }
 
 	
-void SurveillanceModeImpl::onInitializeStreamingSession(void*, IStreamingSession& session, bool& handled)
+void SurveillanceMode::onInitializeStreamingSession(void*, IStreamingSession& session, bool& handled)
 {
 	log() << "Initialize Media Stream: " << session.token() << endl;
 
@@ -274,7 +273,7 @@ void SurveillanceModeImpl::onInitializeStreamingSession(void*, IStreamingSession
 			//session.stream().attach(detector, 3, true);
 			session.stream().attach(&_motionDetector, 3, false);
 			
-			session.stream().StateChange += delegate(this, &SurveillanceModeImpl::onSessionStreamStateChange);
+			session.stream().StateChange += delegate(this, &SurveillanceMode::onSessionStreamStateChange);
 
 			// Let the session manager know we have completely
 			// overridden session stream creation.
@@ -293,14 +292,14 @@ void SurveillanceModeImpl::onInitializeStreamingSession(void*, IStreamingSession
 }
 
 
-void SurveillanceModeImpl::onSessionStreamStateChange(void* sender, PacketStreamState& state, const PacketStreamState&)
+void SurveillanceMode::onSessionStreamStateChange(void* sender, PacketStreamState& state, const PacketStreamState&)
 {
 	PacketStream* stream = reinterpret_cast<PacketStream*>(sender); 
 			
 	log() << "Configuration Media Session State Changed: " << state.toString() << endl;
 
 	if (state.id() == PacketStreamState::Closing) {
-		stream->StateChange -= delegate(this, &SurveillanceModeImpl::onSessionStreamStateChange);
+		stream->StateChange -= delegate(this, &SurveillanceMode::onSessionStreamStateChange);
 
 		// Live configuration is over, life as normal.
 		_isConfiguring = false;
@@ -317,7 +316,7 @@ void SurveillanceModeImpl::onSessionStreamStateChange(void* sender, PacketStream
 }
 
 
-void SurveillanceModeImpl::onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled)
+void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled)
 {
 	log() << "Initialize Media Connection: " << session.token() << endl;
 
@@ -340,19 +339,19 @@ void SurveillanceModeImpl::onInitializeStreamingConnection(void*, IStreamingSess
 }
 
 
-bool SurveillanceModeImpl::isConfigurable() const
+bool SurveillanceMode::isConfigurable() const
 {	
 	return true;
 }
 
 
-bool SurveillanceModeImpl::hasParsableConfig(Symple::Form& form) const
+bool SurveillanceMode::hasParsableConfig(Symple::Form& form) const
 {
 	return form.hasField(".Surveillance Mode.", true);
 }
 
 
-void SurveillanceModeImpl::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
+void SurveillanceMode::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
 {
 	log() << "Creating Config Form" << endl;
 
@@ -439,7 +438,7 @@ void SurveillanceModeImpl::createConfigForm(Symple::Form& form, Symple::FormElem
 }
 
 
-void SurveillanceModeImpl::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
+void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
 {
 	log() << "Parsing Config Form" << endl;
 	
@@ -484,7 +483,7 @@ void SurveillanceModeImpl::parseConfigForm(Symple::Form& form, Symple::FormEleme
 }
 
 
-void SurveillanceModeImpl::createHelp(std::ostream& s) 
+void SurveillanceMode::createHelp(std::ostream& s) 
 {
 	s << "<h2>What is Surveillance Mode?</h2>";
 	s << "<p>Surveillance Mode provides motion detection capabilities for Anionu. ";

@@ -1,15 +1,11 @@
-#ifndef MEDIA_PLUGIN_H
-#define MEDIA_PLUGIN_H
+#ifndef ANIONU_SPOT_MediaPlugin_H
+#define ANIONU_SPOT_MediaPlugin_H
 
 
 #include "Sourcey/Spot/IPlugin.h"
-
 #include "Sourcey/Spot/IStreamingManager.h"
 #include "Sourcey/Spot/IMediaManager.h"
-
 #include "Sourcey/Media/AVEncoder.h"
-/*
-*/
 
 #include "Poco/Thread.h"
 #include "Poco/ClassLibrary.h"
@@ -19,16 +15,16 @@ namespace Sourcey {
 namespace Spot {
 
 
-class MediaProvider: public IPlugin
+class MediaPlugin: public IPlugin
 {
 public:
-	MediaProvider();
-	virtual ~MediaProvider();
+	MediaPlugin();
+	virtual ~MediaPlugin();
 
-public:
 	void initialize();
 	void uninitialize();
 	
+protected:
 	Media::IPacketEncoder* createEncoder(const Media::RecorderParams& params);
 	
 	void onInitializeStreamingSession(void*, IStreamingSession& session, bool&);
@@ -39,14 +35,12 @@ public:
 	{
 		return "Media Provider";
 	}	
-	*/
 
 	std::string name() const
 	{
 		return "Media";
 	}
 	
-	/*
 	std::string author() const
 	{
 		return "Anionu";
@@ -63,4 +57,4 @@ public:
 } } // namespace Sourcey::Spot
 
 
-#endif // MEDIA_PLUGIN_H
+#endif // ANIONU_SPOT_MediaPlugin_H

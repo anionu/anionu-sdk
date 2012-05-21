@@ -41,11 +41,11 @@ namespace Sourcey {
 namespace Anionu {
 
 
-#ifdef _DEBUG
-#define ANIONU_API_ENDPOINT "http://localhost:3000"
-#else
+//#ifdef _DEBUG
+//#define ANIONU_API_ENDPOINT "http://localhost:3000"
+//#else
 #define ANIONU_API_ENDPOINT "https://anionu.com"
-#endif
+//#endif
 
 
 // ---------------------------------------------------------------------
@@ -72,6 +72,9 @@ public:
 
 // ---------------------------------------------------------------------
 //
+class APIClient;
+
+
 class APIMethods: public JSON::Value
 	/// Stores and parses the Anionu API method descriptions.
 	/// The internal JSON will look something like:
@@ -91,7 +94,7 @@ class APIMethods: public JSON::Value
 	///
 {
 public:
-	APIMethods();
+	APIMethods(APIClient& client);
 	virtual ~APIMethods();
 
 	virtual void update();
@@ -105,6 +108,7 @@ public:
 
 private:
 	mutable Poco::FastMutex	_mutex;
+	APIClient& _client;
 };
 
 
@@ -114,11 +118,13 @@ struct APICredentials
 {	
 	std::string username;
 	std::string password;
+	std::string endpoint;
 
 	APICredentials(
 		const std::string& username = "", 
-		const std::string& password = "") :
-		username(username), password(password) {} 
+		const std::string& password = "", 
+		const std::string& endpoint = ANIONU_API_ENDPOINT) :
+		username(username), password(password), endpoint(endpoint) {} 
 };
 
 
@@ -170,25 +176,33 @@ typedef std::vector<APITransaction*> APITransactionList;
 
 // ---------------------------------------------------------------------
 //
-class APIClient
+class APIClient: public ILoggable
 {
 public:
 	APIClient();
 	virtual ~APIClient();
 	
-	virtual void setCredentials(const std::string& username, const std::string& password);
-		// Sets the credentials for authenticating HTTP requests.
+	virtual void setCredentials(
+		const std::string& username, 
+		const std::string& password, 
+		const std::string& endpoint = ANIONU_API_ENDPOINT);
+		// Sets the HTTP authentication credentials.
+		// This must be called before calling any API methods.
 
 	virtual bool loadMethods(bool whiny = true);
 		// Loads the method descriptions from the Anionu server.
-		// This must be called before calling any methods.
+		// This must be called before calling any API methods.
 
 	virtual bool isOK();
-		// Returns true when methods descriptions are loaded and
+		// Returns true when method descriptions are loaded and
 		// the API is available.
 
 	virtual APIMethods& methods();
-		// Returns the methods descriptions XML.
+		// Returns the API method descriptions.
+
+	virtual std::string endpoint();
+		// Returns the API HTTP endpoint.
+		// Defaults to ANIONU_API_ENDPOINT declaration.
 	
 	virtual APIRequest* createRequest(const APIMethod& method);
 	virtual APIRequest* createRequest(const std::string& method, 
@@ -206,15 +220,18 @@ public:
 	virtual AsyncTransaction* callAsync(const std::string& method, 
 										const std::string& format = "json", 
 										const StringMap& params = StringMap());
+
+	virtual const char* className() const { return "APIClient"; }
+
 protected:
 	void cancelTransactions();
 	void onTransactionComplete(void* sender, HTTP::Response& response);
 
 private:
+	mutable Poco::FastMutex _mutex;
 	APIMethods			_methods;
 	APICredentials		_credentials;
 	APITransactionList	_transactions;
-	mutable Poco::FastMutex _mutex;
 };
 
 

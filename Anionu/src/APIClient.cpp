@@ -50,26 +50,36 @@ namespace Anionu {
 // APIClient
 //
 // ---------------------------------------------------------------------
-APIClient::APIClient()
+APIClient::APIClient() :
+	_methods(*this)
 {
-	Log("debug") << "[APIClient] Creating" << endl;
+	Log("debug", this) << "Creating" << endl;
 	//loadMethods(false);
 }
 
 
 APIClient::~APIClient()
 {
-	Log("debug") << "[APIClient] Destroying" << endl;
+	Log("debug", this) << "Destroying" << endl;
 
 	cancelTransactions();
 
-	Log("debug") << "[APIClient] Destroying: OK" << endl;
+	Log("debug", this) << "Destroying: OK" << endl;
+}
+
+
+void APIClient::setCredentials(const string& username, const string& password, const string& endpoint) 
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	_credentials.username = username;
+	_credentials.password = password;
+	_credentials.endpoint = endpoint;
 }
 
 
 bool APIClient::loadMethods(bool whiny)
 {
-	Log("debug") << "[APIClient] Loading Methods" << endl;
+	Log("debug", this) << "Loading Methods" << endl;
 	FastMutex::ScopedLock lock(_mutex);	
 	try 
 	{
@@ -85,31 +95,9 @@ bool APIClient::loadMethods(bool whiny)
 }
 
 
-bool APIClient::isOK()
-{
-	FastMutex::ScopedLock lock(_mutex);	
-	return _methods.valid();
-}
-
-
-APIMethods& APIClient::methods()
-{
-	FastMutex::ScopedLock lock(_mutex);
-	return _methods;
-}
-
-
-void APIClient::setCredentials(const string& username, const string& password) 
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	_credentials.username = username;
-	_credentials.password = password;
-}
-
-
 void APIClient::cancelTransactions()
 {
-	Log("debug") << "[APIClient] Stopping Workers" << endl;
+	Log("debug", this) << "Stopping Workers" << endl;
 	
 	FastMutex::ScopedLock lock(_mutex);
 
@@ -118,24 +106,6 @@ void APIClient::cancelTransactions()
 		(*it)->cancel();
 	}
 	_transactions.clear();
-}
-
-
-void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
-{
-	Log("debug") << "[APIClient] Transaction Complete" << endl;
-
-	FastMutex::ScopedLock lock(_mutex);
-	
-	for (vector<APITransaction*>::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
-		if (*it == sender) {
-			Log("debug") << "[APIClient] Removing Transaction: " << sender << endl;
-			_transactions.erase(it);
-
-			// The transaction is responsible for it's own destruction.
-			return;
-		}
-	}
 }
 
 
@@ -170,7 +140,7 @@ APITransaction* APIClient::call(const APIMethod& method)
 
 APITransaction* APIClient::call(APIRequest* request)
 {
-	Log("debug") << "[APIClient] Calling: " << request->method.name << endl;
+	Log("debug", this) << "Calling: " << request->method.name << endl;
 	APITransaction* transaction = new APITransaction(request);
 	transaction->TransactionComplete += delegate(this, &APIClient::onTransactionComplete);
 	FastMutex::ScopedLock lock(_mutex);
@@ -195,13 +165,52 @@ AsyncTransaction* APIClient::callAsync(const APIMethod& method)
 
 AsyncTransaction* APIClient::callAsync(APIRequest* request)
 {
-	Log("debug") << "[APIClient] Calling: " << request->method.name << endl;
+	Log("debug", this) << "Calling: " << request->method.name << endl;
 	AsyncTransaction* transaction = new AsyncTransaction();
 	transaction->setRequest(request);
 	transaction->TransactionComplete += delegate(this, &APIClient::onTransactionComplete);
 	FastMutex::ScopedLock lock(_mutex);
 	_transactions.push_back(transaction);
 	return transaction;
+}
+
+
+void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
+{
+	Log("debug", this) << "Transaction Complete" << endl;
+
+	FastMutex::ScopedLock lock(_mutex);
+	
+	for (vector<APITransaction*>::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
+		if (*it == sender) {
+			Log("debug", this) << "Removing Transaction: " << sender << endl;
+			_transactions.erase(it);
+
+			// The transaction is responsible for it's own destruction.
+			return;
+		}
+	}
+}
+
+
+bool APIClient::isOK()
+{
+	FastMutex::ScopedLock lock(_mutex);	
+	return _methods.valid();
+}
+
+
+APIMethods& APIClient::methods()
+{
+	FastMutex::ScopedLock lock(_mutex);
+	return _methods;
+}
+
+
+string APIClient::endpoint()
+{
+	FastMutex::ScopedLock lock(_mutex);
+	return _credentials.endpoint;
 }
 
 
@@ -234,8 +243,8 @@ void APIRequest::prepare()
 		);
 	}
 
-	Log("debug") << "[APIRequest] Output: " << endl;
-	write(cout);
+	//Log("debug") << "[APIRequest] Output: " << endl;
+	//write(cout);
 }
 
 
@@ -273,7 +282,8 @@ void APIMethod::format(const string& format)
 // API Methods
 //
 // ---------------------------------------------------------------------
-APIMethods::APIMethods()
+APIMethods::APIMethods(APIClient& client) :
+	_client(client)
 {
 	Log("debug") << "[APIMethods] Creating" << endl;
 }
@@ -298,9 +308,10 @@ void APIMethods::update()
 
 	try 
 	{
-		string endpoint(ANIONU_API_ENDPOINT);
-		replaceInPlace(endpoint, "https", "http");
-		URI uri(endpoint + "/api.json");
+		//string endpoint(_client.endpoint);
+		//replaceInPlace(endpoint, "https", "http");
+		//URI uri(endpoint + "/api.json");
+		URI uri(_client.endpoint() + "/api.json");
 		HTTPClientSession session(uri.getHost(), uri.getPort());
 		HTTPRequest req("GET", uri.getPathAndQuery(), HTTPMessage::HTTP_1_1);
 		session.setTimeout(Timespan(6,0));
@@ -309,7 +320,7 @@ void APIMethods::update()
 		istream& rs = session.receiveResponse(res);
 
 		Log("debug") << "[APIMethods] Request Complete: " 
-			<< res.getStatus() << " " 
+			<< res.getStatus() << ": " 
 			<< res.getReason() << endl;
 
 		string data;

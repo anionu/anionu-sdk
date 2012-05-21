@@ -1,3 +1,3 @@
-add_subdirectory(SurveillanceMode)
-add_subdirectory(RecordingMode)
-add_subdirectory(MediaProvider)
+add_subdirectory(SurveillanceModePlugin)
+add_subdirectory(RecordingModePlugin)
+add_subdirectory(MediaPlugin)

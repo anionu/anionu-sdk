@@ -35,6 +35,8 @@ public:
 protected:
 	bool addChannel(IChannel* channel);
 	bool freeChannel(const std::string& name);	
+		
+	mutable Poco::FastMutex _mutex;
 };
 
 

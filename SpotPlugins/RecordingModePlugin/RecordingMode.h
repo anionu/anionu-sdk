@@ -1,22 +1,20 @@
-#ifndef RECORDING_MODE_H
-#define RECORDING_MODE_H
+#ifndef ANIONU_SPOT_RecordingMode_H
+#define ANIONU_SPOT_RecordingMode_H
 
 
-//#include "Sourcey/Spot/Types.h"
 #include "Sourcey/Spot/IMode.h"
 #include "Sourcey/Spot/IMediaManager.h"
-//#include "Sourcey/Media/CaptureRecorder.h"
 
 
 namespace Sourcey {
 namespace Spot {
 
 
-class RecordingModeImpl: public IMode
+class RecordingMode: public IMode
 {
 public:
-	RecordingModeImpl(IEnvironment& env, IChannel& channel);
-	~RecordingModeImpl();
+	RecordingMode(IEnvironment& env, IChannel& channel);
+	~RecordingMode();
 
 	void initialize();
 	void uninitialize();
@@ -59,4 +57,4 @@ private:
 } } // namespace Sourcey::Spot
 
 
-#endif // RECORDING_MODE_H
+#endif // ANIONU_SPOT_RecordingMode_H

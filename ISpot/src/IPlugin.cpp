@@ -31,8 +31,9 @@ void IPlugin::setEnvironment(IEnvironment* env)
 	_env = env; 
 
 	// Set the default logger instance.
-	Logger::uninitialize();
-	Logger::instance().add(&_env->logger().getDefault());
+	//Logger::uninitialize();
+	//Logger::instance().add(&_env->logger().getDefault());
+	Logger::setInstance(&_env->logger());
 }
 
 

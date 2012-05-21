@@ -1,5 +1,5 @@
-#ifndef SURVEILLANCE_MODE_H
-#define SURVEILLANCE_MODE_H
+#ifndef ANIONU_SPOT_SurveillanceMode_H
+#define ANIONU_SPOT_SurveillanceMode_H
 
 
 #include "Sourcey/Spot/IMode.h"
@@ -14,11 +14,11 @@ namespace Sourcey {
 namespace Spot {
 
 
-class SurveillanceModeImpl: public IMode
+class SurveillanceMode: public IMode
 {
 public:
-	SurveillanceModeImpl(IEnvironment& env, IChannel& channel);
-	~SurveillanceModeImpl();
+	SurveillanceMode(IEnvironment& env, IChannel& channel);
+	~SurveillanceMode();
 	
 	void initialize();
 	void uninitialize();
@@ -71,4 +71,4 @@ protected:
 } } // namespace Sourcey::Spot
 
 
-#endif // SURVEILLANCE_MODE_H
+#endif // ANIONU_SPOT_SurveillanceMode_H

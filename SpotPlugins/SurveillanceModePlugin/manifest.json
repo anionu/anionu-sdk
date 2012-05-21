@@ -1,0 +1,8 @@
+{
+   "title" : "Surveillance Mode Plugin",
+   "author" : "Sourcey",
+   "version" : "0.9.0",
+   "package-name" : "SurveillanceModePlugin",
+   "class-name" : "SurveillanceModePlugin",
+   "file-name" : "SurveillanceModePlugin.dll"
+}

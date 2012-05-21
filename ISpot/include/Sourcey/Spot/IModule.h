@@ -18,13 +18,18 @@ class IModule: public ILoggable
 	/// have an IEnvironment reference and Logger access.
 {
 public:
-	IModule(IEnvironment& env); // : _env(env) {};
-	virtual ~IModule(); // {};
+	IModule(IEnvironment& env);
+	virtual ~IModule();
+	
+	//virtual void initialize() = 0;
+	//virtual void uninitialize() = 0;
 
-	IEnvironment& env() { return _env; }
-	LogStream log(const char* level = "debug") const; // { return _env.send(this, level); }		
+	IEnvironment& env();
+
+	LogStream log(const char* level = "debug") const;
 	
 protected:
+	mutable Poco::FastMutex _mutex;
 	IEnvironment& _env;
 };
 

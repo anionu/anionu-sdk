@@ -40,7 +40,7 @@ bool IChannelManager::freeChannel(const string& name)
 
 IChannel* IChannelManager::getChannel(const string& name) 
 {
-	return Manager::get(name);
+	return Manager::get(name, true);
 }
 
 

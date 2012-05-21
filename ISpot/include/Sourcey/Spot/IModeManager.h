@@ -18,20 +18,20 @@ namespace Spot {
 
 class IChannel;
 
-
-typedef EventfulManager<std::string, IMode>	ModeBase;
-typedef ModeBase::Map					ModeMap;
-
-
-class IModeManager: public ModeBase, public IModule
+class IModeManager: public EventfulManager<std::string, IMode>, public IModule
 {
+public:
+	typedef EventfulManager<std::string, IMode>	Manager;
+	typedef Manager::Map						Map;
+
 public:
 	IModeManager(IChannel& channel);
 	virtual ~IModeManager();
 	
 	virtual const char* className() const { return "ModeManager"; }
 
-protected:
+protected:		
+	mutable Poco::FastMutex _mutex;
 	IChannel& _channel;
 };
 

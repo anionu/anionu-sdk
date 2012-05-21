@@ -1,4 +1,4 @@
-#include "RecordingModeImpl.h"
+#include "RecordingMode.h"
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfiguration.h"
 #include "Sourcey/Spot/IChannel.h"
@@ -20,42 +20,42 @@ namespace Sourcey {
 namespace Spot {
 
 
-RecordingModeImpl::RecordingModeImpl(IEnvironment& env, IChannel& channel) :
+RecordingMode::RecordingMode(IEnvironment& env, IChannel& channel) :
 	IMode(env, channel, "Recording Mode")
 {
 	log() << "Creating" << endl;
 }
 
 
-RecordingModeImpl::~RecordingModeImpl()
+RecordingMode::~RecordingMode()
 {	
 	log() << "Destroying" << endl;
 }
 
 
-void RecordingModeImpl::initialize() 
+void RecordingMode::initialize() 
 {
 	loadConfig();
 }
 
 
-void RecordingModeImpl::uninitialize() 
+void RecordingMode::uninitialize() 
 {
 }
 
 
-void RecordingModeImpl::loadConfig()
+void RecordingMode::loadConfig()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
 	log() << "Loading Config: " << _channel.name() << endl;
 
-	_segmentDuration = _config.getInt("SegmentDuration", 60);
+	_segmentDuration = _config.getInt("SegmentDuration", 3 * 60);
 	_synchronizeVideos = _config.getBool("SynchronizeVideos", false);
 }
 
 
-void RecordingModeImpl::enable() 
+void RecordingMode::enable() 
 {
 	log() << "Starting" << endl;
 	
@@ -74,7 +74,7 @@ void RecordingModeImpl::enable()
 }
 
 
-void RecordingModeImpl::disable() 
+void RecordingMode::disable() 
 {
 	log() << "Stopping" << endl;
 	
@@ -83,26 +83,26 @@ void RecordingModeImpl::disable()
 }
 
 	
-void RecordingModeImpl::startRecording()
+void RecordingMode::startRecording()
 {	
 	FastMutex::ScopedLock lock(_mutex); 
 
-	Media::RecorderParams params;
+	RecorderParams params;
 	env().media().initRecorderParams(_channel, params);
-	params.stopAt = time(0) + _segmentDuration;
+	params.stopAt = ::time(0) + _segmentDuration;
 	_recordingInfo = env().media().startRecording(_channel, params);
-	_recordingInfo.encoder->StateChange += delegate(this, &RecordingModeImpl::onEncoderStateChange);
+	_recordingInfo.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
 
 	log() << "Started Recording: " << _recordingInfo.token << endl;
 }
 
 
-void RecordingModeImpl::stopRecording()
+void RecordingMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
 	if (!_recordingInfo.token.empty()) {
-		_recordingInfo.encoder->StateChange -= delegate(this, &RecordingModeImpl::onEncoderStateChange);
+		_recordingInfo.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
 		env().media().stopRecording(_recordingInfo.token);
 		log() << "Stopped Recording: " << _recordingInfo.token << endl;
 		_recordingInfo.token = "";
@@ -111,47 +111,48 @@ void RecordingModeImpl::stopRecording()
 }
 
 
-void RecordingModeImpl::onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState)
+void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, const EncoderState& oldState)
 {
 	log() << "Recorder State Changed: " << state.toString() << endl;
 	IEncoder* encoder = reinterpret_cast<IEncoder*>(sender);
 
 	switch (state.id()) {
 
-		case Media::EncoderState::None:	
+		case EncoderState::None:	
 		break;
 
-		case Media::EncoderState::Ready:
+		case EncoderState::Ready:
 		break;
 
-		case Media::EncoderState::Encoding:
+		case EncoderState::Encoding:
 		break;
 
-		case Media::EncoderState::Failed:
+		case EncoderState::Failed:
 		break;
 
-		case Media::EncoderState::Stopped:
-			FastMutex::ScopedLock lock(_mutex); 
+		case EncoderState::Stopped:
 
 			// Start a new recording segment if the mode is 
 			// still enabled.
 			if (!isDisabled() &&
 				encoder == _recordingInfo.encoder) {
-				encoder->StateChange -= delegate(this, &RecordingModeImpl::onEncoderStateChange);
-				
-				// Synchronize video's if required
-				if (_synchronizeVideos) {
+				encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
+				{
+					FastMutex::ScopedLock lock(_mutex); 
 
-					Media::RecorderParams& params = static_cast<Media::RecorderParams&>(encoder->params());
+					// Synchronize video's if required
+					if (_synchronizeVideos) {
 
-					Spot::Job job;
-					job.type = "Video";
-					job.path = params.ofile;					
+						RecorderParams& params = static_cast<RecorderParams&>(encoder->params());
 
-					log() << "Synchronizing Video: " << job.path << endl;
-					_env.synchronizer() >> job;
+						Spot::Job job; 
+						job.type = "Video";
+						job.path = params.ofile;
+
+						_env.synchronizer() >> job;
+					}
 				}
-
+				
 				startRecording();
 			}
 		break;
@@ -159,19 +160,19 @@ void RecordingModeImpl::onEncoderStateChange(void* sender, Media::EncoderState& 
 }
 
 
-bool RecordingModeImpl::isConfigurable() const
+bool RecordingMode::isConfigurable() const
 {	
 	return true;
 }
 
 
-bool RecordingModeImpl::hasParsableConfig(Symple::Form& form) const
+bool RecordingMode::hasParsableConfig(Symple::Form& form) const
 {
 	return form.hasField(".Recording Mode.", true);
 }
 
 
-void RecordingModeImpl::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
+void RecordingMode::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
 {
 	log() << "Creating Config Form" << endl;
 
@@ -200,7 +201,7 @@ void RecordingModeImpl::createConfigForm(Symple::Form& form, Symple::FormElement
 }
 
 
-void RecordingModeImpl::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
+void RecordingMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
 {
 	log() << "Parsing Config Form" << endl;
 
@@ -227,7 +228,7 @@ void RecordingModeImpl::parseConfigForm(Symple::Form& form, Symple::FormElement&
 }
 
 
-void RecordingModeImpl::createHelp(std::ostream& s) 
+void RecordingMode::createHelp(std::ostream& s) 
 {
 	s << "<h2>What is Recording Mode?</h2>";
 	s << "<p>Recording Mode enables you to record a constant stream of videos from a surveillance channel. ";
@@ -238,7 +239,7 @@ void RecordingModeImpl::createHelp(std::ostream& s)
 
 	s << "<h2>What video formats are available?</h2>";
 	s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
-	s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietry formats like H264 and XviD.</p>";
+	s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
 }
 
 

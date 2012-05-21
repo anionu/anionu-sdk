@@ -1,1 +1,0 @@
-define_spot_plugin(RecordingMode)

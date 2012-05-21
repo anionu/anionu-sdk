@@ -126,6 +126,8 @@ public:
 
 protected:
 	bool freeDiagnostic(const std::string& name);
+		
+	mutable Poco::FastMutex _mutex;
 };
 
 

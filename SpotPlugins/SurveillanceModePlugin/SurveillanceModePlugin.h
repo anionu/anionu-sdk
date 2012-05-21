@@ -1,5 +1,5 @@
-#ifndef RECORDER_PLUGIN_H
-#define RECORDER_PLUGIN_H
+#ifndef ANIONU_SPOT_SurveillanceModePluginPlugin_H
+#define ANIONU_SPOT_SurveillanceModePluginPlugin_H
 
 
 #include "Sourcey/Spot/IPlugin.h"
@@ -9,23 +9,24 @@ namespace Sourcey {
 namespace Spot {
 
 
-class RecordingMode: public IPlugin
+class SurveillanceModePlugin: public IPlugin
 {
 public:
-	RecordingMode();
-	virtual ~RecordingMode();
+	SurveillanceModePlugin();
+	virtual ~SurveillanceModePlugin();
 
 	void initialize();
 	void uninitialize();
 	
+	/*
 	std::string name() const
 	{
-		return "RecordingMode";
+		return "SurveillanceModePlugin";
 	}
 	
 	std::string title() const
 	{
-		return "Recording Mode Plugin";
+		return "Surveillance Mode Plugin";
 	}
 	
 	std::string author() const
@@ -37,10 +38,11 @@ public:
 	{
 		return "0.8.0";
 	}
+	*/
 };
 
 
 } } // namespace Sourcey::Spot
 
 
-#endif // RECORDER_PLUGIN_H
+#endif // ANIONU_SPOT_SurveillanceModePluginPlugin_H
