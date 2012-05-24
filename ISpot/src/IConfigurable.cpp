@@ -37,21 +37,20 @@ bool IConfigurable::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void IConfigurable::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase) 
+void IConfigurable::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase) 
 {	
 }
 
 
-void IConfigurable::parseConfigForm(Symple::Form& form, Symple::FormElement& element) //, StringMap& errors
+void IConfigurable::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
 {
 }
 
 
-void IConfigurable::createHelp(ostream& ost)
+void IConfigurable::printInformation(ostream& ost)
 {
-	ost << "No help is available." << endl;
+	ost << "No information is available for this module." << endl;
 }
-
 
 
 } } // namespace Sourcey::Spot

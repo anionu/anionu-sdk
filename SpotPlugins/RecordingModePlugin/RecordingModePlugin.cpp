@@ -30,78 +30,25 @@ namespace Spot {
 // ----------------------------------------------------------------------------
 RecordingModePlugin::RecordingModePlugin()
 {
-	//log() << "[RecordingModePlugin] RecordingModePlugin()" << endl;
 }
 
 
 RecordingModePlugin::~RecordingModePlugin()
-{	
-	//log() << "Destroying" << endl;
-	//if (isEnabled()) disable();
-}
-
-
-/*
-void RecordingModePlugin::initialize() 
 {
-	log() << "Initializing" << endl;	
-	try 
-	{
-		//setAPI(api);
-
-		//if (!File(path()).exists())
-		//	throw Exception(format("CaptureRecorder plugin missing files at: %s", path()));
-
-
-	}
-	catch (Poco::Exception& exc) 
-	{
-		//setState(PluginState::Error);
-		throw exc;
-	}
 }
-*/
 
 
 void RecordingModePlugin::initialize() 
 {
-	log() << "Initializing" << endl;
-	
-		env().modes().registerMode<RecordingMode>("Recording Mode");
-
-	/*
-	try 
-	{
-
-		//setState(PluginState::Enabled);
-	} 
-	catch (Poco::Exception& exc) 
-	{
-		//setState(PluginState::Error);
-		throw exc;
-	}
-	*/
+	log() << "Initializing" << endl;	
+	env().modes().registerMode<RecordingMode>("Recording Mode");
 }
 
 
 void RecordingModePlugin::uninitialize() 
 {	
-	log() << "Uninitializing" << endl;
-	
-		env().modes().unregisterMode("Recording Mode");
-
-		/*
-	try 
-	{
-	
-		//setState(PluginState::Disabled);
-	} 
-	catch (Poco::Exception& exc) 
-	{
-		//setState(PluginState::Error);
-		throw exc;
-	}
-	*/
+	log() << "Uninitializing" << endl;	
+	env().modes().unregisterMode("Recording Mode");
 }
 
 

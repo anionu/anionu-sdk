@@ -87,7 +87,7 @@ void IMode::clearData()
 
 
 /*
-void IMode::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase) 
+void IMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase) 
 {	
 	XMPP::FormField field = form.addField("fixed");	
 	field.addValue("No configuration options are available.");		
@@ -99,7 +99,7 @@ void IMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element, St
 }
 
 
-void IMode::createHelp(ostream& s)
+void IMode::printInformation(ostream& s)
 {
 	s << _name << ": Sorry, no help is available.";
 }

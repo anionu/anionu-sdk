@@ -43,7 +43,7 @@ void IStreamingManager::addSession(IStreamingSession* session)
 
 IStreamingSession* IStreamingManager::getSession(const std::string& token)
 {
-	return static_cast<IStreamingSession*>(Manager::get(token, true));
+	return Manager::get(token, true);
 }
 
 
@@ -57,7 +57,11 @@ IStreamingSession* IStreamingManager::removeSession(const std::string& token)
 void IStreamingManager::onItemTimeout(TimerCallback<TimedManager>& timer)
 {
 	log("debug") << "Item Timeout" << endl;
+
+	// This will result is freeing of the session object via callback.
 	static_cast<IStreamingSession*>(timer.opaque())->terminate();
+
+	//Manager::onItemTimeout(timer);
 }
 
 

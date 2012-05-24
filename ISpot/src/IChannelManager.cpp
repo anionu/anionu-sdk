@@ -44,6 +44,15 @@ IChannel* IChannelManager::getChannel(const string& name)
 }
 
 
+/*
+IChannelManager::Map& IChannelManager::items() 
+{ 
+	Poco::FastMutex::ScopedLock lock(_mutex); 
+	return _items;
+}
+*/
+
+
 IChannel* IChannelManager::getDafaultChannel()
 {
 	if (!_items.empty()) {
@@ -52,13 +61,6 @@ IChannel* IChannelManager::getDafaultChannel()
 	}
 
 	return NULL;
-}
-
-
-IChannelManager::Map& IChannelManager::items() 
-{ 
-	Poco::FastMutex::ScopedLock lock(_mutex); 
-	return _items;
 }
 
 

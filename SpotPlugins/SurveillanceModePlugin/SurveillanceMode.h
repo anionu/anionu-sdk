@@ -42,8 +42,8 @@ public:
 
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
-	void createHelp(std::ostream& s);
-	void createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase = false);
+	void printInformation(std::ostream& s);
+	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase = false);
 	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	const char* className() const { return "Surveillance Mode"; }

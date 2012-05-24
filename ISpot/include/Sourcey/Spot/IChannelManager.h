@@ -11,7 +11,7 @@ namespace Sourcey {
 namespace Spot {
 
 
-class IChannelManager: protected EventfulManager<std::string, IChannel>, public IModule
+class IChannelManager: public EventfulManager<std::string, IChannel>, public IModule
 {
 public:
 	typedef EventfulManager<std::string, IChannel>	Manager;
@@ -24,18 +24,16 @@ public:
 	virtual IChannel* getChannel(const std::string& name);
 		// Returns the IChannel instance or throws a
 		// NotFoundException exception.
+	
+	bool addChannel(IChannel* channel);
+	bool freeChannel(const std::string& name);	
 
     virtual IChannel* getDafaultChannel();
 		// Returns the first channel in the list.
-
-	Map& items();
 	
 	virtual const char* className() const { return "ChannelManager"; }
 
-protected:
-	bool addChannel(IChannel* channel);
-	bool freeChannel(const std::string& name);	
-		
+protected:		
 	mutable Poco::FastMutex _mutex;
 };
 

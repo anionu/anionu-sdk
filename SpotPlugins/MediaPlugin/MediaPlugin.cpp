@@ -60,7 +60,8 @@ void MediaPlugin::initialize()
 	//
 	Format mp4("MP4", Format::MP4, 
 		VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 25), 
-		AudioCodec(Codec::AAC, "AAC")
+		//AudioCodec(Codec::AAC, "AAC")
+		AudioCodec(Codec::AC3, "AC3")
 	);
 
 	//

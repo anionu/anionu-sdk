@@ -28,12 +28,16 @@ class IChannel;
 
 struct StreamingParams: public Media::EncoderParams, public JSON::ISerializable
 {	
+	std::string peer;
+	std::string channel;
 	std::string token;
 	std::string transport;
 	std::string protocol;
 	std::string encoding;
 	int timeout;
 	StreamingParams(
+		const std::string& peer = "",
+		const std::string& channel = "",
 		const std::string& transport = "TCP",	/// UDP, TCP, TLS
 		const std::string& protocol = "Raw",	/// Raw, HTTP, RTP/AVP, ...
 		const std::string& encoding = "None",	/// None, Base64, ...
@@ -81,93 +85,6 @@ struct StreamingState: public StateT
 };
 
 
-class IStreamingSession: public StatefulSignal<StreamingState>, public IModule
-{
-public:
-	IStreamingSession(IEnvironment& env, 
-					  IStreamingManager& service, 
-					  IChannel& channel, 
-					  const StreamingParams& params, 
-					  Symple::Peer& peer/* = Symple::Peer()*/,
-					  const Symple::Command& command = Symple::Command());
-
-	virtual ~IStreamingSession();
-		/// The media session is terminated(), not deleted.
-
-	virtual void initialize();
-		/// Session initialization logic should be implemented here.
-		/// Derived methods should always call the base method first.
-		/// An exception is thrown in case of failure.
-
-	virtual void terminate();
-		/// Session termination logic should be implemented here.
-		/// Derived methods should always call the base method.
-		/// NOTE: Sessions are never deleted, only terminated.
-
-	virtual void addCandidate(const std::string& type, 
-							  const Net::Address& address, 
-							  const std::string& uri = "");
-		// Adds a streaming candidate to the command.
-
-	virtual bool removeCandidate(const std::string& type, 
-							     const Net::Address& address);
-		
-	virtual ConnectionStream* createConnection() = 0;
-		/// Creates a connection stream for this media session.
-
-	virtual TCPStreamingConnection* createTCPConnection(const Poco::Net::StreamSocket& socket,
-														const std::string& request) = 0;
-		/// Creates a TCP socket connection for this media session.
-
-	virtual std::string token() const;
-	virtual IStreamingManager& service();
-	virtual PacketStream& stream();
-	virtual IChannel& channel();
-	virtual Symple::Peer& peer();
-	virtual Symple::Command& command();
-	virtual StreamingParams& params();
-	virtual ConnectionStreamList connections() const;
-
-	virtual void setError(const std::string& reason);
-	
-	virtual bool isActive() const;
-	virtual bool isError() const;
-	virtual bool isTerminating() const;
-
-	virtual const char* className() const { return "StreamingSession"; }
-
-protected:	
-	virtual bool setState(unsigned int id, const std::string& message = "");
-		// Sub-classes must use this method for setting state
-		// because the sender instance must match the base.
-
-	mutable Poco::FastMutex _mutex;
-
-	IStreamingManager&		_service;
-	IChannel&				_channel; 
-	PacketStream			_stream;
-	Symple::Peer&			_peer;
-	Symple::Command			_command;
-	StreamingParams			_params;
-	ConnectionStreamList	_connections;
-
-	friend class IStreamingManager;
-};
-
-
-} } // namespace Sourcey::Spot
-
-
-#endif // ANIONU_SPOT_IStreamingSession_H
-
-
-
-
-	//std::string id;
-	//std::string channel;
-		//const std::string& id = "",				/// The session ID
-		//const std::string& channel = "",
-/*
 struct Candidate
 {
 	std::string type; 
@@ -188,7 +105,110 @@ struct Candidate
 			&& uri == r.uri;
 	}
 };
-//typedef std::vector<Candidate> CandidateList;
+
+
+typedef std::vector<Candidate> CandidateList;
+
+
+class IStreamingSession: public StatefulSignal<StreamingState>, public IModule
+{
+public:
+	IStreamingSession(IEnvironment& env, 
+					  IStreamingManager& service, 
+					  const StreamingParams& params);
+
+	virtual ~IStreamingSession();
+		/// The media session is terminated(), not deleted.
+
+	virtual void initialize();
+		/// Session initialization logic should be implemented here.
+		/// Derived methods should always call the base method first.
+		/// An exception is thrown in case of failure.
+
+	virtual void terminate();
+		/// Session termination logic should be implemented here.
+		/// Derived methods should always call the base method.
+		/// NOTE: Sessions are never deleted, only terminated.
+
+	virtual void addCandidate(const std::string& type, 
+							  const Net::Address& address, 
+							  const std::string& uri = "");
+		/// Adds a streaming candidate.
+
+	virtual bool removeCandidate(const std::string& type, 
+							     const Net::Address& address);
+		/// Removes a streaming candidate.
+		
+	virtual ConnectionStream* createConnection() = 0;
+		/// Creates a connection stream for this media session.
+
+	virtual TCPStreamingConnection* createTCPConnection(const Poco::Net::StreamSocket& socket,
+														const std::string& request) = 0;
+		/// Creates a TCP socket connection for this media session.
+
+	virtual std::string token() const;
+	virtual IStreamingManager& service();
+	virtual PacketStream& stream();
+	virtual StreamingParams& params();
+	virtual CandidateList candidates() const;
+	virtual ConnectionStreamList connections() const;
+
+	virtual void setError(const std::string& reason);
+		/// Sets the session as erroneous resulting in termination.
+	
+	virtual bool isActive() const;
+	virtual bool isError() const;
+	virtual bool isTerminating() const;
+
+	Signal<const CandidateList&> CandidatesCollected;
+
+	virtual const char* className() const { return "StreamingSession"; }
+
+protected:
+	virtual void notifyCandidates();
+		/// Notifies the outside application that candidates have
+		/// been collected and should be sent to the peer.
+
+	virtual bool setState(unsigned int id, const std::string& message = "");
+		/// Sub-classes must use this method for setting state
+		/// because the sender instance must match the base.
+
+	mutable Poco::FastMutex _mutex;
+	
+protected:
+	IStreamingManager&		_service;
+	StreamingParams			_params;
+	PacketStream			_stream;
+	CandidateList			_candidates;
+	ConnectionStreamList	_connections;
+
+	friend class IStreamingManager;
+};
+
+
+} } // namespace Sourcey::Spot
+
+
+#endif // ANIONU_SPOT_IStreamingSession_H
+
+/*, 
+					  IChannel& channel, 
+					  Symple::Peer& peer = Symple::Peer(),
+					  const Symple::Command& command = Symple::Command()*/
+
+	//virtual IChannel& channel();
+	//virtual Symple::Peer& peer();
+	//virtual Symple::Command& command();
+	//IChannel&				_channel; 
+	//Symple::Peer&			_peer;
+	//Symple::Command		_command;
+
+
+	//std::string id;
+	//std::string channel;
+		//const std::string& id = "",				/// The session ID
+		//const std::string& channel = "",
+/*
 */
 	//virtual JSON::Value& candidates();
 	//virtual void startTimer(int timeout = 0);

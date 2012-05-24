@@ -127,7 +127,7 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 		case EncoderState::Encoding:
 		break;
 
-		case EncoderState::Failed:
+		case EncoderState::Error:
 		break;
 
 		case EncoderState::Stopped:
@@ -172,11 +172,10 @@ bool RecordingMode::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void RecordingMode::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
+void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
 {
 	log() << "Creating Config Form" << endl;
 
-	/*
 	FastMutex::ScopedLock lock(_mutex); 
 
 	Symple::FormField field;	
@@ -187,17 +186,14 @@ void RecordingMode::createConfigForm(Symple::Form& form, Symple::FormElement& el
 		"This setting determines the length in seconds of each recorded video. "
 	);
 	field.setValue(_segmentDuration);
-	//layout.addFieldRef(field);	
 
 	// Enable Video Synchronization
-	field = element.addField("boolean", _config.getScoped("SynchronizeVideos", useBase), "Enable Video Synchronization?");	
+	field = element.addField("boolean", _config.getScoped("SynchronizeVideos", useBase), "Enable Video Synchronization");	
 	field.setHint(
 		"Would you like to upload / synchronize recorded videos with your Anionu account? "
-		"This is not recommended for low-bandwidth accounts because you will use up your bandwidth in no time."
+		"This is not recommended for low-bandwidth accounts otherwise you will use up your bandwidth and storage allocation very quickly."
 	);
 	field.setValue(_synchronizeVideos);	
-	//layout.addFieldRef(field);
-	*/
 }
 
 
@@ -228,18 +224,23 @@ void RecordingMode::parseConfigForm(Symple::Form& form, Symple::FormElement& ele
 }
 
 
-void RecordingMode::createHelp(std::ostream& s) 
+void RecordingMode::printInformation(std::ostream& s) 
 {
-	s << "<h2>What is Recording Mode?</h2>";
-	s << "<p>Recording Mode enables you to record a constant stream of videos from a surveillance channel. ";
-	s << "Recorded videos can be stored either on your local hard drive, ";
-	s << "or synchronized with your Anionu account where they are watchable from your online dashboard.</p>"; 
-	s << "<p>We do recommend keeping video synchronization disabled however, because uploading a continuous "; 
-	s << "stream of videos to Anionu servers will use up your bandwidth quickly.</p>";
+	s << "<h2>About Recording Mode</h2>";
+	s << "<p>Recording Mode provides Spot with the ability to constantly record the video footage of the current surveillance channel. ";
+	s << "If you require 24/7 surveillance with video backup then Recording Mode is for you.</p>";
 
-	s << "<h2>What video formats are available?</h2>";
-	s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
-	s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
+	s << "<h2>Using Recording Mode</h2>";
+	s << "<p>Recorded videos are stored on your local hard drive, ";
+	s << "and can be optionally synchronized with your Anionu account where you can access them online via your dashboard.</p>";
+	s << "<p>We recommend that you keep video synchronization disabled if you have a low-bandwidth account "; 
+	s << "otherwise you will use up your bandwidth and storage allocation very quickly.</p>";
+	
+	//s << "<h2>Recording Mode Options</h2>";
+
+	//s << "<h2>What video formats are available?</h2>";
+	//s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
+	//s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
 }
 
 

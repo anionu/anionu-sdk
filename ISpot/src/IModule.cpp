@@ -24,17 +24,15 @@ IModule::~IModule()
 LogStream IModule::log(const char* level) const 
 { 
 	FastMutex::ScopedLock lock(_mutex);
-	return _env.logger().send(this, level); 
+	return _env.logger().send(this, level);
 }	
 
 
-/*
 IEnvironment& IModule::env() 
 { 
 	FastMutex::ScopedLock lock(_mutex);
 	return _env; 
-}	
-*/
+}
 
 
 } } // namespace Sourcey::Spot

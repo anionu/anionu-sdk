@@ -351,7 +351,7 @@ bool SurveillanceMode::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void SurveillanceMode::createConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
+void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
 {
 	log() << "Creating Config Form" << endl;
 
@@ -483,11 +483,21 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 }
 
 
-void SurveillanceMode::createHelp(std::ostream& s) 
+void SurveillanceMode::printInformation(std::ostream& s) 
 {
-	s << "<h2>What is Surveillance Mode?</h2>";
-	s << "<p>Surveillance Mode provides motion detection capabilities for Anionu. ";
-	s << "Surveillance Mode will also alert you when motion is detected and record videos during motion intervals.</p>";  
+	s << "<h2>About Surveillance Mode</h2>";
+	s << "<p>Surveillance Mode provides Spot with advanced motion detection capabilities and notifications. ";
+	
+	s << "<h2>Using Surveillance Mode</h2>";
+	s << "<p>Once Surveillance Mode is configured and enabled Spot will begin detecting motion on the current channel.</p>";
+	s << "<p>When motion is detected two things will happen:</p>";
+	s << "<ul><li>A video will be recorded and optionally synchronized with your Anionu account.</li>"; 
+	s << "<ul><li>A 'Motion Detected' event will be created which will trigger notifications.</li>";
+	
+	//recording videos during intervals of motion
+
+	/* a video will be recorded until motion ends, and a 'Motion Detected' event will be created which will trigger notifications.
+	s << "Surveillance Mode will also alert you when motion is detected and record videos during intervals of motion.</p>";  
 
 	s << "<h2>What happens when motion is detected?</h2>";
 	s << "<p>If recording capabilities are enabled, time-stamped videos will be recorded during intervals of motion and immediately uploaded to your Anionu.com account for safe storage. ";
@@ -498,6 +508,7 @@ void SurveillanceMode::createHelp(std::ostream& s)
 	s << "<h2>How do I configure Surveillance Mode?</h2>";
 	s << "<p>The motion detector's sensitivity option can be configured on a per channel basis from the Channels section of the Settings page. ";
 	s << "All other operating parameters can be configured from the Surveillance Mode section.</p>";
+	*/
 }
 
 

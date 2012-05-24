@@ -15,16 +15,18 @@ namespace Spot {
 // ---------------------------------------------------------------------
 //
 StreamingParams::StreamingParams(
-	//const string& channel,
+	const string& peer,			// The initiating peer ID
+	const string& channel,		// The streaming channel name
 	const string& transport,	// UDP, TCP, TLS
-	const string& protocol,	// Raw, HTTP, RTP/AVP
-	const string& encoding,	// None, Base64, ...
+	const string& protocol,		// Raw, HTTP, RTP/AVP
+	const string& encoding,		// None, Base64, ...
 	const Media::Format& iformat,
 	const Media::Format& oformat,		
 	int timeout) :
 		Media::EncoderParams(iformat, oformat),
 		token(CryptoProvider::generateRandomKey(32)),
-		//channel(channel),
+		peer(peer),
+		channel(channel),
 		transport(transport),
 		protocol(protocol),
 		encoding(encoding),
@@ -36,6 +38,7 @@ StreamingParams::StreamingParams(
 void StreamingParams::serialize(JSON::Value& root)
 {
 	root["token"] = token;
+	root["peer"] = peer;
 	root["timeout"] = timeout;
 	root["transport"] = transport;
 	root["protocol"] = protocol;
@@ -44,21 +47,23 @@ void StreamingParams::serialize(JSON::Value& root)
 
 	// BUG: JSON Value does not seem to support
 	// switching references after assignment.
+	JSON::Value& v = root["video"];
 	if (oformat.video.enabled) {
-		JSON::Value& v = root["video"];
 		v["codec"] = Media::Codec::idString(oformat.video.id);
 		v["width"] = Util::itoa(oformat.video.width);
 		v["height"] = Util::itoa(oformat.video.height);
 		v["fps"] = Util::itoa(oformat.video.fps);
 	}
-
+	else v = Json::nullValue;
+	
+	JSON::Value& a = root["audio"];
 	if (oformat.audio.enabled) {
-		JSON::Value& a = root["audio"];
 		a["codec"] = Media::Codec::idString(oformat.audio.id);
 		a["bit-rate"] = Util::itoa(oformat.audio.bitRate);
 		a["channels"] = Util::itoa(oformat.audio.channels);
 		a["sample-rate"] = Util::itoa(oformat.audio.sampleRate);
 	}
+	else a = Json::nullValue;
 }
 
 
@@ -106,7 +111,9 @@ void StreamingParams::deserialize(JSON::Value& root)
 	
 bool StreamingParams::valid()
 {
-	return !token.empty()
+	return !peer.empty()
+		&& !channel.empty()
+		&& !token.empty()
 		&& (transport == "TCP" 
 		||  transport == "TSL" 
 		||  transport == "UDP") 
@@ -119,27 +126,20 @@ bool StreamingParams::valid()
 //
 IStreamingSession::IStreamingSession(IEnvironment& env, 
 									 IStreamingManager& service, 
-									 IChannel& channel, 
-									 const StreamingParams& params, 
-									 Symple::Peer& peer, 
-									 const Symple::Command& command) :
+									 const StreamingParams& params) :
 	IModule(env),
 	_service(service),
-	_channel(channel),
-	_params(params),
-	_peer(peer),
-	_command(command)
+	_params(params)
 {		
 	assert(_params.valid());
 
 	log() << "Creating:"		
 		<< "\n\tPID: " << this	
-		<< "\n\tChannel: " << _channel.name()
+		<< "\n\tChannel: " << _params.channel
 		<< "\n\tFormat: " << _params.oformat.label
 		<< "\n\tUsing Video: " << _params.oformat.video.enabled
 		<< "\n\tUsing Audio: " << _params.oformat.audio.enabled
-		<< "\n\tPeer: " << _peer.id()
-		<< "\n\tPeer IP: " << _peer.address()
+		<< "\n\tPeer: " << _params.peer
 		<< "\n\tTransport: " << _params.transport
 		<< "\n\tEncoding: " << _params.protocol
 		<< "\n\tToken: " << _params.token
@@ -171,25 +171,17 @@ void IStreamingSession::terminate()
 	log() << "Terminating" << endl;
 	assert(!isTerminating());
 
-	/*
-	// Dereference all connections and erase callbacks.
-	ConnectionStreamList::iterator it = _connections.begin();
-	while (it != _connections.end()) {
-		log() << "Dereferenced Connection: " << *it << endl;
-		(*it)->StateChange -= delegate(this, &IStreamingSession::onConnectionStreamStateChange);
-		(*it)->close();
-		it = _connections.erase(it);
-	}
-
-	// Close the packet stream. This will cause
-	// the  destruction of all managed adapters.
-	_stream.StateChange -= delegate(this, &IStreamingSession::onSessionStreamStateChange);
-	_stream.close();
-	*/
-
 	// Set the state here as we may have stream
 	// adapters listening for this signal.
 	setState(StreamingState::Terminating);
+}
+
+
+void IStreamingSession::notifyCandidates()
+{
+	assert(isActive());
+	CandidateList c = candidates();
+	CandidatesCollected.dispatch(this, c);
 }
 
 
@@ -211,12 +203,8 @@ void IStreamingSession::addCandidate(const string& type,
 									 const Net::Address& address, 
 									 const string& uri)
 {
-	// TODO: Remove matches to avoid doubling up.
-	JSON::Value cand;
-	cand["type"] = type;
-	cand["address"] = address.toString();
-	cand["uri"] = uri;
-	_command.data("candidates").append(cand);
+	FastMutex::ScopedLock lock(_mutex);
+	_candidates.push_back(Candidate(type, address, uri));
 }
 
 
@@ -224,6 +212,139 @@ bool IStreamingSession::removeCandidate(const string& type,
 										const Net::Address& address)
 {
 	bool res = false;
+	FastMutex::ScopedLock lock(_mutex);
+	for (CandidateList::iterator it = _candidates.begin(); it != _candidates.end(); ++it) {	
+		if ((*it).type == type && (*it).address == address) {
+			_candidates.erase(it);
+			res = true;
+			break;
+		}
+	}
+
+	return res;
+}
+
+
+bool IStreamingSession::isActive() const			
+{ 
+	return stateEquals(StreamingState::Ready)
+		|| stateEquals(StreamingState::Active); 
+}
+
+
+bool IStreamingSession::isError() const
+{
+	return stateEquals(StreamingState::Error); 
+}
+
+
+bool IStreamingSession::isTerminating() const		
+{ 
+	return stateEquals(StreamingState::Terminating); 
+}
+
+
+IStreamingManager& IStreamingSession::service()		
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _service; 
+}
+
+
+ConnectionStreamList IStreamingSession::connections() const
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _connections; 
+}
+
+
+string IStreamingSession::token() const		
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _params.token; 
+}
+
+
+PacketStream& IStreamingSession::stream()		
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _stream; 
+}
+
+
+CandidateList IStreamingSession::candidates() const
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _candidates; 
+}
+
+
+StreamingParams& IStreamingSession::params()	
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _params; 
+}
+
+	
+} } // namespace Sourcey::Spot
+
+
+
+/*, 
+									 IChannel& channel, 
+									 Symple::Peer& peer, 
+									 const Symple::Command& command*/
+	//_channel(channel),
+	//,
+	//_peer(peer),
+	//_command(command)
+	/*
+	// Dereference all connections and erase callbacks.
+	ConnectionStreamList::iterator it = _connections.begin();
+	while (it != _connections.end()) {
+		log() << "Dereferenced Connection: " << *it << endl;
+		(*it)->StateChange -= delegate(this, &IStreamingSession::onConnectionStreamStateChange);
+		(*it)->close();
+		it = _connections.erase(it);
+	}
+
+	// Close the packet stream. This will cause
+	// the  destruction of all managed adapters.
+	_stream.StateChange -= delegate(this, &IStreamingSession::onSessionStreamStateChange);
+	_stream.close();
+	*/
+
+/*
+Symple::Peer& IStreamingSession::peer()
+{
+	FastMutex::ScopedLock lock(_mutex);
+	return _peer;
+}
+
+
+IChannel& IStreamingSession::channel()		
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _channel; 
+}
+
+
+Symple::Command& IStreamingSession::command()		
+{ 
+	FastMutex::ScopedLock lock(_mutex);
+	return _command; 
+}
+*/
+
+	/*
+	// TODO: Remove matches to avoid doubling up.
+	JSON::Value cand;
+	cand["type"] = type;
+	cand["address"] = address.toString();
+	cand["uri"] = uri;
+	_command.data("candidates").append(cand);
+	*/
+	/*
 	JSON::Value& cands = _command.data("candidates");
 	if (cands.size()) {
 		JSON::Value copy(cands); // copy items
@@ -236,9 +357,7 @@ bool IStreamingSession::removeCandidate(const string& type,
 			else res = true;
 		}
 	}
-	return res;
-}
-
+	*/
 
 /*
 ConnectionStream* IStreamingSession::createConnection()
@@ -271,84 +390,6 @@ TCPStreamingConnection* IStreamingSession::createTCPConnection(const Poco::Net::
 	return new TCPStreamingConnection(conn, socket, true, false);
 }
 */
-
-
-bool IStreamingSession::isActive() const			
-{ 
-	return stateEquals(StreamingState::Ready)
-		|| stateEquals(StreamingState::Active); 
-}
-
-
-bool IStreamingSession::isError() const
-{
-	return stateEquals(StreamingState::Error); 
-}
-
-
-bool IStreamingSession::isTerminating() const		
-{ 
-	return stateEquals(StreamingState::Terminating); 
-}
-
-
-IStreamingManager& IStreamingSession::service()		
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _service; 
-}
-
-
-Symple::Peer& IStreamingSession::peer()
-{
-	FastMutex::ScopedLock lock(_mutex);
-	return _peer;
-}
-
-
-ConnectionStreamList IStreamingSession::connections() const
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _connections; 
-}
-
-
-string IStreamingSession::token() const		
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _params.token; 
-}
-
-
-PacketStream& IStreamingSession::stream()		
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _stream; 
-}
-
-
-IChannel& IStreamingSession::channel()		
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _channel; 
-}
-
-
-Symple::Command& IStreamingSession::command()		
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _command; 
-}
-
-
-StreamingParams& IStreamingSession::params()	
-{ 
-	FastMutex::ScopedLock lock(_mutex);
-	return _params; 
-}
-
-
-
 
 /*
 
@@ -434,6 +475,3 @@ void IStreamingSession::onTimeout(TimerCallback<IStreamingSession>& timer)
 	terminate();
 }
 */
-
-	
-} } // namespace Sourcey::Spot
