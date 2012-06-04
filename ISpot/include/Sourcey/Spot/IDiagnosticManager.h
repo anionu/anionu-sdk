@@ -80,12 +80,13 @@ public:
 
 	virtual void check() 
 	{
+		reset();
 		_thread.start(*this);
 	};
 
+protected:
 	virtual void run() = 0;
 
-protected:
 	Poco::Thread _thread;
 };
 

@@ -356,13 +356,6 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	log() << "Creating Config Form" << endl;
 
 	Symple::FormField field;
-	
-	element.setHint(
-		"This form enables you to configure your surveillance and motion detection settings in real-time. "
-		"Keep an eye on the motion levels and motion detector state; "
-		"when the motion levels exceed the threshold the alarm will trigger."
-		"Use the help icons below for more assistance."
-	);
 
 	// When configuring the channel, and not the base, we create a
 	// media element which will display live changes to the channel
@@ -371,6 +364,14 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	// When a media session request is received matching our token
 	// we create the motion preview stream.
 	if (!useBase) {
+	
+		element.setHint(
+			"This form enables you to configure your surveillance and motion detection settings in real-time. "
+			"Keep an eye on the motion levels and motion detector state; "
+			"when the motion levels exceed the threshold the alarm will trigger."
+			"Use the help icons below for more assistance."
+		);
+
 		field = element.addField("media", _config.getDefaultScope("Preview"), "Motion Preview");
 		_mediaToken = CryptoProvider::generateRandomKey(32);
 		_mediaTokenTimeout.setDelay(10000); // 10 secs to redeem
@@ -380,7 +381,6 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 			"Remote video feeds may be delayed by a couple of seconds. "
 		);
 		field.setValue(_mediaToken);
-		element.setLive(true);
 	}
 
 	field = element.addField("text", _config.getScoped("MotionThreshold", useBase), "Motion Threshold");	
@@ -389,6 +389,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"Motion is detected if the 'Motion Level' exceeds the 'Motion Threshold' in any given frame."
 	);
 	field.setValue(_motionDetector.options().motionThreshold);
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("PreSurveillanceDelay", useBase), "Pre Surveillance Mode Delay");	
 	field.setHint(
@@ -396,6 +398,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"This should be set to the amount of time you need to vacate the room/premises after mode activation."
 	);
 	field.setValue(_motionDetector.options().preSurveillanceDelay);
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("MinTriggeredDuration", useBase), "Min Triggered Duration");
 	field.setHint(
@@ -403,6 +407,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"Also, each time motion is detected while in the 'Triggered' state the timer will be extended by 'Min Triggered Duration' seconds."
 	);
 	field.setValue(_motionDetector.options().minTriggeredDuration);
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("MaxTriggeredDuration", useBase), "Max Triggered Duration");	
 	field.setHint(
@@ -412,12 +418,16 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"for the 'Post Triggered Delay' duration of time before motion detection will recommence."
 	);
 	field.setValue(_motionDetector.options().maxTriggeredDuration);
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("PostTriggeredDelay", useBase), "Post Triggered Delay");	
 	field.setHint(
 		"This is the delay time (in seconds) after the motion detector's 'Triggered' state has ended before motion detection will recommence."
 	);
 	field.setValue(_motionDetector.options().postMotionEndedDelay);
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("StableMotionNumFrames", useBase), "Stable Motion Frames");
 	field.setHint(
@@ -425,6 +435,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"This is calculated as follows; if motion is detected on a 'Stable Motion Frames' number of frames before a 'Motion Lifetime' duration of time expires then the alarm will trigger."    
 	);
 	field.setValue(_motionDetector.options().stableMotionNumFrames);	
+	if (!useBase)
+		field.setLive(true);
 
 	field = element.addField("text", _config.getScoped("StableMotionLifetime", useBase), "Stable Motion Lifetime");	
 	field.setHint(
@@ -435,6 +447,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"duration of time then the alarm will trigger." 
 	);
 	field.setValue(_motionDetector.options().stableMotionLifetime);
+	if (!useBase)
+		field.setLive(true);
 }
 
 
