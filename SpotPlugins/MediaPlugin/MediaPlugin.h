@@ -25,10 +25,10 @@ public:
 	void uninitialize();
 	
 protected:
-	Media::IPacketEncoder* createEncoder(const Media::RecorderParams& params);
+	Media::IPacketEncoder* createEncoder(const Media::RecorderOptions& options);
 	
 	void onInitializeStreamingSession(void*, IStreamingSession& session, bool&);
-	void onInitializeRecordingEncoder(void*, const Media::RecorderParams& params, Media::IPacketEncoder*&);
+	void onInitializeRecordingEncoder(void*, const Media::RecorderOptions& options, Media::IPacketEncoder*&);
 	
 	/*
 	std::string title() const

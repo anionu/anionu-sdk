@@ -31,19 +31,19 @@ public:
 	bool startMotionDetector();
 	bool stopMotionDetector();
 	
-	void startRecording();
-	void stopRecording();
+	bool startRecording();
+	bool stopRecording();
 
 	void onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&);
 	void onInitializeStreamingSession(void*, IStreamingSession& session, bool& handled);
 	void onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled);
 	void onSessionStreamStateChange(void*, PacketStreamState& state, const PacketStreamState&);	
-	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState&);
+	//void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState&);
 
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
 	void printInformation(std::ostream& s);
-	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase = false);
+	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope = false);
 	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	const char* className() const { return "Surveillance Mode"; }
@@ -62,8 +62,9 @@ protected:
 	PacketStream	_motionStream;
 	std::string		_mediaToken;
 	Timeout			_mediaTokenTimeout;
-	bool			_isConfiguring;
 	RecordingInfo	_recordingInfo;
+	bool			_isConfiguring;
+	bool			_synchronizeVideos;
 	mutable Poco::FastMutex _mutex;
 };
 

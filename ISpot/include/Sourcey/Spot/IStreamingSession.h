@@ -1,3 +1,30 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
 #ifndef ANIONU_SPOT_IStreamingSession_H
 #define ANIONU_SPOT_IStreamingSession_H
 
@@ -26,7 +53,7 @@ class IStreamingManager;
 class IChannel;
 
 
-struct StreamingParams: public Media::EncoderParams, public JSON::ISerializable
+struct StreamingOptions: public Media::EncoderOptions, public JSON::ISerializable
 {	
 	std::string peer;
 	std::string channel;
@@ -35,7 +62,7 @@ struct StreamingParams: public Media::EncoderParams, public JSON::ISerializable
 	std::string protocol;
 	std::string encoding;
 	int timeout;
-	StreamingParams(
+	StreamingOptions(
 		const std::string& peer = "",
 		const std::string& channel = "",
 		const std::string& transport = "TCP",	/// UDP, TCP, TLS
@@ -115,7 +142,7 @@ class IStreamingSession: public StatefulSignal<StreamingState>, public IModule
 public:
 	IStreamingSession(IEnvironment& env, 
 					  IStreamingManager& service, 
-					  const StreamingParams& params);
+					  const StreamingOptions& options);
 
 	virtual ~IStreamingSession();
 		/// The media session is terminated(), not deleted.
@@ -149,7 +176,7 @@ public:
 	virtual std::string token() const;
 	virtual IStreamingManager& service();
 	virtual PacketStream& stream();
-	virtual StreamingParams& params();
+	virtual StreamingOptions& options();
 	virtual CandidateList candidates() const;
 	virtual ConnectionStreamList connections() const;
 
@@ -177,7 +204,7 @@ protected:
 	
 protected:
 	IStreamingManager&		_service;
-	StreamingParams			_params;
+	StreamingOptions			_options;
 	PacketStream			_stream;
 	CandidateList			_candidates;
 	ConnectionStreamList	_connections;
@@ -219,4 +246,4 @@ protected:
 		/// Returns true if the stream is ready, or false if the, int timeout = 20000
 		/// stream is still in the negotiating phase in which case
 		/// the stream will manage it's own .
-	//StreamingParams	_params;
+	//StreamingOptions	_options;

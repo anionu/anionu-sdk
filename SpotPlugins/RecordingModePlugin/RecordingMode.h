@@ -22,8 +22,8 @@ public:
 	void enable();
 	void disable();
 	
-	void startRecording();
-	void stopRecording();
+	bool startRecording();
+	bool stopRecording();
 	
 	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
 	
@@ -32,11 +32,11 @@ public:
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
 	void printInformation(std::ostream& s);
-	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase = false);
+	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope = false);
 	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	//void printInformation(std::ostream& s);
-	//void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase = false);
+	//void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope = false);
 	//void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	virtual const char* className() const { return "Recording Mode"; }

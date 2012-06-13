@@ -1,3 +1,30 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
 #ifndef ANIONU_SPOT_IMode_H
 #define ANIONU_SPOT_IMode_H
 
@@ -41,14 +68,14 @@ public:
 	double getDouble(const std::string& key, double defaultValue) const;
 	bool getBool(const std::string& key, bool defaultValue) const;
 
-	void setString(const std::string& key, const std::string& value, bool useBase = false);
-	void setInt(const std::string& key, int value, bool useBase = false);
-	void setDouble(const std::string& key, double value, bool useBase = false);
-	void setBool(const std::string& key, bool value, bool useBase = false);
+	void setString(const std::string& key, const std::string& value, bool baseScope = false);
+	void setInt(const std::string& key, int value, bool baseScope = false);
+	void setDouble(const std::string& key, double value, bool baseScope = false);
+	void setBool(const std::string& key, bool value, bool baseScope = false);
 	
 	std::string getDefaultScope(const std::string& key) const;
 	std::string getBaseScope(const std::string& key) const;
-	std::string getScoped(const std::string& key, bool useBase = false) const;
+	std::string getScoped(const std::string& key, bool baseScope = false) const;
 
 	IMode& mode;
 	std::string defaultScope;

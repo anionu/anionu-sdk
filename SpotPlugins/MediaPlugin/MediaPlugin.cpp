@@ -244,13 +244,13 @@ void MediaPlugin::uninitialize()
 }
 
 
-IPacketEncoder* MediaPlugin::createEncoder(const RecorderParams& params)
+IPacketEncoder* MediaPlugin::createEncoder(const RecorderOptions& options)
 {
 	log() << "Initializing AV Encoder" << endl;	
 
 	IPacketEncoder* encoder = NULL;
 	try {
-		encoder = new AVEncoder(params);
+		encoder = new AVEncoder(options);
 		encoder->initialize();
 	}
 	catch (Exception& exc) {
@@ -263,13 +263,13 @@ IPacketEncoder* MediaPlugin::createEncoder(const RecorderParams& params)
 }
 
 
-void MediaPlugin::onInitializeRecordingEncoder(void*, const RecorderParams& params, IPacketEncoder*& encoder)
+void MediaPlugin::onInitializeRecordingEncoder(void*, const RecorderOptions& options, IPacketEncoder*& encoder)
 {
 	log() << "Initialize Recording Encoder" << endl;
 
-	if (params.oformat.id != Format::Raw &&
+	if (options.oformat.id != Format::Raw &&
 		encoder == NULL) {
-		encoder = createEncoder(params);
+		encoder = createEncoder(options);
 	}
 }
 
@@ -278,13 +278,13 @@ void MediaPlugin::onInitializeStreamingSession(void*, IStreamingSession& session
 {
 	log() << "Initialize Streaming Session" << endl;
 		
-	if (session.params().oformat.id != Format::Raw &&
+	if (session.options().oformat.id != Format::Raw &&
 		session.stream().getProcessor<IPacketEncoder>() == NULL) {	
 	
-		RecorderParams params(
-			session.params().iformat, 
-			session.params().oformat);
-		IPacketEncoder* encoder = createEncoder(params);
+		RecorderOptions options(
+			session.options().iformat, 
+			session.options().oformat);
+		IPacketEncoder* encoder = createEncoder(options);
 		if (encoder)
 			session.stream().attach(encoder, 5, true);			
 	}

@@ -1,3 +1,30 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
 #include "Sourcey/Spot/IStreamingSession.h"
 #include "Sourcey/Spot/IStreamingManager.h"
 #include "Sourcey/Spot/IChannel.h"
@@ -14,7 +41,7 @@ namespace Spot {
 	
 // ---------------------------------------------------------------------
 //
-StreamingParams::StreamingParams(
+StreamingOptions::StreamingOptions(
 	const string& peer,			// The initiating peer ID
 	const string& channel,		// The streaming channel name
 	const string& transport,	// UDP, TCP, TLS
@@ -23,7 +50,7 @@ StreamingParams::StreamingParams(
 	const Media::Format& iformat,
 	const Media::Format& oformat,		
 	int timeout) :
-		Media::EncoderParams(iformat, oformat),
+		Media::EncoderOptions(iformat, oformat),
 		token(CryptoProvider::generateRandomKey(32)),
 		peer(peer),
 		channel(channel),
@@ -35,7 +62,7 @@ StreamingParams::StreamingParams(
 }		
 
 
-void StreamingParams::serialize(JSON::Value& root)
+void StreamingOptions::serialize(JSON::Value& root)
 {
 	root["token"] = token;
 	root["peer"] = peer;
@@ -67,7 +94,7 @@ void StreamingParams::serialize(JSON::Value& root)
 }
 
 
-void StreamingParams::deserialize(JSON::Value& root)
+void StreamingOptions::deserialize(JSON::Value& root)
 {	
 	if (root.isMember("token")) token = root["token"].asString();
 	if (root.isMember("timeout") && root["timeout"].isInt()) 
@@ -85,15 +112,15 @@ void StreamingParams::deserialize(JSON::Value& root)
 
 	// Video
 	JSON::Value& v = root["video"];
-	//Log("debug") << "[StreamingParams] Updating: " << JSON::stringify(root, true) << endl;
-	//Log("debug") << "[StreamingParams] Updating: " << JSON::stringify(v, true) << endl;
+	//Log("debug") << "[StreamingOptions] Updating: " << JSON::stringify(root, true) << endl;
+	//Log("debug") << "[StreamingOptions] Updating: " << JSON::stringify(v, true) << endl;
 	if (!v.isNull()) {		
 		oformat.video.enabled = v.isMember("enabled") ? v["enabled"].asBool() : true;
 		if (oformat.video.enabled) {
 			if (v.isMember("codec")) oformat.video.id = Media::Codec::toID(v["codec"].asString());
-			if (v.isMember("width")) oformat.video.width = Util::atoi(v["width"].asString());	
-			if (v.isMember("height")) oformat.video.height = Util::atoi(v["height"].asString());
-			if (v.isMember("fps")) oformat.video.fps = Util::atoi(v["fps"].asString());
+			if (v.isMember("width")) oformat.video.width = v["width"].asInt();
+			if (v.isMember("height")) oformat.video.height = v["height"].asInt();
+			if (v.isMember("fps")) oformat.video.fps = v["fps"].asInt();
 		}
 	}
 	
@@ -102,14 +129,14 @@ void StreamingParams::deserialize(JSON::Value& root)
 	//oformat.audio.enabled = !a.isNull() && a["enabled"].asBool();
 	if (oformat.audio.enabled) {
 		if (a.isMember("codec")) oformat.audio.id = Media::Codec::toID(a["codec"].asString());
-		if (a.isMember("bit-rate")) oformat.audio.bitRate = Util::atoi(a["bit-rate"].asString());
-		if (a.isMember("channels")) oformat.audio.channels = Util::atoi(a["channels"].asString());
-		if (a.isMember("sample-rate")) oformat.audio.sampleRate = Util::atoi(a["sample-rate"].asString());
+		if (a.isMember("bit-rate")) oformat.audio.bitRate = a["bit-rate"].asInt();
+		if (a.isMember("channels")) oformat.audio.channels = a["channels"].asInt();
+		if (a.isMember("sample-rate")) oformat.audio.sampleRate = a["sample-rate"].asInt();
 	}
 }
 
 	
-bool StreamingParams::valid()
+bool StreamingOptions::valid()
 {
 	return !peer.empty()
 		&& !channel.empty()
@@ -126,23 +153,23 @@ bool StreamingParams::valid()
 //
 IStreamingSession::IStreamingSession(IEnvironment& env, 
 									 IStreamingManager& service, 
-									 const StreamingParams& params) :
+									 const StreamingOptions& options) :
 	IModule(env),
 	_service(service),
-	_params(params)
+	_options(options)
 {		
-	assert(_params.valid());
+	assert(_options.valid());
 
 	log() << "Creating:"		
 		<< "\n\tPID: " << this	
-		<< "\n\tChannel: " << _params.channel
-		<< "\n\tFormat: " << _params.oformat.label
-		<< "\n\tUsing Video: " << _params.oformat.video.enabled
-		<< "\n\tUsing Audio: " << _params.oformat.audio.enabled
-		<< "\n\tPeer: " << _params.peer
-		<< "\n\tTransport: " << _params.transport
-		<< "\n\tEncoding: " << _params.protocol
-		<< "\n\tToken: " << _params.token
+		<< "\n\tChannel: " << _options.channel
+		<< "\n\tFormat: " << _options.oformat.label
+		<< "\n\tUsing Video: " << _options.oformat.video.enabled
+		<< "\n\tUsing Audio: " << _options.oformat.audio.enabled
+		<< "\n\tPeer: " << _options.peer
+		<< "\n\tTransport: " << _options.transport
+		<< "\n\tEncoding: " << _options.protocol
+		<< "\n\tToken: " << _options.token
 		<< endl;
 }
 
@@ -261,7 +288,7 @@ ConnectionStreamList IStreamingSession::connections() const
 string IStreamingSession::token() const		
 { 
 	FastMutex::ScopedLock lock(_mutex);
-	return _params.token; 
+	return _options.token; 
 }
 
 
@@ -279,10 +306,10 @@ CandidateList IStreamingSession::candidates() const
 }
 
 
-StreamingParams& IStreamingSession::params()	
+StreamingOptions& IStreamingSession::options()	
 { 
 	FastMutex::ScopedLock lock(_mutex);
-	return _params; 
+	return _options; 
 }
 
 	

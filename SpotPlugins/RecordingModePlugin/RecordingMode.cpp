@@ -51,7 +51,7 @@ void RecordingMode::loadConfig()
 	log() << "Loading Config: " << _channel.name() << endl;
 
 	_segmentDuration = _config.getInt("SegmentDuration", 3 * 60);
-	_synchronizeVideos = _config.getBool("SynchronizeVideos", false);
+	_synchronizeVideos = false; //_config.getBool("SynchronizeVideos", false);
 }
 
 
@@ -62,12 +62,12 @@ void RecordingMode::enable()
 	try
 	{
 		loadConfig();
+		IMode::enable();
 		startRecording();
-		setState(this, ModeState::Enabled);
 	}
 	catch (Exception& exc)
 	{
-		cerr << "Error:" << exc.displayText() << endl;
+		log("error")  << "Error:" << exc.displayText() << endl;
 		setState(this, ModeState::Failed);
 		throw exc;
 	}
@@ -78,26 +78,39 @@ void RecordingMode::disable()
 {
 	log() << "Stopping" << endl;
 	
-	setState(this, ModeState::Disabled);
 	stopRecording();
+	IMode::disable();
 }
 
 	
-void RecordingMode::startRecording()
+bool RecordingMode::startRecording()
 {	
 	FastMutex::ScopedLock lock(_mutex); 
 
-	RecorderParams params;
-	env().media().initRecorderParams(_channel, params);
-	params.stopAt = ::time(0) + _segmentDuration;
-	_recordingInfo = env().media().startRecording(_channel, params);
-	_recordingInfo.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
+	//assert(_recordingInfo.token.empty());
 
-	log() << "Started Recording: " << _recordingInfo.token << endl;
+	RecorderOptions options;
+	env().media().initRecorderOptions(_channel, options);
+	options.duration = _segmentDuration * 1000;
+	RecordingInfo* info = env().media().startRecording(_channel, options);
+	if (info) {
+		info->synchronize = _synchronizeVideos;
+		_recordingInfo = RecordingInfo(*info);
+		log() << "Started Recording: " << _recordingInfo.token << endl;
+		return true;
+	}
+
+	//RecordingInfo* info = env().media().startRecording(_channel, options);
+	//_recordingInfo.token = info->token;
+	//_recordingInfo = env().media().startRecording(_channel, options);
+	//info.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
+
+	//log() << "Started Recording: " << _recordingInfo.token << endl;
+	return false;
 }
 
 
-void RecordingMode::stopRecording()
+bool RecordingMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
@@ -107,7 +120,9 @@ void RecordingMode::stopRecording()
 		log() << "Stopped Recording: " << _recordingInfo.token << endl;
 		_recordingInfo.token = "";
 		_recordingInfo.encoder = NULL;
+		return true;
 	}
+	return false;
 }
 
 
@@ -137,21 +152,23 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 			if (!isDisabled() &&
 				encoder == _recordingInfo.encoder) {
 				encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
+				/*
 				{
 					FastMutex::ScopedLock lock(_mutex); 
 
 					// Synchronize video's if required
 					if (_synchronizeVideos) {
 
-						RecorderParams& params = static_cast<RecorderParams&>(encoder->params());
+						RecorderOptions& options = static_cast<RecorderOptions&>(encoder->options());
 
 						Spot::Job job; 
 						job.type = "Video";
-						job.path = params.ofile;
+						job.path = options.ofile;
 
 						_env.synchronizer() >> job;
 					}
 				}
+				*/
 				
 				startRecording();
 			}
@@ -172,28 +189,37 @@ bool RecordingMode::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase)
+void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope)
 {
 	log() << "Creating Config Form" << endl;
 
-	FastMutex::ScopedLock lock(_mutex); 
+	FastMutex::ScopedLock lock(_mutex);
+
+	if (baseScope) {
+		element.setHint(
+			"This form enables you to configure the default settings for Recording Mode. "
+			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration)."
+		);
+	}
 
 	Symple::FormField field;	
 	
 	// Video Segment Duration
-	field = element.addField("text", _config.getScoped("SegmentDuration", useBase), "Video Segment Duration");	
+	field = element.addField("text", _config.getScoped("SegmentDuration", baseScope), "Video Segment Duration");	
 	field.setHint(
 		"This setting determines the length in seconds of each recorded video. "
 	);
 	field.setValue(_segmentDuration);
-
+	
+	/*
 	// Enable Video Synchronization
-	field = element.addField("boolean", _config.getScoped("SynchronizeVideos", useBase), "Enable Video Synchronization");	
+	field = element.addField("boolean", _config.getScoped("SynchronizeVideos", baseScope), "Enable Video Synchronization");	
 	field.setHint(
 		"Would you like to upload / synchronize recorded videos with your Anionu account? "
 		"This is not recommended for low-bandwidth accounts otherwise you will use up your bandwidth and storage allocation very quickly."
 	);
 	field.setValue(_synchronizeVideos);	
+	*/
 }
 
 
@@ -216,9 +242,11 @@ void RecordingMode::parseConfigForm(Symple::Form& form, Symple::FormElement& ele
 			_env.config().setInt(field.id(), value);
 	}
 
+	/*
 	field = element.getField("Recording Mode.SynchronizeVideos", true);
 	if (field.valid())
 		_env.config().setBool(field.id(), field.boolValue());
+		*/
 
 	loadConfig();
 }

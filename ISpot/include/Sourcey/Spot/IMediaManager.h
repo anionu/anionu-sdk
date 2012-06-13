@@ -1,3 +1,31 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
+
 #ifndef ANIONU_SPOT_IMediaManager_H
 #define ANIONU_SPOT_IMediaManager_H
 
@@ -23,10 +51,15 @@ class IChannel;
 struct RecordingInfo 
 {
 	std::string token;
+	std::string channel;
 	Media::IPacketEncoder* encoder;
-	RecordingInfo(const std::string& token = "", Media::IPacketEncoder* encoder = NULL) : 
+	bool synchronize;
+	RecordingInfo(const std::string& token = "", const std::string& channel = "", 
+		Media::IPacketEncoder* encoder = NULL, bool synchronize = false) : 
 		token(token), 
-		encoder(encoder) {}
+		channel(channel), 
+		encoder(encoder), 
+		synchronize(synchronize) {}
 };
 
 
@@ -40,21 +73,21 @@ public:
 	IMediaManager(IEnvironment& env);
 	virtual ~IMediaManager();
 
-	virtual void initRecorderParams(IChannel& channel, Media::RecorderParams& params) = 0;
-		/// Initializes default recorder parameters from the user
-		/// configuration for the current session.
+	virtual void initRecorderOptions(IChannel& channel, Media::RecorderOptions& options) = 0;
+		/// Initializes default recorder options from the current
+		/// user's configuration.
 	
-	virtual RecordingInfo startRecording(IChannel& channel, const Media::RecorderParams& params) = 0;
+	virtual RecordingInfo* startRecording(IChannel& channel, const Media::RecorderOptions& options) = 0; //, bool disableSync = false
 		/// Initializes a recorder instance for the current channel.
-		/// The default encoder format parameters are provided by
-		/// the application configuration.
-		/// The returned string is the recorder's index token used 
-		/// as a reference by the StreamManager.
+		/// If disableSync then the video file NOT be synchronized
+		/// with the user account.
+		/// The returned RecordingInfo pointer is managed internally and,
+		/// and will be freed when the recording session ends.
 
 	virtual bool stopRecording(const std::string& token, bool whiny = true) = 0;
 		/// Stops the recorder session matching the given token.
 
-	Signal2<const Media::RecorderParams&, Media::IPacketEncoder*&> InitializeEncoder;
+	Signal2<const Media::RecorderOptions&, Media::IPacketEncoder*&> InitializeEncoder;
 		/// Provides plugins with the ability to override creation
 		/// of the default recording encoder. A valid IPacketEncoder
 		/// instance must be returned. Encoders should always use

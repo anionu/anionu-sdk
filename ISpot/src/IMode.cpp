@@ -1,3 +1,30 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
 #include "Sourcey/Spot/IMode.h"
 #include "Sourcey/Spot/IChannel.h"
 #include "Sourcey/Spot/IEnvironment.h"
@@ -87,7 +114,7 @@ void IMode::clearData()
 
 
 /*
-void IMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool useBase) 
+void IMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope) 
 {	
 	XMPP::FormField field = form.addField("fixed");	
 	field.addValue("No configuration options are available.");		
@@ -142,27 +169,27 @@ bool ModeConfiguration::getBool(const string& key, bool defaultValue) const
 }
 
 
-void ModeConfiguration::setString(const string& key, const string& value, bool useBase) 
+void ModeConfiguration::setString(const string& key, const string& value, bool baseScope) 
 {
-	mode.env().config().setString(getScoped(key, useBase), value);
+	mode.env().config().setString(getScoped(key, baseScope), value);
 }
 
 
-void ModeConfiguration::setInt(const string& key, int value, bool useBase) 
+void ModeConfiguration::setInt(const string& key, int value, bool baseScope) 
 {	
-	mode.env().config().setInt(getScoped(key, useBase), value);
+	mode.env().config().setInt(getScoped(key, baseScope), value);
 }
 
 
-void ModeConfiguration::setDouble(const string& key, double value, bool useBase) 
+void ModeConfiguration::setDouble(const string& key, double value, bool baseScope) 
 {
-	mode.env().config().setDouble(getScoped(key, useBase), value);
+	mode.env().config().setDouble(getScoped(key, baseScope), value);
 }
 
 
-void ModeConfiguration::setBool(const string& key, bool value, bool useBase) 
+void ModeConfiguration::setBool(const string& key, bool value, bool baseScope) 
 {
-	mode.env().config().setBool(getScoped(key, useBase), value);
+	mode.env().config().setBool(getScoped(key, baseScope), value);
 }
 
 
@@ -180,9 +207,9 @@ string ModeConfiguration::getBaseScope(const string& key) const
 }
 
 
-string ModeConfiguration::getScoped(const string& key, bool useBase) const
+string ModeConfiguration::getScoped(const string& key, bool baseScope) const
 {
-	return useBase ? getBaseScope(key) : getDefaultScope(key);
+	return baseScope ? getBaseScope(key) : getDefaultScope(key);
 }
 
 

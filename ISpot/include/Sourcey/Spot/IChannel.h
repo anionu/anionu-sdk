@@ -1,3 +1,30 @@
+//
+// LibSourcey
+// Copyright (C) 2005, Sourcey <http://sourcey.com>
+//
+// LibSourcey is is distributed under a dual license that allows free, 
+// open source use and closed source use under a standard commercial
+// license.
+//
+// Non-Commercial Use:
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// 
+// Commercial Use:
+// Please contact mail@sourcey.com
+//
+
+
 #ifndef ANIONU_SPOT_IChannel_H
 #define ANIONU_SPOT_IChannel_H
 
@@ -24,31 +51,28 @@ public:
 	IChannel(IEnvironment& env, const std::string& name, const Media::Device& video, const Media::Device& audio);
 	IChannel(IEnvironment& env, const std::string& name);
 	virtual ~IChannel();
-
-	virtual bool valid() const;	
 	
-	//virtual int id() const;
 	virtual std::string name() const;
 	virtual std::string videoInputFile() const;
-	virtual Media::VideoCapture* videoCapture(bool whiny = false) const;
-	virtual Media::AudioCapture* audioCapture(int channels = 2, int sampleRate = 44100, bool whiny = false) const;
 	virtual Media::Device videoDevice() const;
 	virtual Media::Device audioDevice() const;
-	
-	virtual IModeManager& modes() = 0;	
+	virtual Media::VideoCapture* videoCapture(bool whiny = false) const;
+	virtual Media::AudioCapture* audioCapture(int channels = 2, int sampleRate = 44100, bool whiny = false) const;
+	virtual IModeManager& modes() = 0;
+
+	virtual bool valid() const;	
 	
 	Signal<std::string&> ChannelChanged;
 		// Signals change to the internal channel data, namely
 		// devices and name. In the case of a name change the
 		// signal will broadcast the old name, and the new name
-		// may be accessed via the name() method.
+		// will be accessible via the name() method.
 
 	virtual void print(std::ostream& ost) const;
 
 	virtual const char* className() const { return "Channel"; }
 
 protected:
-	//int			_id;
 	std::string	_name;
 	std::string	_videoInputFile;
 	Media::Device _videoDevice;
