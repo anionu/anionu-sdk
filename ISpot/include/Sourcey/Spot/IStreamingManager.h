@@ -99,7 +99,7 @@ public:
 		///
 
 	virtual void onSessionStateChange(void* sender, StreamingState& state, const StreamingState&) = 0;
-	virtual void onItemTimeout(TimerCallback<TimedManager>& timer);
+	virtual void onItemTimeout(TimerCallback<Manager>& timer);
 
 	virtual const char* className() const { return "StreamingManager"; }
 };

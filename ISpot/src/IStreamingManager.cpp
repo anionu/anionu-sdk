@@ -81,7 +81,7 @@ IStreamingSession* IStreamingManager::removeSession(const std::string& token)
 }
 
 	
-void IStreamingManager::onItemTimeout(TimerCallback<TimedManager>& timer)
+void IStreamingManager::onItemTimeout(TimerCallback<IStreamingManager::Manager>& timer)
 {
 	log("debug") << "Item Timeout" << endl;
 
