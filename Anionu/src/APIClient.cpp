@@ -26,7 +26,7 @@
 
 
 #include "Sourcey/Anionu/APIClient.h"
-#include "Sourcey/HTTP/Authenticator.h"
+#include "Sourcey/Anionu/Authenticator.h"
 #include "Sourcey/Logger.h"
 
 #include "Poco/Net/HTTPClientSession.h"
@@ -53,18 +53,16 @@ namespace Anionu {
 APIClient::APIClient() :
 	_methods(*this)
 {
-	Log("debug", this) << "Creating" << endl;
+	Log("trace", this) << "Creating" << endl;
 	//loadMethods(false);
 }
 
 
 APIClient::~APIClient()
 {
-	Log("debug", this) << "Destroying" << endl;
-
+	Log("trace", this) << "Destroying" << endl;
 	cancelTransactions();
-
-	Log("debug", this) << "Destroying: OK" << endl;
+	Log("trace", this) << "Destroying: OK" << endl;
 }
 
 
@@ -79,7 +77,7 @@ void APIClient::setCredentials(const string& username, const string& password, c
 
 bool APIClient::loadMethods(bool whiny)
 {
-	Log("debug", this) << "Loading Methods" << endl;
+	Log("trace", this) << "Loading Methods" << endl;
 	FastMutex::ScopedLock lock(_mutex);	
 	try 
 	{
@@ -97,12 +95,12 @@ bool APIClient::loadMethods(bool whiny)
 
 void APIClient::cancelTransactions()
 {
-	Log("debug", this) << "Stopping Workers" << endl;
+	Log("trace", this) << "Stopping Workers" << endl;
 	
 	FastMutex::ScopedLock lock(_mutex);
 
 	for (vector<APITransaction*>::const_iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
-		(*it)->TransactionComplete -= delegate(this, &APIClient::onTransactionComplete);
+		(*it)->Complete -= delegate(this, &APIClient::onTransactionComplete);
 		(*it)->cancel();
 	}
 	_transactions.clear();
@@ -116,16 +114,16 @@ APIRequest* APIClient::createRequest(const APIMethod& method)
 }
 
 	
-APIRequest* APIClient::createRequest(const std::string& method, 
-									 const std::string& format, 
+APIRequest* APIClient::createRequest(const string& method, 
+									 const string& format, 
 									 const StringMap& params)
 {
 	return createRequest(methods().get(method, format, params));
 }
 
 
-APITransaction* APIClient::call(const std::string& method, 
-								const std::string& format, 
+APITransaction* APIClient::call(const string& method, 
+								const string& format, 
 								const StringMap& params)
 {
 	return call(createRequest(method, format, params));
@@ -140,17 +138,17 @@ APITransaction* APIClient::call(const APIMethod& method)
 
 APITransaction* APIClient::call(APIRequest* request)
 {
-	Log("debug", this) << "Calling: " << request->method.name << endl;
+	Log("trace", this) << "Calling: " << request->method.name << endl;
 	APITransaction* transaction = new APITransaction(request);
-	transaction->TransactionComplete += delegate(this, &APIClient::onTransactionComplete);
+	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
 	FastMutex::ScopedLock lock(_mutex);
 	_transactions.push_back(transaction);
 	return transaction;
 }
 
 
-AsyncTransaction* APIClient::callAsync(const std::string& method, 
-									   const std::string& format, 
+AsyncTransaction* APIClient::callAsync(const string& method, 
+									   const string& format, 
 									   const StringMap& params)
 {
 	return callAsync(createRequest(method, format, params));
@@ -165,10 +163,10 @@ AsyncTransaction* APIClient::callAsync(const APIMethod& method)
 
 AsyncTransaction* APIClient::callAsync(APIRequest* request)
 {
-	Log("debug", this) << "Calling: " << request->method.name << endl;
+	Log("trace", this) << "Calling: " << request->method.name << endl;
 	AsyncTransaction* transaction = new AsyncTransaction();
 	transaction->setRequest(request);
-	transaction->TransactionComplete += delegate(this, &APIClient::onTransactionComplete);
+	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
 	FastMutex::ScopedLock lock(_mutex);
 	_transactions.push_back(transaction);
 	return transaction;
@@ -177,13 +175,13 @@ AsyncTransaction* APIClient::callAsync(APIRequest* request)
 
 void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
 {
-	Log("debug", this) << "Transaction Complete" << endl;
+	Log("trace", this) << "Transaction Complete" << endl;
 
 	FastMutex::ScopedLock lock(_mutex);
 	
 	for (vector<APITransaction*>::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
 		if (*it == sender) {
-			Log("debug", this) << "Removing Transaction: " << sender << endl;
+			Log("trace", this) << "Removing Transaction: " << sender << endl;
 			_transactions.erase(it);
 
 			// The transaction is responsible for it's own destruction.
@@ -220,31 +218,30 @@ string APIClient::endpoint()
 //
 // ---------------------------------------------------------------------
 void APIRequest::prepare()
-{
+{	
 	setMethod(method.httpMethod);
 	setURI(method.uri.toString());
-	HTTP::Request::prepare();
 	set("User-Agent", "Anionu C++ API");
+	HTTP::Request::prepare();
+	/*
 	if (!form &&
 		method.httpMethod == "POST" || 
 		method.httpMethod == "PUT")
-		set("Content-Type", "application/xml");
+		set("Content-Type", "application/json");
+		*/
 
 	if (!method.anonymous) {
 		set("Authorization", 
-			HTTP::AnionuAuthenticator::generateAuthHeader(
+			Authenticator::generateAuthHeader(
 				credentials.username,
 				credentials.password, 
 				method.httpMethod, 
-				method.uri.toString(),
+				method.uri.getPathAndQuery(),
 				getContentType(), 
 				get("Date")
 			)
 		);
 	}
-
-	//Log("debug") << "[APIRequest] Output: " << endl;
-	//write(cout);
 }
 
 
@@ -285,13 +282,13 @@ void APIMethod::format(const string& format)
 APIMethods::APIMethods(APIClient& client) :
 	_client(client)
 {
-	Log("debug") << "[APIMethods] Creating" << endl;
+	Log("trace") << "[APIMethods] Creating" << endl;
 }
 
 
 APIMethods::~APIMethods()
 {
-	Log("debug") << "[APIMethods] Destroying" << endl;
+	Log("trace") << "[APIMethods] Destroying" << endl;
 }
 
 
@@ -303,42 +300,37 @@ bool APIMethods::valid() const
 
 void APIMethods::update()
 {
-	Log("debug") << "[APIMethods] Updating" << endl;
+	Log("trace") << "[APIMethods] Updating" << endl;
 	FastMutex::ScopedLock lock(_mutex); 	
 
 	try 
-	{
-		//string endpoint(_client.endpoint);
-		//replaceInPlace(endpoint, "https", "http");
-		//URI uri(endpoint + "/api.json");
-		URI uri(_client.endpoint() + "/api.json");
-		HTTPClientSession session(uri.getHost(), uri.getPort());
-		HTTPRequest req("GET", uri.getPathAndQuery(), HTTPMessage::HTTP_1_1);
-		session.setTimeout(Timespan(6,0));
-		session.sendRequest(req);
-		HTTPResponse res;
-		istream& rs = session.receiveResponse(res);
+	{		
+		// Make the API call to retrieve the remote manifest
+		HTTP::Request* request = new HTTP::Request("GET", _client.endpoint() + "/api.json");	
+		HTTP::Transaction transaction(request);
+		HTTP::Response& response = transaction.response();
+		if (!transaction.send())
+			throw Exception(format("API query failed: HTTP Error: %d %s", 
+				static_cast<int>(response.getStatus()), response.getReason()));
 
-		Log("debug") << "[APIMethods] Request Complete: " 
-			<< res.getStatus() << ": " 
-			<< res.getReason() << endl;
-
-		string data;
-		StreamCopier::copyToString(rs, data);
+		Log("trace") << "[APIMethods] Request Complete: " 
+			<< response.getStatus() << ": " << response.getReason() 
+			<< "\n\tData: " << response.body.str() 
+			<< endl;
 					
 		JSON::Reader reader;
-		if (!reader.parse(data, *this))
+		if (!reader.parse(response.body.str(), *this))
 			throw Exception(reader.getFormatedErrorMessages());
 	} 
 	catch (Exception& exc) 
 	{
-		Log("debug") << exc.displayText() << endl;
+		Log("error") << "API Error: " << exc.displayText() << endl;
 		exc.rethrow();
 	} 
 }
 
 
-std::string APIMethods::endpoint()
+string APIMethods::endpoint()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 	return isMember("endpoint") ? (*this)["endpoint"].asString() : ANIONU_API_ENDPOINT;
@@ -347,7 +339,7 @@ std::string APIMethods::endpoint()
 
 APIMethod APIMethods::get(const string& name, const string& format, const StringMap& params)
 {	
-	Log("debug") << "[APIMethods] Get: " << name << endl;
+	Log("trace") << "[APIMethods] Get: " << name << endl;
 	FastMutex::ScopedLock lock(_mutex); 	
 	APIMethod method;
 
@@ -382,11 +374,11 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 		method.format(format);
 		method.interpolate(params);
 
-		Log("debug") << "[APIMethods] get()\n"
-			 << "Name: " << method.name << "\n"
-			 << "Method: " << method.httpMethod << "\n"
-			 << "Uri: " << method.uri.toString() << "\n"
-			 << "Anonymous: " << method.anonymous << "\n"
+		Log("trace") << "[APIMethods] Got Method"
+			 << "\n\tName: " << method.name
+			 << "\n\tMethod: " << method.httpMethod
+			 << "\n\tUri: " << method.uri.toString()
+			 << "\n\tAnonymous: " << method.anonymous
 			 << endl;
 	}
 	catch (Exception& exc)
@@ -399,7 +391,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 }
 
 
-void APIMethods::print(std::ostream& os) const
+void APIMethods::print(ostream& os) const
 {
 	JSON::StyledWriter writer;
 	os << writer.write(*this);
@@ -414,22 +406,23 @@ void APIMethods::print(std::ostream& os) const
 APITransaction::APITransaction(APIRequest* request) : 
 	HTTP::Transaction(request)
 {
-	Log("debug") << "[APITransaction] Creating" << endl;
+	Log("trace") << "[APITransaction] Creating" << endl;
 }
 
 
 APITransaction::~APITransaction()
 {
-	Log("debug") << "[APITransaction] Destroying" << endl;
+	Log("trace") << "[APITransaction] Destroying" << endl;
 }
 
 
 void APITransaction::dispatchCallbacks()
 {	
-	Log("debug") << "[APITransaction] Process Callbacks: " << (!cancelled()) << endl;
+	Log("trace") << "[APITransaction] Process Callbacks: " << (!cancelled()) << endl;
 
 	if (!cancelled()) {
-		TransactionComplete.dispatch(this, _response);
+		//Complete.dispatch(this, _response);
+		HTTP::Transaction::dispatchCallbacks();
 		APITransactionComplete.dispatch(this, static_cast<APIRequest*>(_request)->method, _response);
 	}
 }
@@ -438,6 +431,26 @@ void APITransaction::dispatchCallbacks()
 } } // namespace Sourcey::Anionu
 
 
+
+		/*
+		//string endpoint(_client.endpoint);
+		//replaceInPlace(endpoint, "https", "http");
+		//URI uri(endpoint + "/api.json");
+		URI uri(_client.endpoint() + "/api.json");
+		HTTPClientSession session(uri.getHost(), uri.getPort());
+		HTTPRequest req("GET", uri.getPathAndQuery(), HTTPMessage::HTTP_1_1);
+		session.setTimeout(Timespan(6,0));
+		session.sendRequest(req);
+		HTTPResponse res;
+		istream& rs = session.receiveResponse(res);
+
+		Log("trace") << "[APIMethods] Request Complete: " 
+			<< res.getStatus() << ": " 
+			<< res.getReason() << endl;
+
+		string data;
+		StreamCopier::copyToString(rs, data);
+		*/
 		
 		/*
 		for (JSON::ValueIterator it = root.begin(); it != root.end(); it++) {		
@@ -476,5 +489,5 @@ void APITransaction::dispatchCallbacks()
 
 		//load(xml.data());
 
-		//Log("debug") << "[APIMethods] API Methods XML:\n" << endl;
+		//Log("trace") << "[APIMethods] API Methods XML:\n" << endl;
 		//print(cout);

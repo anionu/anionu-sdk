@@ -19,8 +19,8 @@ public:
 	void initialize();
 	void uninitialize();
 
-	void enable();
-	void disable();
+	void activate();
+	void deactivate();
 	
 	bool startRecording();
 	bool stopRecording();

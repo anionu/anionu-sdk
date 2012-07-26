@@ -75,7 +75,7 @@ void SurveillanceMode::loadConfig()
 }
 
 
-void SurveillanceMode::enable() 
+void SurveillanceMode::activate() 
 {
 	log() << "Enabling:"
 		<< "\n\tPre Surveillance Delay: " << _motionDetector.options().preSurveillanceDelay
@@ -89,23 +89,23 @@ void SurveillanceMode::enable()
 	try
 	{
 		startMotionDetector();
-		IMode::enable();
+		IMode::activate();
 	}
 	catch (Exception& exc)
 	{
 		log("error") << "Error: " << exc.displayText() << endl;
-		setState(this, ModeState::Failed);
+		setState(this, ModeState::Error);
 		throw exc;
 	}
 }
 
 
-void SurveillanceMode::disable() 
+void SurveillanceMode::deactivate() 
 {
 	log() << "Disabling" << endl;
 	stopRecording();
 	stopMotionDetector();
-	IMode::disable();
+	IMode::deactivate();
 }
 
 
@@ -180,7 +180,7 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 			// Create a Motion Detected event via the
 			// Anionu API to notify account users.
 			Anionu::Event event(Anionu::Event::High, "Motion Detected", "Motion detected on channel: " + _channel.name());
-			env().notifyEvent(event);
+			env().broadcastEvent(event);
 			
 			// Start recording.
 			startRecording();

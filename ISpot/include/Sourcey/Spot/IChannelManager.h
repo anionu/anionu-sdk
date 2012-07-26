@@ -59,9 +59,6 @@ public:
 		// Returns the first channel in the list.
 	
 	virtual const char* className() const { return "ChannelManager"; }
-
-protected:		
-	mutable Poco::FastMutex _mutex;
 };
 
 

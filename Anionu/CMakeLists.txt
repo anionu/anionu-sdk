@@ -6,5 +6,5 @@ if(BUILD_MODULES AND BUILD_MODULE_Anionu)
   include_dependency(RtAudio REQUIRED)
   include_dependency(JsonCpp REQUIRED)
 
-  define_sourcey_module(Anionu Base Net HTTP JSON Media)
+  define_sourcey_module(Anionu Base Net HTTP JSON Media Util)
 endif()

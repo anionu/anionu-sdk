@@ -77,39 +77,84 @@ void IMode::uninitialize()
 }
 
 
-void IMode::enable()
+void IMode::activate()
 {
-	setState(this, ModeState::Enabled);
+	setState(this, ModeState::Active);
 }
 
 
-void IMode::disable()
+void IMode::deactivate()
 {
-	setState(this, ModeState::Disabled);
+	setState(this, ModeState::Inactive);
 }
 
 
-void IMode::setData(const std::string& name, const std::string& value)
+void IMode::setData(const string& name, const string& value)
 {
-	_data[name] = value;
+	{
+		FastMutex::ScopedLock lock(_mutex);	
+		_data[name] = value;
+	}
 	ModeDataChanged.dispatch(this, _data);
 }
 
 
-void IMode::removeVar(const std::string& name) 
+void IMode::removeData(const string& name) 
 {
-	StringMap::iterator it = _data.find(name);
-	if (it != _data.end()) {
-		_data.erase(it);
-		ModeDataChanged.dispatch(this, _data);
+	{
+		FastMutex::ScopedLock lock(_mutex);	
+		StringMap::iterator it = _data.find(name);
+		if (it != _data.end()) {
+			_data.erase(it);
+		}
 	}
+	ModeDataChanged.dispatch(this, data());
 }
 
 
 void IMode::clearData() 
 {
-	_data.clear();
-	ModeDataChanged.dispatch(this, _data);
+	{
+		FastMutex::ScopedLock lock(_mutex);	
+		_data.clear();
+	}
+	ModeDataChanged.dispatch(this, data());
+}
+
+
+StringMap IMode::data() const 
+{ 
+	FastMutex::ScopedLock lock(_mutex);	
+	return _data; 
+}
+
+
+
+string IMode::name() const		
+{ 
+	FastMutex::ScopedLock lock(_mutex);	
+	return _name; 
+}
+
+
+IChannel& IMode::channel() 			
+{ 
+	FastMutex::ScopedLock lock(_mutex);	
+	return _channel; 
+}
+
+
+ModeConfiguration& IMode::config() 	
+{ 
+	FastMutex::ScopedLock lock(_mutex);	
+	return _config;
+}
+
+
+ModeOptions& IMode::options()  		
+{ 
+	FastMutex::ScopedLock lock(_mutex);	
+	return _options; 
 }
 
 
@@ -140,6 +185,14 @@ ModeConfiguration::ModeConfiguration(IMode& mode) :
 {
 }
 
+
+ModeConfiguration::ModeConfiguration(const ModeConfiguration& r) :
+	mode(r.mode),
+	defaultScope(r.defaultScope),
+	baseScope(r.baseScope)
+{
+}
+	
 
 string ModeConfiguration::getString(const string& key, const string& defaultValue) const 
 {

@@ -32,35 +32,6 @@ CMemLeakDetect memLeakDetect;
 */
 
 
-class AnionuAPIConsole: public APIClient
-{
-public:
-	AnionuAPIConsole()
-	{
-	}
-
-	~AnionuAPIConsole()
-	{
-	}
-
-	void onAPITransactionComplete(void*, APIMethod& service, HTTP::Response& response)
-	{
-		Log("trace") << "Anionu API Response:" 
-			<< "\n\tMethod: " << service.name
-			<< "\n\tStatus: " << response.getStatus()
-			<< "\n\tReason: " << response.getReason()
-			<< "\n\tSuccess: " << response.success()
-			<< endl;
-		
-		Log("trace") << "Anionu API Response Headers:" << endl;
-		response.write(cout);
-
-		Log("trace") << "Anionu API Response Body:" << endl;
-		cout << response.body.str() << endl;
-	}
-};
-
-
 string selectListItem(const string& hint, const vector<string>& list)
 {
 	cout << hint << ": " << endl;
@@ -104,13 +75,41 @@ bool getYesNoAnswer(const string& question)
 }
 
 
+class AnionuAPIConsole: public APIClient
+{
+public:
+	AnionuAPIConsole()
+	{
+		Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
+	}
+
+	~AnionuAPIConsole()
+	{
+		Logger::uninitialize();
+	}
+
+	void onAPITransactionComplete(void*, APIMethod& service, HTTP::Response& response)
+	{
+		Log("trace") << "Anionu API Response:" 
+			<< "\n\tMethod: " << service.name
+			<< "\n\tStatus: " << response.getStatus()
+			<< "\n\tReason: " << response.getReason()
+			<< "\n\tSuccess: " << response.success()
+			<< endl;
+		
+		Log("trace") << "Anionu API Response Headers:" << endl;
+		response.write(cout);
+
+		Log("trace") << "Anionu API Response Body:" << endl;
+		cout << response.body.str() << endl;
+	}
+};
+
 
 int main(int argc, char** argv)
 {
-	Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
-	
 	AnionuAPIConsole api;	
-	api.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD);
+	api.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
 	api.loadMethods();
 	
 	string service("GetAccount");

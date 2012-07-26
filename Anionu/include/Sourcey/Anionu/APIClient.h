@@ -132,10 +132,9 @@ struct APICredentials
 //
 struct APIRequest: public HTTP::Request
 {
-	APIRequest() : HTTP::Request(HTTPMessage::HTTP_1_1) {} 	
+	APIRequest() {} 	
 	APIRequest(const APIMethod& method, 
 			   const APICredentials& credentials) :
-		HTTP::Request(HTTPMessage::HTTP_1_1),
 		method(method), 
 		credentials(credentials) {}
 	virtual ~APIRequest() {}

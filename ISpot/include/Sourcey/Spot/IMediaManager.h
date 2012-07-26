@@ -30,7 +30,7 @@
 #define ANIONU_SPOT_IMediaManager_H
 
 
-#include "Sourcey/TimedManager.h"
+#include "Sourcey/Util/TimedManager.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Media/IEncoder.h"
 #include "Sourcey/Media/Format.h"

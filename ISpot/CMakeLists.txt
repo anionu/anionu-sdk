@@ -8,5 +8,5 @@ if(BUILD_MODULES AND BUILD_MODULE_ISpot)
 
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
       
-  define_sourcey_module(ISpot Base Net Media ICE RTP STUN TURN SDP JSON Symple)
+  define_sourcey_module(ISpot Base Net Media ICE RTP STUN TURN SDP JSON Symple Util)
 endif()

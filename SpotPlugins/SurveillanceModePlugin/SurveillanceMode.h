@@ -23,8 +23,8 @@ public:
 	void initialize();
 	void uninitialize();
 	
-	void enable();
-	void disable();
+	void activate();
+	void deactivate();
 	
 	void loadConfig();
 

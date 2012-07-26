@@ -55,31 +55,31 @@ void RecordingMode::loadConfig()
 }
 
 
-void RecordingMode::enable() 
+void RecordingMode::activate() 
 {
 	log() << "Starting" << endl;
 	
 	try
 	{
 		loadConfig();
-		IMode::enable();
+		IMode::activate();
 		startRecording();
 	}
 	catch (Exception& exc)
 	{
 		log("error")  << "Error:" << exc.displayText() << endl;
-		setState(this, ModeState::Failed);
+		setState(this, ModeState::Error);
 		throw exc;
 	}
 }
 
 
-void RecordingMode::disable() 
+void RecordingMode::deactivate() 
 {
 	log() << "Stopping" << endl;
 	
 	stopRecording();
-	IMode::disable();
+	IMode::deactivate();
 }
 
 	
@@ -148,8 +148,8 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 		case EncoderState::Stopped:
 
 			// Start a new recording segment if the mode is 
-			// still enabled.
-			if (!isDisabled() &&
+			// still active.
+			if (isActive() &&
 				encoder == _recordingInfo.encoder) {
 				encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
 				/*

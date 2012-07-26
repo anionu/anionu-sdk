@@ -29,7 +29,9 @@
 #define ANIONU_SPOT_IEnvironment_H
 
 
+#include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
+#include "Sourcey/Runner.h"
 #include "Sourcey/Spot/IModule.h"
 
 
@@ -44,6 +46,9 @@ namespace Anionu {
 struct Event;
 }
 
+//class TaskScheduler;
+
+
 namespace Spot {
 
 
@@ -52,18 +57,15 @@ class IConfiguration;
 class ISynchronizer;
 class IChannelManager;
 class IModeRegistry;
+class IMediaManager;
 class IStreamingManager;
 class IStreamingSession;
-class IMediaManager;
 class IDiagnosticManager;
 
 
-class IEnvironment 
+class IEnvironment: public Runner
 {
 public:
-	IEnvironment() {};	
-	virtual ~IEnvironment() {};
-	
 	virtual IConfiguration& appConfig() /*const*/ = 0;
 	virtual IConfiguration& config() /*const*/ = 0;
 	virtual ISession& session() /*const*/ = 0;
@@ -73,21 +75,26 @@ public:
 	virtual IStreamingManager& streaming() /*const*/ = 0;
 	virtual IMediaManager& media() /*const*/ = 0;
 	virtual IDiagnosticManager& diagnostics() /*const*/ = 0;
+	//virtual TaskScheduler& scheduler() /*const*/ = 0;
 	virtual Logger& logger() /*const*/ = 0;
 
 	virtual std::string version() const = 0;
-		/// Returns the version number string of the library.
+		/// Returns the version string of the installed Spot
+		/// package.
 	
-	virtual void notifyEvent(const Anionu::Event& event) = 0;
-		/// Notifies the system about an event.
+	virtual void broadcastEvent(const Anionu::Event& event) = 0;
+		/// Broadcasts a surveillance event over the network.
 		/// If the event severity is higher than the minimum 
 		/// severity defined by the user then the event will
 		/// be broadcast over the remote network and saved on
 		/// the user account. If the event is not broadcast
-		/// then event notifications will not be triggered.
+		/// then server side event notifications will not be
+		/// triggered.
 	
-	Signal<const Anionu::Event&> OnEvent;
-		/// Signals an event. Called internally by notifyEvent()
+	Signal<const Anionu::Event&> Event;
+		/// Signals a surveillance event. 
+		/// Called internally by broadcastEvent() to dispatch
+		/// the event to the internal application.
 };
 
 

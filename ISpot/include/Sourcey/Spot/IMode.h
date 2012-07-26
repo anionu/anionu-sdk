@@ -60,8 +60,7 @@ class ModeConfiguration
 {	
 public:
 	ModeConfiguration(IMode& mode);
-		
-	//void setup();
+	ModeConfiguration(const ModeConfiguration& r);
 
 	std::string getString(const std::string& key, const std::string& defaultValue) const;
 	int getInt(const std::string& key, int defaultValue) const;
@@ -92,18 +91,18 @@ struct ModeState: public StateT
 	enum Type
 	{
 		None = 0,
-		Disabled,
-		Enabled,
-		Failed
+		Inactive,
+		Active,
+		Error
 	};
 
 	std::string str(unsigned int id) const 
 	{ 
 		switch (id) {
 		case None:		return "None";
-		case Disabled:	return "Disabled";
-		case Enabled:	return "Enabled";
-		case Failed:	return "Failed";
+		case Inactive:	return "Inactive";
+		case Active:	return "Active";
+		case Error:	    return "Error";
 		}
 		return "undefined"; 
 	};
@@ -122,32 +121,32 @@ public:
 	virtual void uninitialize();
 		// If unrecoverable errors are encountered
 		// during the initialization process, the
-		// mode state should be set to Failed and
+		// mode state should be set to Error and
 		// an Exception thrown.
 
-	virtual void enable();
-	virtual void disable();
+	virtual void activate();
+	virtual void deactivate();
 
-	virtual std::string name() const		{ return _name; };
-	virtual IEnvironment& env() 			{ return _env; };
-	virtual IChannel& channel() 			{ return _channel; };
-	virtual ModeConfiguration& config() 	{ return _config; };
-	virtual ModeOptions& options()  		{ return _options; };
+	virtual std::string name() const;
+	virtual IChannel& channel();
+	virtual ModeConfiguration& config();
+	virtual ModeOptions& options();
 	
-	virtual bool isDisabled() const { return stateEquals(ModeState::Disabled); };
-	virtual bool isEnabled() const { return stateEquals(ModeState::Enabled); };
-	virtual bool isFailed() const { return stateEquals(ModeState::Failed); };
+	virtual bool isActive() const { return stateEquals(ModeState::Active); };
+	virtual bool isError() const { return stateEquals(ModeState::Error); };
 
 	virtual void setData(const std::string& name, const std::string& value);
-	virtual void removeVar(const std::string& name);
+	virtual void removeData(const std::string& name);
 	virtual void clearData();
-	virtual StringMap data() const { return _data; };
+	virtual StringMap data() const;;
 	
 	Signal<const StringMap&> ModeDataChanged;
 	
 	virtual const char* className() const { return "Mode"; }
 
 protected:	
+	mutable Poco::FastMutex	_mutex;	
+
 	IChannel&			_channel;
 	ModeConfiguration	_config;
 	ModeOptions			_options;

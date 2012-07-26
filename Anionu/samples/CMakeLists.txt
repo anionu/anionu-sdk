@@ -3,5 +3,4 @@
 #
 # ----------------------------------------------------------------------------
 
-#add_subdirectory(AnionuAPIConsole)
-#add_subdirectory(WaveformOutput)
+add_subdirectory(AnionuAPIConsole)

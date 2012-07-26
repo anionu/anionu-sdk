@@ -64,33 +64,40 @@ StreamingOptions::StreamingOptions(
 
 void StreamingOptions::serialize(JSON::Value& root)
 {
-	root["token"] = token;
-	root["peer"] = peer;
-	root["timeout"] = timeout;
-	root["transport"] = transport;
-	root["protocol"] = protocol;
-	root["encoding"] = encoding;
-	root["format"] = oformat.label;
+	if (!token.empty())
+		root["token"] = token;
+	if (!peer.empty())
+		root["peer"] = peer;
+	if (timeout)
+		root["timeout"] = timeout;
+	if (!transport.empty())
+		root["transport"] = transport;
+	if (!protocol.empty())
+		root["protocol"] = protocol;
+	if (!encoding.empty())
+		root["encoding"] = encoding;
+	if (oformat.label != "Unknown")
+		root["format"] = oformat.label;
 
 	// BUG: JSON Value does not seem to support
 	// switching references after assignment.
-	JSON::Value& v = root["video"];
 	if (oformat.video.enabled) {
+		JSON::Value& v = root["video"];
 		v["codec"] = Media::Codec::idString(oformat.video.id);
 		v["width"] = Util::itoa(oformat.video.width);
 		v["height"] = Util::itoa(oformat.video.height);
 		v["fps"] = Util::itoa(oformat.video.fps);
 	}
-	else v = Json::nullValue;
+	//else v = Json::nullValue;
 	
-	JSON::Value& a = root["audio"];
 	if (oformat.audio.enabled) {
+		JSON::Value& a = root["audio"];
 		a["codec"] = Media::Codec::idString(oformat.audio.id);
 		a["bit-rate"] = Util::itoa(oformat.audio.bitRate);
 		a["channels"] = Util::itoa(oformat.audio.channels);
 		a["sample-rate"] = Util::itoa(oformat.audio.sampleRate);
 	}
-	else a = Json::nullValue;
+	//else a = Json::nullValue;
 }
 
 
@@ -103,7 +110,7 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	// Transport
 	transport = root.isMember("transport") ? root["transport"].asString() : "TCP";
 	if (transport != "TCP" &&
-		transport != "TSL" &&
+		transport != "SSL" &&
 		transport != "UDP")
 		throw Exception("Unsupported transport protocol.");
 
@@ -111,28 +118,39 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	encoding = root.isMember("encoding") ? root["encoding"].asString() : "None";
 
 	// Video
+	//if (oformat.video.enabled) {
 	JSON::Value& v = root["video"];
-	//Log("debug") << "[StreamingOptions] Updating: " << JSON::stringify(root, true) << endl;
-	//Log("debug") << "[StreamingOptions] Updating: " << JSON::stringify(v, true) << endl;
+	Log("debug") << "######################### [StreamingOptions] Updating: " << JSON::stringify(root, true) << endl;
+	Log("debug") << "######################### [StreamingOptions] Updating: " << JSON::stringify(v, true) << endl;
 	if (!v.isNull()) {		
-		oformat.video.enabled = v.isMember("enabled") ? v["enabled"].asBool() : true;
-		if (oformat.video.enabled) {
-			if (v.isMember("codec")) oformat.video.id = Media::Codec::toID(v["codec"].asString());
-			if (v.isMember("width")) oformat.video.width = v["width"].asInt();
-			if (v.isMember("height")) oformat.video.height = v["height"].asInt();
-			if (v.isMember("fps")) oformat.video.fps = v["fps"].asInt();
-		}
+		//oformat.video.enabled = true; //v.isMember("enabled") ? v["enabled"].asBool() : true;
+		//if (oformat.video.enabled) {
+		if (v.isMember("codec")) oformat.video.id = Media::Codec::toID(v["codec"].asString());
+		if (v.isMember("width")) oformat.video.width = v["width"].asInt();
+		if (v.isMember("height")) oformat.video.height = v["height"].asInt();
+		if (v.isMember("fps")) oformat.video.fps = v["fps"].asInt();
+		//}
+		//}
 	}
 	
 	// Audio
 	JSON::Value& a = root["audio"];
-	//oformat.audio.enabled = !a.isNull() && a["enabled"].asBool();
-	if (oformat.audio.enabled) {
+	if (!a.isNull()) {	
+		Log("debug") << "######################### [StreamingOptions] 1 Updating: " << JSON::stringify(root, true) << endl;
+		Log("debug") << "######################### [StreamingOptions] 1 Updating: " << JSON::stringify(a, true) << endl;
 		if (a.isMember("codec")) oformat.audio.id = Media::Codec::toID(a["codec"].asString());
 		if (a.isMember("bit-rate")) oformat.audio.bitRate = a["bit-rate"].asInt();
 		if (a.isMember("channels")) oformat.audio.channels = a["channels"].asInt();
 		if (a.isMember("sample-rate")) oformat.audio.sampleRate = a["sample-rate"].asInt();
 	}
+	//oformat.audio.enabled = true; //!a.isNull() && a["enabled"].asBool();
+	//if (oformat.audio.enabled) {
+	//}
+	//else
+	//	oformat.audio.enabled = false;
+	
+	Log("debug") << "######################### [StreamingOptions] 2 Updating: " << JSON::stringify(root, true) << endl;
+	Log("debug") << "######################### [StreamingOptions] 2 Updating: " << JSON::stringify(a, true) << endl;
 }
 
 	
@@ -142,7 +160,7 @@ bool StreamingOptions::valid()
 		&& !channel.empty()
 		&& !token.empty()
 		&& (transport == "TCP" 
-		||  transport == "TSL" 
+		||  transport == "SSL" 
 		||  transport == "UDP") 
 		&& (oformat.video.enabled 
 		||  oformat.audio.enabled);

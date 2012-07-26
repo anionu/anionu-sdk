@@ -30,10 +30,8 @@
 
 
 #include "Sourcey/Spot/IModule.h"
-#include "Sourcey/TimedManager.h"
 #include "Sourcey/Spot/IStreamingSession.h"
-//#include "Sourcey/BasicManager.h"
-//#include "Sourcey/PacketStream.h"
+#include "Sourcey/Util/TimedManager.h"
 
 
 namespace Sourcey {
