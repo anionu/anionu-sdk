@@ -33,12 +33,21 @@ void MediaPlugin::initialize()
 {
 	log() << "Initializing" << endl;	
 
+	IMediaManager& media = env().media();
+	
+	log() << "Initializing 1" << endl;	
+
 	// Since we will be the default media provider in most
 	// cases, we should listen in on the signals at a lower
 	// priority so other providers can create the encoder first.
+	//log() << "Initializing 0: " << env().streaming().items().size() << endl;	
+	log() << "Initializing 0" << endl;	
+	log() << "Initializing 01: " << env().streaming().InitializeStreamingSession.delegates().size() << endl;	
 	env().streaming().InitializeStreamingSession += delegate(this, &MediaPlugin::onInitializeStreamingSession, -1);
-	env().media().InitializeEncoder += delegate(this, &MediaPlugin::onInitializeRecordingEncoder, -1);
+	log() << "Initializing 02" << endl;	
+	media.InitializeEncoder += delegate(this, &MediaPlugin::onInitializeRecordingEncoder, -1);
 		
+	log() << "Initializing 2" << endl;	
 		
 	//
 	// MJPEG High (Streaming)
@@ -101,50 +110,58 @@ void MediaPlugin::initialize()
 	// Recording Formats
 	//
 	{
-		env().media().recordingFormats().clear();
-		env().media().recordingFormats().registerFormat(mjpegHigh);
+	log() << "Initializing 3" << endl;	
+		media.recordingFormats().clear();
+		media.recordingFormats().registerFormat(mjpegHigh);
 
 //#ifdef USING_FFMPEG
-		env().media().recordingFormats().registerFormat(mp4);
-		env().media().recordingFormats().setDefault("MP4");
+		media.recordingFormats().registerFormat(mp4);
+		media.recordingFormats().setDefault("MP4");
 //#endif
+	log() << "Initializing 4" << endl;	
 	}
 	
 	//
 	// Local Video Streaming Formats
 	//
 	{
-		env().media().localVideoStreamingFormats().clear();
-		env().media().localVideoStreamingFormats().registerFormat(mjpegHigh);
+	log() << "Initializing 5" << endl;	
+		media.localVideoStreamingFormats().clear();
+		media.localVideoStreamingFormats().registerFormat(mjpegHigh);
 		
 //#ifdef USING_FFMPEG
-		env().media().localVideoStreamingFormats().registerFormat(flvVideo);
-		env().media().localVideoStreamingFormats().registerFormat(flvH264);
-		env().media().localVideoStreamingFormats().setDefault("Flash Video");
+		media.localVideoStreamingFormats().registerFormat(flvVideo);
+		media.localVideoStreamingFormats().registerFormat(flvH264);
+		media.localVideoStreamingFormats().setDefault("Flash Video");
 //#endif
+	log() << "Initializing 6" << endl;	
 	}	
 	
 	//
 	// Remote Video Streaming Formats
 	//
 	{
-		env().media().remoteVideoStreamingFormats().clear();
-		env().media().remoteVideoStreamingFormats().registerFormat(mjpegLow);
+	log() << "Initializing 7" << endl;	
+		media.remoteVideoStreamingFormats().clear();
+		media.remoteVideoStreamingFormats().registerFormat(mjpegLow);
 		
 //#ifdef USING_FFMPEG
-		env().media().remoteVideoStreamingFormats().registerFormat(flvVideo);
-		env().media().remoteVideoStreamingFormats().registerFormat(flvH264);
-		env().media().remoteVideoStreamingFormats().setDefault("Flash Video");
+		media.remoteVideoStreamingFormats().registerFormat(flvVideo);
+		media.remoteVideoStreamingFormats().registerFormat(flvH264);
+		media.remoteVideoStreamingFormats().setDefault("Flash Video");
 //#endif
+	log() << "Initializing 8" << endl;	
 	}
 	
 	//
 	// Audio Streaming Formats
 	//
 	{
-		env().media().audioStreamingFormats().clear();
-		env().media().audioStreamingFormats().registerFormat(flvSpeex);
-		env().media().audioStreamingFormats().setDefault("Flash Speex");
+	log() << "Initializing 9" << endl;	
+		media.audioStreamingFormats().clear();
+		media.audioStreamingFormats().registerFormat(flvSpeex);
+		media.audioStreamingFormats().setDefault("Flash Speex");
+	log() << "Initializing 10" << endl;	
 	}
 
 	/*
@@ -167,17 +184,17 @@ void MediaPlugin::initialize()
 	// Recording Formats
 	//
 	{
-		env().media().recordingFormats().registerFormat(mp4);
+		media.recordingFormats().registerFormat(mp4);
 	}
 		
 	//
 	// Streaming Formats
 	//
 	{
-		env().media().localVideoStreamingFormats().registerFormat(flv);
-		env().media().remoteVideoStreamingFormats().registerFormat(flv);
-		env().media().localVideoStreamingFormats().setDefault("FLV");
-		env().media().remoteVideoStreamingFormats().setDefault("FLV");
+		media.localVideoStreamingFormats().registerFormat(flv);
+		media.remoteVideoStreamingFormats().registerFormat(flv);
+		media.localVideoStreamingFormats().setDefault("FLV");
+		media.remoteVideoStreamingFormats().setDefault("FLV");
 
 #if HAVE_H264
 
@@ -191,10 +208,10 @@ void MediaPlugin::initialize()
 			VideoCodec(Codec::H264, "H264"), 
 			AudioCodec(Codec::AAC, "AAC"));
 		
-		env().media().localVideoStreamingFormats().registerFormat(fh264);
-		env().media().remoteVideoStreamingFormats().registerFormat(fh264);
-		env().media().localVideoStreamingFormats().setDefault("Flash H264");
-		env().media().remoteVideoStreamingFormats().setDefault("Flash H264");
+		media.localVideoStreamingFormats().registerFormat(fh264);
+		media.remoteVideoStreamingFormats().registerFormat(fh264);
+		media.localVideoStreamingFormats().setDefault("Flash H264");
+		media.remoteVideoStreamingFormats().setDefault("Flash H264");
 //#endif
 	}
 	*/
@@ -221,6 +238,12 @@ void MediaPlugin::uninitialize()
 	env().streaming().InitializeStreamingSession -= delegate(this, &MediaPlugin::onInitializeStreamingSession);
 	env().media().InitializeEncoder -= delegate(this, &MediaPlugin::onInitializeRecordingEncoder);
 	
+	// FIXME: For some reason delegates added across the
+	// process boundary are causing the SignalBase to
+	// crash when cleanup() is called from the other side.
+	env().streaming().InitializeStreamingSession.cleanup();
+	env().media().InitializeEncoder.cleanup();
+
 	/*
 	try 
 	{

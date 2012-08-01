@@ -37,59 +37,91 @@ using namespace Poco;
 
 namespace Sourcey {
 namespace Spot {
-
+	
+	
+// ---------------------------------------------------------------------
+//
+// Synchronizer
+//
+// ---------------------------------------------------------------------
+ISynchronizer::ISynchronizer(IEnvironment& env) :
+	IModule(env)
+{	
+}
+	
 
 // ---------------------------------------------------------------------
 //
-// Synchronization Queue Job
+// Synchronization Task
 //
 // ---------------------------------------------------------------------
-Job::Job() :
-	id(CryptoProvider::generateRandomKey(16)), 
+SynchronizerTask::SynchronizerTask() :
+	id(CryptoProvider::generateRandomKey(8)), 
 	priority(0), 
+	progress(0),
 	state("Ready"), 
 	time(Poco::DateTimeFormatter::format(Poco::Timestamp(), "%Y-%m-%d %H:%M:%S"))
 {
 }
 
 
-Job::Job(const string& type,
-		 const string& path,
+SynchronizerTask::SynchronizerTask(const string& type,
+		 const string& file,
 		 int priority,		 
 		 const string& time) :
-	id(CryptoProvider::generateRandomKey(16)), 
+	id(CryptoProvider::generateRandomKey(8)), 
 	type(type), 
-	path(path), 
+	file(file), 
 	priority(priority), 
+	progress(0),
 	state("Ready"), 
 	time(time)
 {
 }
 
 
-/*
-Job::Job(const Job& r) : 
-	id(r.id), 
-	parent(r.parent), 
-	type(r.type), 
-	path(r.path), 
-	state(r.state), 
-	time(r.time),
-	priority(r.priority), 
+SynchronizerTask* SynchronizerTask::clone() const 
 {
-}
-*/
-
-
-Job* Job::clone() const 
-{
-	return new Job(*this);
+	return new SynchronizerTask(*this);
 }
 
 
-bool Job::valid() const
+void SynchronizerTask::serialize(JSON::Value& root)
 {
-	return !path.empty() 
+	root["id"] = id;
+	root["parent"] = parent;
+	root["type"] = type;
+	root["file"] = file;
+	root["state"] = state;
+	root["time"] = time;
+	root["priority"] = priority;
+	//root["progress"] = progress;
+	root["params"] = params;
+	root["data"] = data;
+	
+	root["completedOn"] = completedOn;
+}
+
+
+void SynchronizerTask::deserialize(JSON::Value& root)
+{		
+	id = root["id"].asString();
+	parent = root["parent"].asString();
+	type = root["type"].asString();
+	file = root["file"].asString();
+	state = root["state"].asString();
+	time = root["time"].asString();	
+	priority = root["priority"].asInt();
+	//progress = root["progress"].asInt();
+	params = root["params"]; //.asString();	
+	data = root["data"]; //.asString();	
+	completedOn = root["completedOn"].asString();	
+}
+
+
+bool SynchronizerTask::valid() const
+{
+	return !file.empty() 
 		&& (type == "Video"
 		||  type == "VideoSpectrogram"
 		||  type == "Audio"
@@ -100,14 +132,14 @@ bool Job::valid() const
 }
 
 
-string Job::toString() const
+string SynchronizerTask::toString() const
 {
 	ostringstream ost;
-	ost << "Job["
+	ost << "SynchronizerTask["
 		<< id << ":"
 		<< parent << ":"
 		<< type << ":"
-		<< path << ":"
+		<< file << ":"
 		<< state << ":"
 		<< priority << ":"
 		<< time << "]";
@@ -115,88 +147,4 @@ string Job::toString() const
 }
 
 
-// ---------------------------------------------------------------------
-//
-// Synchronization Queue
-//
-// ---------------------------------------------------------------------
-ISynchronizer::ISynchronizer(IEnvironment& env) :
-	IModule(env)
-{	
-}
-
-
 } } // namespace Sourcey::Spot
-
-
-
-	
-/*
-		 const string& state,
-		 const string& message,
-Job::Job(int priority,
-		 const string& type,
-		 const string& file,
-		 const string& state,
-		 const string& message,
-		 const string& time) :
-	type(type), 
-	file(file), 
-	state(state), 
-	message(message), 
-	time(time)
-{
-}
-*/
-	
-/*
-ISynchronizer::~ISynchronizer() 
-{
-	Log("debug") << "[ISynchronizer] ~ISynchronizer()" << endl;
-}
-
-
-void ISynchronizer::start()
-{
-	Log("debug") << "[ISynchronizer] Starting" << endl;
-	//database.initialize();
-	//database.parseAndEnqueueJobs();
-	_runner.start(this);
-}
-
-
-void ISynchronizer::stop()
-{
-	Log("debug") << "[ISynchronizer] Stopping" << endl;
-	//_runner.stop(this);
-	//Mutex::ScopedLock lock(_mutex);
-	//for (JobQueue::iterator it = _activeQueue.begin(); it != _activeQueue.end(); ++it) {
-	//}	
-	reinterpret_cast<Task*>(this)->destroy();
-	Log("debug") << "[ISynchronizer] Stopping: OK" << endl;
-}
-
-
-int ISynchronizer::push(const Job& job)
-{
-	Log("debug") << "[ISynchronizer] Pushing: " << job.toString() << endl;
-	Mutex::ScopedLock lock(_mutex);
-
-	_queue.push_back(job);
-	Job& j = _queue.back();
-	j.id = database.add(job);
-	return j.id;
-}
-
-
-void ISynchronizer::run()
-{
-}
-
-
-ISynchronizer& ISynchronizer::operator >> (const Job& job) 
-{
-	push(job);
-	return *this;
-}
-*/

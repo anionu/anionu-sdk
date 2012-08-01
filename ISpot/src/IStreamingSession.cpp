@@ -120,8 +120,6 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	// Video
 	//if (oformat.video.enabled) {
 	JSON::Value& v = root["video"];
-	Log("debug") << "######################### [StreamingOptions] Updating: " << JSON::stringify(root, true) << endl;
-	Log("debug") << "######################### [StreamingOptions] Updating: " << JSON::stringify(v, true) << endl;
 	if (!v.isNull()) {		
 		//oformat.video.enabled = true; //v.isMember("enabled") ? v["enabled"].asBool() : true;
 		//if (oformat.video.enabled) {
@@ -136,8 +134,6 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	// Audio
 	JSON::Value& a = root["audio"];
 	if (!a.isNull()) {	
-		Log("debug") << "######################### [StreamingOptions] 1 Updating: " << JSON::stringify(root, true) << endl;
-		Log("debug") << "######################### [StreamingOptions] 1 Updating: " << JSON::stringify(a, true) << endl;
 		if (a.isMember("codec")) oformat.audio.id = Media::Codec::toID(a["codec"].asString());
 		if (a.isMember("bit-rate")) oformat.audio.bitRate = a["bit-rate"].asInt();
 		if (a.isMember("channels")) oformat.audio.channels = a["channels"].asInt();
@@ -148,9 +144,6 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	//}
 	//else
 	//	oformat.audio.enabled = false;
-	
-	Log("debug") << "######################### [StreamingOptions] 2 Updating: " << JSON::stringify(root, true) << endl;
-	Log("debug") << "######################### [StreamingOptions] 2 Updating: " << JSON::stringify(a, true) << endl;
 }
 
 	

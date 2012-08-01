@@ -30,6 +30,7 @@
 #include "Sourcey/Logger.h"
 
 #include "Poco/Net/HTTPClientSession.h"
+#include "Poco/Net/HTTPBasicCredentials.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/Format.h"
 
@@ -223,6 +224,7 @@ void APIRequest::prepare()
 	setURI(method.uri.toString());
 	set("User-Agent", "Anionu C++ API");
 	HTTP::Request::prepare();
+
 	/*
 	if (!form &&
 		method.httpMethod == "POST" || 
@@ -231,6 +233,14 @@ void APIRequest::prepare()
 		*/
 
 	if (!method.anonymous) {
+		
+		// Using basic auth over SSL
+		Poco::Net::HTTPBasicCredentials cred(
+			credentials.username,
+			credentials.password);
+		cred.authenticate(*this); 
+
+		/*
 		set("Authorization", 
 			Authenticator::generateAuthHeader(
 				credentials.username,
@@ -241,6 +251,7 @@ void APIRequest::prepare()
 				get("Date")
 			)
 		);
+		*/
 	}
 }
 

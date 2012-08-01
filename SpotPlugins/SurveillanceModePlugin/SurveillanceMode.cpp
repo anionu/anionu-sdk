@@ -54,7 +54,8 @@ void SurveillanceMode::uninitialize()
 	// FIXME: For some reason delegates added across the
 	// process boundary are causing the SignalBase to
 	// crash when cleanup() is called from the other side.
-	//_env.streaming().InitializeStreamingSession.cleanup();
+	_env.streaming().InitializeStreamingSession.cleanup();
+	_env.streaming().InitializeStreamingConnection.cleanup();
 }
 
 
