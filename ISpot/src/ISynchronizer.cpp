@@ -26,6 +26,7 @@
 
 
 #include "Sourcey/Spot/ISynchronizer.h"
+#include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/CryptoProvider.h"
 
 #include <sstream>
@@ -59,23 +60,22 @@ SynchronizerTask::SynchronizerTask() :
 	id(CryptoProvider::generateRandomKey(8)), 
 	priority(0), 
 	progress(0),
+	size(0),
 	state("Ready"), 
-	time(Poco::DateTimeFormatter::format(Poco::Timestamp(), "%Y-%m-%d %H:%M:%S"))
+	time(Poco::DateTimeFormatter::format(Poco::Timestamp(), Spot::DateFormat))
 {
 }
 
-
-SynchronizerTask::SynchronizerTask(const string& type,
-		 const string& file,
-		 int priority,		 
-		 const string& time) :
+	
+SynchronizerTask::SynchronizerTask(const string& type, const string& file) :
 	id(CryptoProvider::generateRandomKey(8)), 
 	type(type), 
 	file(file), 
-	priority(priority), 
+	priority(0), 
 	progress(0),
+	size(0),
 	state("Ready"), 
-	time(time)
+	time(Poco::DateTimeFormatter::format(Poco::Timestamp(), Spot::DateFormat))
 {
 }
 
@@ -90,15 +90,16 @@ void SynchronizerTask::serialize(JSON::Value& root)
 {
 	root["id"] = id;
 	root["parent"] = parent;
+	root["name"] = name;
 	root["type"] = type;
 	root["file"] = file;
 	root["state"] = state;
 	root["time"] = time;
 	root["priority"] = priority;
-	//root["progress"] = progress;
+	root["progress"] = progress;
+	root["size"] = size;
 	root["params"] = params;
-	root["data"] = data;
-	
+	root["data"] = data;	
 	root["completedOn"] = completedOn;
 }
 
@@ -107,12 +108,14 @@ void SynchronizerTask::deserialize(JSON::Value& root)
 {		
 	id = root["id"].asString();
 	parent = root["parent"].asString();
+	name = root["name"].asString();
 	type = root["type"].asString();
 	file = root["file"].asString();
 	state = root["state"].asString();
 	time = root["time"].asString();	
 	priority = root["priority"].asInt();
-	//progress = root["progress"].asInt();
+	progress = root["progress"].asInt();
+	size = root["size"].asInt();
 	params = root["params"]; //.asString();	
 	data = root["data"]; //.asString();	
 	completedOn = root["completedOn"].asString();	
@@ -138,13 +141,27 @@ string SynchronizerTask::toString() const
 	ost << "SynchronizerTask["
 		<< id << ":"
 		<< parent << ":"
+		<< name << ":"
 		<< type << ":"
 		<< file << ":"
 		<< state << ":"
 		<< priority << ":"
+		<< size << ":"
 		<< time << "]";
 	return ost.str();
 }
 
 
+
 } } // namespace Sourcey::Spot
+
+
+
+	
+
+/*
+string SynchronizerTask::name() const
+{
+	return file.empty() ? "Unnamed" : Poco::Path(file).getFileName();	
+}
+*/

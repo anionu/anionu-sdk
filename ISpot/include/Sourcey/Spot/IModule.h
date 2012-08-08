@@ -47,9 +47,12 @@ class IModule: public ILoggable
 public:
 	IModule(IEnvironment& env);
 	virtual ~IModule();
-	
+
 	//virtual void initialize() = 0;
 	//virtual void uninitialize() = 0;
+
+	virtual void onSessionStart() {};
+	virtual void onSessionEnd() {};
 
 	IEnvironment& env();
 

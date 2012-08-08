@@ -44,7 +44,7 @@ namespace Sourcey {
 namespace Spot {
 
 
-struct SessionState: public StateT 
+struct SessionState: public State 
 {
 	enum Type 
 	{
@@ -89,8 +89,8 @@ public:
 
 	virtual bool isActive() const 
 	{ 
-		return stateEquals(SessionState::ActiveConnecting)
-			|| stateEquals(SessionState::ActiveOffline)
+		return stateEquals(SessionState::ActiveOffline)
+			|| stateEquals(SessionState::ActiveConnecting)
 			|| stateEquals(SessionState::ActiveOnline); 
 	}
 	

@@ -86,7 +86,7 @@ typedef Poco::Net::NameValueCollection ModeOptions;
 typedef std::map<std::string, IMode*> IModeMap;
 
 
-struct ModeState: public StateT 
+struct ModeState: public State 
 {
 	enum Type
 	{

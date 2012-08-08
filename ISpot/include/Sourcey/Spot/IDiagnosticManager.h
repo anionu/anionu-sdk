@@ -38,7 +38,7 @@ namespace Sourcey {
 namespace Spot {
 
 
-struct DiagnosticState: public StateT 
+struct DiagnosticState: public State 
 {
 	enum Type 
 	{

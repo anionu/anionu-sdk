@@ -84,7 +84,7 @@ typedef Net::TCPPacketStreamConnection TCPStreamingConnection;
 typedef std::vector<ConnectionStream*> ConnectionStreamList;
 
 
-struct StreamingState: public StateT 
+struct StreamingState: public State 
 {
 	enum Type 
 	{

@@ -46,10 +46,11 @@ namespace Anionu {
 struct Event;
 }
 
-//class TaskScheduler;
-
 
 namespace Spot {
+
+
+static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
 
 
 class ISession;

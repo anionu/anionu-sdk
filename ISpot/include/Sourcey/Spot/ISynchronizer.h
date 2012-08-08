@@ -43,7 +43,7 @@ namespace Spot {
 
 
 /*
-struct SynchronizerTaskStateChange: public StateT
+struct SynchronizerTaskStateChange: public State
 {
 	enum Type
 	{
@@ -87,12 +87,14 @@ struct SynchronizerTask: public JSON::ISerializable
 
 	std::string id;			// Unique ID
 	std::string parent;		// Parent ID (optional)
+	std::string	name;		// The task name (the file name is not set)
 	std::string	type;		// Video, Audio, Image, Archive
-	std::string	file;		// The asset file system path
+	std::string	file;		// The asset file path
 	std::string	state;		// Pending, Ready, Active, Complete, Cancelled, Failed
 	std::string	time;		// The asset timestamp
 	int priority;			// Value between 0 - 100
 	int progress;			// Value between 0 - 100
+	size_t size;				// The asset file size
 
 	JSON::Value params;		// Optional API request parameters
 	JSON::Value	data;		// API response data
@@ -101,12 +103,9 @@ struct SynchronizerTask: public JSON::ISerializable
 	std::string	error;		// Error message set when (Failed state)
 
 	SynchronizerTask();
-	SynchronizerTask(const std::string& type,
-		const std::string& file,
-		int priority = 0,
-		const std::string& time = 
-			Poco::DateTimeFormatter::format(
-			Poco::Timestamp(), "%Y-%m-%d %H:%M:%S"));
+	SynchronizerTask(
+		const std::string& type,
+		const std::string& file);
 
 	virtual SynchronizerTask* clone() const;
 
@@ -157,3 +156,9 @@ public:
 
 
 #endif // ANIONU_SPOT_ISynchronizer_H
+
+
+
+
+	//virtual std::string name() const;
+		/// Returns the file name part of the file path.
