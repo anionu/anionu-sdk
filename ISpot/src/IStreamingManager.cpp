@@ -68,23 +68,30 @@ void IStreamingManager::addSession(IStreamingSession* session)
 }
 
 
-IStreamingSession* IStreamingManager::getSession(const std::string& token)
+IStreamingSession* IStreamingManager::getSession(const string& token)
 {
 	return Manager::get(token, true);
 }
 
 
-IStreamingSession* IStreamingManager::removeSession(const std::string& token) 
+IStreamingSession* IStreamingManager::removeSession(const string& token) 
 {
 	log() << "Removing Session: " << token << endl;	
 	return Manager::remove(token);
 }
 
 	
+bool IStreamingManager::hasSession(const string& token) const
+{
+	return Manager::exists(token);
+}
+
+	
 void IStreamingManager::onItemTimeout(TimerCallback<IStreamingManager::Manager>& timer)
 {
 	log("debug") << "Item Timeout" << endl;
-
+	
+	// FIXME: Crashing here occasionally.
 	// This will result is freeing of the session object via callback.
 	static_cast<IStreamingSession*>(timer.opaque())->terminate();
 
@@ -152,7 +159,7 @@ void IStreamingManager::registerSession(IStreamingSession* session)
 }
 
 
-IStreamingSession* IStreamingManager::getSession(const std::string& token) 
+IStreamingSession* IStreamingManager::getSession(const string& token) 
 {
 	FastMutex::ScopedLock lock(_mutex);
 	IStreamingSessionMap::iterator it = _sessions.find(token);
@@ -162,7 +169,7 @@ IStreamingSession* IStreamingManager::getSession(const std::string& token)
 }
 
 
-bool IStreamingManager::terminateSession(const std::string& token) 
+bool IStreamingManager::terminateSession(const string& token) 
 {
 	Log("debug") << "[IStreamingManager] Terminating Media ISession: " << token << endl;	
 
@@ -183,7 +190,7 @@ bool IStreamingManager::terminateSession(const std::string& token)
 }
 
 
-bool IStreamingManager::removeSession(const std::string& token) 
+bool IStreamingManager::removeSession(const string& token) 
 {
 	Log("debug") << "[IStreamingManager] Removing Media ISession: " << token << endl;	
 

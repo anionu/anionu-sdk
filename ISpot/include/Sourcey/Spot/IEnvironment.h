@@ -83,18 +83,23 @@ public:
 		/// Returns the version string of the installed Spot
 		/// package.
 	
-	virtual void broadcastEvent(const Anionu::Event& event) = 0;
-		/// Broadcasts a surveillance event over the network.
-		/// If the event severity is higher than the minimum 
-		/// severity defined by the user then the event will
-		/// be broadcast over the remote network and saved on
-		/// the user account. If the event is not broadcast
-		/// then server side event notifications will not be
-		/// triggered.
+	virtual void createEvent(const Anionu::Event& event) = 0;
+		/// Creates a surveillance event via the Anionu REST API.
+		/// Once created the event will be broadcasted over the 
+		/// network to online peers.
+		/// This method should be used for important events which
+		/// need to be stored in the database.
+
+	virtual bool broadcastEvent(const Anionu::Event& event) = 0;
+		/// Broadcasts a surveillance event over the network to 
+		/// online peers.
+		/// This method should be used for messages or trivial
+		/// events which don't need to be stored in the database.
+		/// Returns false if offline, true otherwise.
 	
 	Signal<const Anionu::Event&> Event;
-		/// Signals a surveillance event. 
-		/// Called internally by broadcastEvent() to dispatch
+		/// Signals when a surveillance event has been triggered.
+		/// Called internally by createEvent() to dispatch
 		/// the event to the internal application.
 };
 
@@ -103,3 +108,13 @@ public:
 
 
 #endif // ANIONU_SPOT_IEnvironment_H
+
+
+
+		///
+		/// If the event severity is higher than the minimum 
+		/// severity defined by the user then the event will
+		/// be broadcast over the remote network and saved on
+		/// the user account. If the event is not broadcast
+		/// then server side event notifications will not be
+		/// triggered.

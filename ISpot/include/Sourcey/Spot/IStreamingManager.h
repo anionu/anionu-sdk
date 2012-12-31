@@ -48,6 +48,8 @@ public:
 	IStreamingManager(IEnvironment& env);
 	virtual ~IStreamingManager();
 
+	virtual IStreamingSession* createSession(StreamingOptions& options) = 0;
+
 	virtual void addSession(IStreamingSession* session);
 		/// Adds the session, or throws an ExistsException if
 		/// a session with a matching token already exists.
@@ -55,6 +57,9 @@ public:
 	virtual IStreamingSession* getSession(const std::string& token);
 		/// Returns the IStreamingSession instance or throws
 		/// a NotFoundException.
+	
+	virtual bool hasSession(const std::string& token) const;
+		/// Returns true if a session exists with the given token.
 
 	IStreamingSession* removeSession(const std::string& token);
 		/// Removes the session with the given token and returns

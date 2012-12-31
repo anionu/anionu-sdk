@@ -189,13 +189,13 @@ bool RecordingMode::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope)
+void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope)
 {
 	log() << "Creating Config Form" << endl;
 
 	FastMutex::ScopedLock lock(_mutex);
 
-	if (baseScope) {
+	if (defaultScope) {
 		element.setHint(
 			"This form enables you to configure the default settings for Recording Mode. "
 			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration)."
@@ -205,15 +205,15 @@ void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& ele
 	Symple::FormField field;	
 	
 	// Video Segment Duration
-	field = element.addField("text", _config.getScoped("SegmentDuration", baseScope), "Video Segment Duration");	
+	field = element.addField("number", _config.getScopedKey("SegmentDuration", defaultScope), "Video Segment Duration");	
 	field.setHint(
 		"This setting determines the length in seconds of each recorded video. "
 	);
-	field.setValue(_segmentDuration);
+	field.setValue(_config.getInt("SegmentDuration", _segmentDuration, defaultScope));
 	
 	/*
 	// Enable Video Synchronization
-	field = element.addField("boolean", _config.getScoped("SynchronizeVideos", baseScope), "Enable Video Synchronization");	
+	field = element.addField("boolean", _config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
 	field.setHint(
 		"Would you like to upload / synchronize recorded videos with your Anionu account? "
 		"This is not recommended for low-bandwidth accounts otherwise you will use up your bandwidth and storage allocation very quickly."

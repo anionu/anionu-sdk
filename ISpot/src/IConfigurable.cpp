@@ -64,7 +64,7 @@ bool IConfigurable::hasParsableConfig(Symple::Form& form) const
 }
 
 
-void IConfigurable::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope) 
+void IConfigurable::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope) 
 {	
 }
 

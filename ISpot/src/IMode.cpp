@@ -53,12 +53,12 @@ IMode::IMode(IEnvironment& env, IChannel& channel, const string& name) :
 	//
 	// Default Scope: channels.[name].modes.[name].[value]
 	//
-	_config.defaultScope = format("channels.%s.modes.%s.", _channel.name(), _name);
+	_config.channelScope = format("channels.%s.modes.%s.", _channel.name(), _name);
 	
 	//
 	// Base Scope: modes.[name].[value]
 	//
-	_config.baseScope = format("modes.%s.", _name);
+	_config.defaultScope = format("modes.%s.", _name);
 }
 
 
@@ -137,7 +137,7 @@ string IMode::name() const
 }
 
 
-IChannel& IMode::channel() 			
+IChannel& IMode::channel() const
 { 
 	FastMutex::ScopedLock lock(_mutex);	
 	return _channel; 
@@ -159,7 +159,7 @@ ModeOptions& IMode::options()
 
 
 /*
-void IMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope) 
+void IMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope) 
 {	
 	XMPP::FormField field = form.addField("fixed");	
 	field.addValue("No configuration options are available.");		
@@ -188,81 +188,85 @@ ModeConfiguration::ModeConfiguration(IMode& mode) :
 
 ModeConfiguration::ModeConfiguration(const ModeConfiguration& r) :
 	mode(r.mode),
-	defaultScope(r.defaultScope),
-	baseScope(r.baseScope)
+	channelScope(r.channelScope),
+	defaultScope(r.defaultScope)
 {
 }
 	
 
-string ModeConfiguration::getString(const string& key, const string& defaultValue) const 
+string ModeConfiguration::getString(const string& key, const string& defaultValue, bool forceDefaultScope) const 
 {
-	return mode.env().config().getString(getDefaultScope(key), 
-		mode.env().config().getString(getBaseScope(key), defaultValue));
+	return forceDefaultScope ? mode.env().config().getString(getDafaultKey(key), defaultValue) :
+		mode.env().config().getString(getChannelKey(key), 
+			mode.env().config().getString(getDafaultKey(key), defaultValue));
 }
 
 
-int ModeConfiguration::getInt(const string& key, int defaultValue) const 
+int ModeConfiguration::getInt(const string& key, int defaultValue, bool forceDefaultScope) const 
 {
-	return mode.env().config().getInt(getDefaultScope(key), 
-		mode.env().config().getInt(getBaseScope(key), defaultValue));
+	return forceDefaultScope ? mode.env().config().getInt(getDafaultKey(key), defaultValue) :
+		mode.env().config().getInt(getChannelKey(key), 
+			mode.env().config().getInt(getDafaultKey(key), defaultValue));
 }
 
 
-double ModeConfiguration::getDouble(const string& key, double defaultValue) const 
+double ModeConfiguration::getDouble(const string& key, double defaultValue, bool forceDefaultScope) const 
 {
-	return mode.env().config().getDouble(getDefaultScope(key), 
-		mode.env().config().getDouble(getBaseScope(key), defaultValue));
+	return forceDefaultScope ? mode.env().config().getDouble(getDafaultKey(key), defaultValue) :
+		mode.env().config().getDouble(getChannelKey(key), 
+			mode.env().config().getDouble(getDafaultKey(key), defaultValue));
 }
 
 
-bool ModeConfiguration::getBool(const string& key, bool defaultValue) const 
+bool ModeConfiguration::getBool(const string& key, bool defaultValue, bool forceDefaultScope) const 
 {
-	return mode.env().config().getBool(getDefaultScope(key), 
-		mode.env().config().getBool(getBaseScope(key), defaultValue));
+	return forceDefaultScope ? mode.env().config().getBool(getDafaultKey(key), defaultValue) :
+		mode.env().config().getBool(getChannelKey(key), 
+			mode.env().config().getBool(getDafaultKey(key), defaultValue));
 }
 
 
-void ModeConfiguration::setString(const string& key, const string& value, bool baseScope) 
+void ModeConfiguration::setString(const string& key, const string& value, bool defaultScope) 
 {
-	mode.env().config().setString(getScoped(key, baseScope), value);
+	mode.env().config().setString(getScopedKey(key, defaultScope), value);
 }
 
 
-void ModeConfiguration::setInt(const string& key, int value, bool baseScope) 
+void ModeConfiguration::setInt(const string& key, int value, bool defaultScope) 
 {	
-	mode.env().config().setInt(getScoped(key, baseScope), value);
+	mode.env().config().setInt(getScopedKey(key, defaultScope), value);
 }
 
 
-void ModeConfiguration::setDouble(const string& key, double value, bool baseScope) 
+void ModeConfiguration::setDouble(const string& key, double value, bool defaultScope) 
 {
-	mode.env().config().setDouble(getScoped(key, baseScope), value);
+	mode.env().config().setDouble(getScopedKey(key, defaultScope), value);
 }
 
 
-void ModeConfiguration::setBool(const string& key, bool value, bool baseScope) 
+void ModeConfiguration::setBool(const string& key, bool value, bool defaultScope) 
 {
-	mode.env().config().setBool(getScoped(key, baseScope), value);
+	mode.env().config().setBool(getScopedKey(key, defaultScope), value);
 }
 
 
-string ModeConfiguration::getDefaultScope(const string& key) const
+string ModeConfiguration::getChannelKey(const string& base) const
 {	
+	//if (channelScope.empty())
+	return channelScope + base;
+}
+
+
+string ModeConfiguration::getDafaultKey(const string& base) const
+{
 	//if (defaultScope.empty())
-	return defaultScope + key;
+	return defaultScope + base;
 }
 
 
-string ModeConfiguration::getBaseScope(const string& key) const
+string ModeConfiguration::getScopedKey(const string& base, bool defaultScope) const
 {
-	//if (baseScope.empty())
-	return baseScope + key;
-}
-
-
-string ModeConfiguration::getScoped(const string& key, bool baseScope) const
-{
-	return baseScope ? getBaseScope(key) : getDefaultScope(key);
+	return defaultScope ? getDafaultKey(base) : getChannelKey(base);
 }
 
 

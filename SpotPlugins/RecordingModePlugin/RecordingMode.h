@@ -32,11 +32,11 @@ public:
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
 	void printInformation(std::ostream& s);
-	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope = false);
+	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
 	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	//void printInformation(std::ostream& s);
-	//void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope = false);
+	//void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
 	//void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
 
 	virtual const char* className() const { return "Recording Mode"; }

@@ -13,20 +13,25 @@ namespace Anionu {
 
 
 struct Event
-	/// This class defines a runtime event that takes place 
+	/// This class defines a surveillance event that takes place 
 	/// on the Anionu system.
 	/// NOTE: Anionu notifications will be triggered based on
-	/// the event name (see Custom Events on the dashboard).
+	/// the event name (see Special Events on the dashboard).
 {	
 	enum Severity
 	{
-		None = 0,
+		Default = 0,
+		Safe,
 		Low,
 		Medium,
 		High
 	};
 
-	Event(Severity severity = None, 
+	Event(const std::string& name = "", 
+		const std::string& message = "", 
+		time_t time = ::time(0));
+
+	Event(Severity severity = Safe, 
 		const std::string& name = "", 
 		const std::string& message = "", 
 		time_t time = ::time(0));

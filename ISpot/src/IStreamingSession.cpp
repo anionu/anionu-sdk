@@ -83,7 +83,8 @@ void StreamingOptions::serialize(JSON::Value& root)
 	// switching references after assignment.
 	if (oformat.video.enabled) {
 		JSON::Value& v = root["video"];
-		v["codec"] = Media::Codec::idString(oformat.video.id);
+		//v["codec"] = Media::Codec::idString(oformat.video.id);
+		v["codec"] = oformat.video.name;
 		v["width"] = Util::itoa(oformat.video.width);
 		v["height"] = Util::itoa(oformat.video.height);
 		v["fps"] = Util::itoa(oformat.video.fps);
@@ -92,7 +93,8 @@ void StreamingOptions::serialize(JSON::Value& root)
 	
 	if (oformat.audio.enabled) {
 		JSON::Value& a = root["audio"];
-		a["codec"] = Media::Codec::idString(oformat.audio.id);
+		//a["codec"] = Media::Codec::idString(oformat.audio.id);
+		a["codec"] = oformat.audio.name;
 		a["bit-rate"] = Util::itoa(oformat.audio.bitRate);
 		a["channels"] = Util::itoa(oformat.audio.channels);
 		a["sample-rate"] = Util::itoa(oformat.audio.sampleRate);
@@ -123,7 +125,10 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	if (!v.isNull()) {		
 		//oformat.video.enabled = true; //v.isMember("enabled") ? v["enabled"].asBool() : true;
 		//if (oformat.video.enabled) {
-		if (v.isMember("codec")) oformat.video.id = Media::Codec::toID(v["codec"].asString());
+		//if (v.isMember("codec")) oformat.video.id = Media::Codec::toID(v["codec"].asString());
+
+		// TODO: Need a way t guess encoder from codec name
+		if (v.isMember("codec")) oformat.video.name = v["codec"].asString(); //Media::Codec::toID(v["codec"].asString());
 		if (v.isMember("width")) oformat.video.width = v["width"].asInt();
 		if (v.isMember("height")) oformat.video.height = v["height"].asInt();
 		if (v.isMember("fps")) oformat.video.fps = v["fps"].asInt();
@@ -134,7 +139,9 @@ void StreamingOptions::deserialize(JSON::Value& root)
 	// Audio
 	JSON::Value& a = root["audio"];
 	if (!a.isNull()) {	
-		if (a.isMember("codec")) oformat.audio.id = Media::Codec::toID(a["codec"].asString());
+
+		// TODO: Need a way t guess encoder from codec name
+		if (a.isMember("codec")) oformat.audio.name = v["codec"].asString(); //Media::Codec::toID(a["codec"].asString());
 		if (a.isMember("bit-rate")) oformat.audio.bitRate = a["bit-rate"].asInt();
 		if (a.isMember("channels")) oformat.audio.channels = a["channels"].asInt();
 		if (a.isMember("sample-rate")) oformat.audio.sampleRate = a["sample-rate"].asInt();

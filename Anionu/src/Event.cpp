@@ -8,13 +8,19 @@ namespace Sourcey {
 namespace Anionu {
 
 
+Event::Event(const string& name, const string& message, time_t time) :
+	severity(Severity::Default), name(name), message(message), time(time) 
+{
+}
+
+
 Event::Event(Severity severity, const string& name, const string& message, time_t time) :
 	severity(severity), name(name), message(message), time(time) 
 {
 }
 
 
-std::string Event::formatTime(const string& fmt, int timeZoneDifferential) const
+string Event::formatTime(const string& fmt, int timeZoneDifferential) const
 {
 	return Poco::DateTimeFormatter::format(
 		Poco::Timestamp::fromEpochTime(time),
@@ -31,20 +37,23 @@ string Event::severityStr() const
 string Event::severityToStr(Severity id) 
 { 	
 	switch (id) {
-	case None:		return "None";
+	case Default:	return "Default";
+	case Safe:		return "Safe";
 	case Low:		return "Low";
 	case Medium:	return "Medium";
 	case High:		return "High";
 	}
 	assert(0 && "unknown severity");
-	return "None";
+	return "Safe";
 }
 
 
-Event::Severity Event::strToSeverity(const std::string& id) 
+Event::Severity Event::strToSeverity(const string& id) 
 { 	
-	if (id == "None")
-		return None;
+	if (id == "Default")
+		return Default;
+	if (id == "Safe")
+		return Safe;
 	else if (id == "Low")
 		return Low;
 	else if (id == "Medium")
@@ -52,7 +61,7 @@ Event::Severity Event::strToSeverity(const std::string& id)
 	else if (id == "High")
 		return High;
 	assert(0 && "unknown severity");
-	return None;
+	return Default;
 }
 
 

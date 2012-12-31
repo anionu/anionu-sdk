@@ -32,6 +32,9 @@ macro(define_spot_plugin name)
     add_library(${name} MODULE ${lib_srcs} ${lib_hdrs})
     
     # Plug-ins can not have a debug prefix
+    if(ENABLE_SOLUTION_FOLDERS)
+      set_target_properties(${name} PROPERTIES FOLDER "appications")
+    endif()
     set_target_properties(${name} PROPERTIES DEBUG_POSTFIX "")
     
     #message(${LibSourcey_INCLUDE_LIBRARIES})

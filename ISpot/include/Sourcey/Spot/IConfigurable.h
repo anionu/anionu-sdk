@@ -60,8 +60,8 @@ public:
 		/// Prints textual help and information pertaining to the
 		/// current module. Basic HTML markup may be used.
 
-	virtual void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool baseScope);
-		/// Builds the config form for this module. The baseScope 
+	virtual void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope);
+		/// Builds the config form for this module. The defaultScope 
 		/// variable is only applicable for classes which use
 		/// multi-scoped configuration such as IModes.
 

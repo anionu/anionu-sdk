@@ -62,23 +62,23 @@ public:
 	ModeConfiguration(IMode& mode);
 	ModeConfiguration(const ModeConfiguration& r);
 
-	std::string getString(const std::string& key, const std::string& defaultValue) const;
-	int getInt(const std::string& key, int defaultValue) const;
-	double getDouble(const std::string& key, double defaultValue) const;
-	bool getBool(const std::string& key, bool defaultValue) const;
+	std::string getString(const std::string& key, const std::string& defaultValue, bool forceDefaultScope = false) const;
+	int getInt(const std::string& key, int defaultValue, bool forceDefaultScope = false) const;
+	double getDouble(const std::string& key, double defaultValue, bool forceDefaultScope = false) const;
+	bool getBool(const std::string& key, bool defaultValue, bool forceDefaultScope = false) const;
 
-	void setString(const std::string& key, const std::string& value, bool baseScope = false);
-	void setInt(const std::string& key, int value, bool baseScope = false);
-	void setDouble(const std::string& key, double value, bool baseScope = false);
-	void setBool(const std::string& key, bool value, bool baseScope = false);
+	void setString(const std::string& key, const std::string& value, bool defaultScope = false);
+	void setInt(const std::string& key, int value, bool defaultScope = false);
+	void setDouble(const std::string& key, double value, bool defaultScope = false);
+	void setBool(const std::string& key, bool value, bool defaultScope = false);
 	
-	std::string getDefaultScope(const std::string& key) const;
-	std::string getBaseScope(const std::string& key) const;
-	std::string getScoped(const std::string& key, bool baseScope = false) const;
+	std::string getChannelKey(const std::string& base) const;
+	std::string getDafaultKey(const std::string& base) const;
+	std::string getScopedKey(const std::string& base, bool defaultScope = false) const;
 
 	IMode& mode;
+	std::string channelScope;
 	std::string defaultScope;
-	std::string baseScope;
 };
 
 
@@ -128,7 +128,7 @@ public:
 	virtual void deactivate();
 
 	virtual std::string name() const;
-	virtual IChannel& channel();
+	virtual IChannel& channel() const;
 	virtual ModeConfiguration& config();
 	virtual ModeOptions& options();
 	

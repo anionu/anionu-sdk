@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Mpeg4, Speex, FLV, MP3, AAC (TODO: Use libfaac)
+# Mpeg4, Speex, FLV, MP3, AC3
 
 ./configure \
 	--enable-memalign-hack \
@@ -13,6 +13,7 @@
   --disable-doc \
   --disable-ffmpeg \
   --disable-ffplay \
+  --disable-ffprobe \
   --disable-ffserver \
   --disable-avdevice \
   --disable-avfilter \
@@ -29,12 +30,14 @@
   --enable-encoder=mp3 \
 	--enable-encoder=ac3_fixed \
   --enable-encoder=libspeex \
+	--enable-encoder=nellymoser \
   --enable-muxer=h263 \
   --enable-muxer=mp4 \
   --enable-muxer=flv \
   --enable-muxer=mjpeg \
   --enable-muxer=mp3 \
-	--enable-muxer=ac3
+	--enable-muxer=ac3 \
+	--enable-muxer=nellymoser
 
 
 #	--enable-muxer=ac3 \

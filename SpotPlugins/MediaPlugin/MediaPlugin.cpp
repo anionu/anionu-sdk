@@ -49,6 +49,7 @@ void MediaPlugin::initialize()
 		
 	log() << "Initializing 2" << endl;	
 		
+	/*
 	//
 	// MJPEG High (Streaming)
 	//
@@ -163,8 +164,13 @@ void MediaPlugin::initialize()
 		media.audioStreamingFormats().setDefault("Flash Speex");
 	log() << "Initializing 10" << endl;	
 	}
+	*/
 
-	/*
+
+
+
+
+	/* OLD
 	// MP4
 	Format mp4("MP4", Format::MP4, 
 		VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 20)//, 

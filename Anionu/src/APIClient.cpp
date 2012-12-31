@@ -222,7 +222,6 @@ void APIRequest::prepare()
 {	
 	setMethod(method.httpMethod);
 	setURI(method.uri.toString());
-	set("User-Agent", "Anionu C++ API");
 	HTTP::Request::prepare();
 
 	/*
