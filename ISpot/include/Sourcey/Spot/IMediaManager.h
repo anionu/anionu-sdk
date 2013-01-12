@@ -50,16 +50,21 @@ class IChannel;
 
 struct RecordingInfo 
 {
-	std::string token;
-	std::string channel;
+	std::string token;		// The session's unique identification token
+	std::string channel;	// The canllel we are recording on
+	std::string peer;		// The name of the instigating peer, used for broadcating events
 	Media::IPacketEncoder* encoder;
 	bool synchronize;
-	RecordingInfo(const std::string& token = "", const std::string& channel = "", 
-		Media::IPacketEncoder* encoder = NULL, bool synchronize = false) : 
-		token(token), 
-		channel(channel), 
-		encoder(encoder), 
-		synchronize(synchronize) {}
+	RecordingInfo(const std::string& token = "", 
+		const std::string& channel = "", 
+		const std::string& peer = "", 
+		Media::IPacketEncoder* encoder = NULL, 
+		bool synchronize = false) : 
+			token(token), 
+			channel(channel), 
+			peer(peer), 
+			encoder(encoder), 
+			synchronize(synchronize) {}
 };
 
 

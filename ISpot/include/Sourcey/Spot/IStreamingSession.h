@@ -55,19 +55,19 @@ class IChannel;
 
 struct StreamingOptions: public Media::EncoderOptions, public JSON::ISerializable
 {	
-	std::string peer;
-	std::string channel;
-	std::string token;
-	std::string transport;
-	std::string protocol;
-	std::string encoding;
-	int timeout;
+	std::string peer;		// Peer ID of the initiating party
+	std::string channel;	// The canllel we are streaming on
+	std::string token;		// The session's unique identification token
+	std::string transport;	// The transport protocol  [UDP, TCP, TLS]
+	std::string protocol;	// The packet protocol [Raw, HTTP, RTP/AVP]
+	std::string encoding;	// The packet encoding method [None, Base64]
+	int timeout;			// The lifetime after disconnection timeout value
 	StreamingOptions(
 		const std::string& peer = "",
 		const std::string& channel = "",
-		const std::string& transport = "TCP",	/// UDP, TCP, TLS
-		const std::string& protocol = "Raw",	/// Raw, HTTP, RTP/AVP, ...
-		const std::string& encoding = "None",	/// None, Base64, ...
+		const std::string& transport = "TCP",
+		const std::string& protocol = "Raw",
+		const std::string& encoding = "None",
 		const Media::Format& iformat = Media::Format(),
 		const Media::Format& oformat = Media::Format(),
 		int timeout = 20000);
