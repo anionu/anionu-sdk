@@ -39,8 +39,6 @@ namespace Spot {
 
 
 /*
-
-
 // ---------------------------------------------------------------------
 //	
 class ITaskScheduler: public IModule
@@ -59,57 +57,3 @@ public:
 
 
 #endif // ANIONU_SPOT_TaskScheduler_H
-
-
-
-	
-
-
-//protected:
-//	virtual bool valid() = 0;
-	
-	//virtual void onTimeout() = 0;
-		/// Performs task processing when the timer fires.
-	
-
-	//Poco::DateTime _time;	
-	//void setTime(std::time_t time);
-	//void setTime(const Poco::DateTime& time);
-	//void setTime(const std::string& time, const std::string& fmt = Poco::DateTimeFormat::ISO8601_FORMAT);
-		/// Sets the time the task will be run.
-		
-	//Poco::DateTime time();
-		/// Returns the time the task will be run.
-	
-	//virtual void run() = 0;
-
-//virtual void run();	
-//protected:
-//	std::string    _action; 
-//	Poco::DateTime _runAt;	
-
- //public StatefulSignal<ScheduledTaskState>, 
-	//std::string description; /// The test description.
-	//StringList summary;      /// The test summary, maybe including 
-							 /// troubleshooting information on failure.
-	
-	//virtual void check();
-	//virtual void reset();
-
-	//virtual bool complete() const;
-	//virtual bool passed() const;
-	//virtual bool failed() const;
-
-	//Signal<const std::string&> SummaryUpdated;
-		/// Fires when a new text item is added 
-		/// to the summary.
-
-	/// The StateChange signal will dispatch
-	/// diagnostic test results to delegates.
-	       /// The name of the test.
-	/*
-	virtual bool pass();
-	virtual bool fail();
-
-	virtual void addSummary(const std::string& text);
-	*/

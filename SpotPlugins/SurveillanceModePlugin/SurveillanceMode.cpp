@@ -1,6 +1,5 @@
 #include "SurveillanceMode.h"
 #include "SurveillanceMultipartPacketizer.h"
-
 #include "Sourcey/Spot/IChannel.h"
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfiguration.h"
@@ -180,7 +179,7 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 
 			// Create a Motion Detected event via the
 			// Anionu API to notify account users.
-			Anionu::Event event(Anionu::Event::High, "Motion Detected", env().session().name() + ": Motion detected on channel: " + _channel.name());
+			Anionu::Event event("Motion Detected", env().session().name() + ": Motion detected on channel: " + _channel.name(), Anionu::Event::SpotLocal, Anionu::Event::High);
 			env().createEvent(event);
 			
 			try {	
@@ -202,22 +201,27 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 bool SurveillanceMode::startRecording()
 {	
 	FastMutex::ScopedLock lock(_mutex); 
-
-	assert(_recordingInfo.token.empty());
-
+	_recordingAction.token = "";
+	_recordingAction.encoder = NULL;
+	_recordingAction.synchronize = _synchronizeVideos;
 	Media::RecorderOptions options;
 	env().media().initRecorderOptions(_channel, options);
+		log() << "Started Recording: " << _recordingAction.token << endl;
+	env().media().startRecording(_channel, options, _recordingAction);
+		
+	return true;
+	/*
 	//params.duration = time(0) + _segmentDuration;
-	RecordingInfo* info = env().media().startRecording(_channel, options);
+	RecordingAction* info = env().media().startRecording(_channel, options);
 	if (info) {
 		info->synchronize = _synchronizeVideos;
-		_recordingInfo = RecordingInfo(*info);
-		//_recordingInfo.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
-		log() << "Started Recording: " << _recordingInfo.token << endl;
+		_recordingAction = RecordingAction(*info);
+		//_recordingAction.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
 		return true;
 	}
 	
 	return false;
+	*/
 }
 
 
@@ -225,12 +229,12 @@ bool SurveillanceMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
-	if (!_recordingInfo.token.empty()) {
-		//_recordingInfo.encoder->StateChange -= delegate(this, &SurveillanceMode::onEncoderStateChange);
-		env().media().stopRecording(_recordingInfo.token);
-		log() << "Stopped Recording: " << _recordingInfo.token << endl;
-		_recordingInfo.token = "";
-		_recordingInfo.encoder = NULL;
+	if (!_recordingAction.token.empty()) {
+		//_recordingAction.encoder->StateChange -= delegate(this, &SurveillanceMode::onEncoderStateChange);
+		env().media().stopRecording(_recordingAction.token);
+		log() << "Stopped Recording: " << _recordingAction.token << endl;
+		_recordingAction.token = "";
+		_recordingAction.encoder = NULL;
 		return true;
 	}
 	return false;

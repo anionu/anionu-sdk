@@ -38,13 +38,27 @@ namespace Spot {
 
 
 IModule::IModule(IEnvironment& env) : 
-	_env(env)
+	_env(env), _supressEvents(false)
 {
 }
 
 
 IModule::~IModule()
 {
+}
+
+
+void IModule::setSupressEvents(bool flag)
+{
+	FastMutex::ScopedLock lock(_mutex);
+	_supressEvents = flag;
+}
+
+
+bool IModule::supressEvents() const
+{
+	FastMutex::ScopedLock lock(_mutex);
+	return _supressEvents;
 }
 
 

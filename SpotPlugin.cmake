@@ -33,7 +33,7 @@ macro(define_spot_plugin name)
     
     # Plug-ins can not have a debug prefix
     if(ENABLE_SOLUTION_FOLDERS)
-      set_target_properties(${name} PROPERTIES FOLDER "appications")
+      set_target_properties(${name} PROPERTIES FOLDER "applications")
     endif()
     set_target_properties(${name} PROPERTIES DEBUG_POSTFIX "")
     

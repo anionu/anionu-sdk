@@ -48,23 +48,26 @@ namespace Spot {
 class IChannel;
 
 
-struct RecordingInfo 
+struct RecordingAction 
 {
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The canllel we are recording on
-	std::string peer;		// The name of the instigating peer, used for broadcating events
+	std::string peer;		// The initigating peer ID, used for broadcating events
+	bool synchronize;		// Weather or not to synchronize the recorded media
+	bool supressEvents;		// Supress event creation for this recorder session
 	Media::IPacketEncoder* encoder;
-	bool synchronize;
-	RecordingInfo(const std::string& token = "", 
+	RecordingAction(const std::string& token = "", 
 		const std::string& channel = "", 
 		const std::string& peer = "", 
 		Media::IPacketEncoder* encoder = NULL, 
-		bool synchronize = false) : 
+		bool synchronize = false, 
+		bool supressEvents = false) : 
 			token(token), 
 			channel(channel), 
 			peer(peer), 
 			encoder(encoder), 
-			synchronize(synchronize) {}
+			synchronize(synchronize), 
+			supressEvents(supressEvents) {}
 };
 
 
@@ -82,12 +85,11 @@ public:
 		/// Initializes default recorder options from the current
 		/// user's configuration.
 	
-	virtual RecordingInfo* startRecording(IChannel& channel, const Media::RecorderOptions& options) = 0; //, bool disableSync = false
+	virtual void startRecording(IChannel& channel, const Media::RecorderOptions& options, RecordingAction& action) = 0;
 		/// Initializes a recorder instance for the current channel.
-		/// If disableSync then the video file NOT be synchronized
-		/// with the user account.
-		/// The returned RecordingInfo pointer is managed internally and,
-		/// and will be freed when the recording session ends.
+		/// RecordingAction fields should be populated as required
+		/// before calling this method.
+		/// An descriptive exception will be thrown on error.
 
 	virtual bool stopRecording(const std::string& token, bool whiny = true) = 0;
 		/// Stops the recorder session matching the given token.

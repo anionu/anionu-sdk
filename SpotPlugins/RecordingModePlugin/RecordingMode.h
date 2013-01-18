@@ -45,7 +45,7 @@ private:
 	//Media::CaptureRecorder	_recorder;
 	//Media::VideoParams		_videoParams;
 	//Media::AudioParams		_audioParams;
-	RecordingInfo	_recordingInfo;
+	RecordingAction	_recordingAction;
 	//std::string		_recordingToken;
 	int				_segmentDuration;
 	bool			_synchronizeVideos;

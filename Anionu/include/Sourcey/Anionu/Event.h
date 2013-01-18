@@ -20,25 +20,34 @@ struct Event
 {	
 	enum Severity
 	{
-		Default = 0,
-		Safe,
-		Low,
-		Medium,
-		High
+		Default = 0,	// Default threat level for current event type (specified via Dashboard)
+		Safe,			// Safe threat level
+		Low,			// Low threat level
+		Medium,			// Medium threat level
+		High			// High threat level
 	};
 
-	Event(const std::string& name = "", 
-		const std::string& message = "", 
+	enum Realm
+	{
+		SpotLocal = 0,	// Triggered by a command from the local interface
+		SpotRemote,		// Triggered by a command from a remote peer
+		Dashboard		// Triggered from the Anionu dashboard
+	};
+
+	Event(const std::string& name, 
+		const std::string& message, 
 		time_t time = ::time(0));
 
-	Event(Severity severity = Safe, 
-		const std::string& name = "", 
-		const std::string& message = "", 
+	Event(const std::string& name = "", 
+		const std::string& message = "", 	
+		Realm realm = SpotLocal,
+		Severity severity = Default,
 		time_t time = ::time(0));
 	
 	std::string name;
 	std::string message;
 	Severity severity;
+	Realm realm;
 	time_t time;
 		
 	std::string formatTime(
@@ -47,7 +56,11 @@ struct Event
 
 	std::string severityStr() const;
 	static std::string severityToStr(Severity id);
-	static Severity strToSeverity(const std::string& id);
+	static Severity strToSeverity(const std::string& id);	
+
+	std::string realmStr() const;
+	static std::string realmToStr(Realm id);
+	static Realm strToRealm(const std::string& id);
 }; 
 
 

@@ -85,28 +85,38 @@ void RecordingMode::deactivate()
 	
 bool RecordingMode::startRecording()
 {	
-	FastMutex::ScopedLock lock(_mutex); 
+	log() << "Start Recording" << endl;
 
-	//assert(_recordingInfo.token.empty());
+	FastMutex::ScopedLock lock(_mutex); 
 
 	RecorderOptions options;
 	env().media().initRecorderOptions(_channel, options);
 	options.duration = _segmentDuration * 1000;
-	RecordingInfo* info = env().media().startRecording(_channel, options);
-	if (info) {
-		info->synchronize = _synchronizeVideos;
-		_recordingInfo = RecordingInfo(*info);
-		log() << "Started Recording: " << _recordingInfo.token << endl;
-		return true;
-	}
+		
+	_recordingAction.token = "";
+	_recordingAction.encoder = NULL;
+	_recordingAction.synchronize = _synchronizeVideos;
+	//_recordingAction.supressEvents = true; // Only broadcast mode events to avoid clutter
+	env().media().startRecording(_channel, options, _recordingAction);
 
-	//RecordingInfo* info = env().media().startRecording(_channel, options);
-	//_recordingInfo.token = info->token;
-	//_recordingInfo = env().media().startRecording(_channel, options);
+	log() << "Started Recording: " << _recordingAction.token << endl;
+
+	//assert(_recordingAction.token.empty());
+	
+	//RecordingAction action;
+	//action.synchronize = _synchronizeVideos;
+	//if (info) {
+	//	info->synchronize = _synchronizeVideos;
+	//	_recordingAction = RecordingAction(*info);
+	//	
+	//	return true;
+	//}
+
+	//RecordingAction* info = env().media().startRecording(_channel, options);
+	//_recordingAction.token = info->token;
+	//_recordingAction = env().media().startRecording(_channel, options);
 	//info.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
-
-	//log() << "Started Recording: " << _recordingInfo.token << endl;
-	return false;
+	return true;
 }
 
 
@@ -114,12 +124,12 @@ bool RecordingMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
-	if (!_recordingInfo.token.empty()) {
-		_recordingInfo.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
-		env().media().stopRecording(_recordingInfo.token);
-		log() << "Stopped Recording: " << _recordingInfo.token << endl;
-		_recordingInfo.token = "";
-		_recordingInfo.encoder = NULL;
+	if (!_recordingAction.token.empty()) {
+		_recordingAction.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
+		env().media().stopRecording(_recordingAction.token);
+		log() << "Stopped Recording: " << _recordingAction.token << endl;
+		_recordingAction.token = "";
+		_recordingAction.encoder = NULL;
 		return true;
 	}
 	return false;
@@ -150,7 +160,7 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 			// Start a new recording segment if the mode is 
 			// still active.
 			if (isActive() &&
-				encoder == _recordingInfo.encoder) {
+				encoder == _recordingAction.encoder) {
 				encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
 				/*
 				{

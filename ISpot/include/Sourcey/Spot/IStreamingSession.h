@@ -173,15 +173,16 @@ public:
 														const std::string& request) = 0;
 		/// Creates a TCP socket connection for this media session.
 
+	virtual void setError(const std::string& reason);
+		/// Sets the session as erroneous, triggering failed events,
+		/// and resulting in termination by the StreamingManager.
+
 	virtual std::string token() const;
 	virtual IStreamingManager& service();
 	virtual PacketStream& stream();
 	virtual StreamingOptions& options();
 	virtual CandidateList candidates() const;
 	virtual ConnectionStreamList connections() const;
-
-	virtual void setError(const std::string& reason);
-		/// Sets the session as erroneous resulting in termination.
 	
 	virtual bool isActive() const;
 	virtual bool isError() const;

@@ -50,6 +50,12 @@ public:
 
 	//virtual void initialize() = 0;
 	//virtual void uninitialize() = 0;
+	
+	virtual void setSupressEvents(bool flag = true);
+	virtual bool supressEvents() const;
+		/// Supresses the creation of events by this module.
+		/// Usefull for reducing redunant events while 
+		/// deserializing and testing.
 
 	virtual void onSessionStart() {};
 	virtual void onSessionEnd() {};
@@ -61,6 +67,7 @@ public:
 protected:
 	mutable Poco::FastMutex _mutex;
 	IEnvironment& _env;
+	bool _supressEvents;
 };
 
 

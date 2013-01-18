@@ -50,10 +50,11 @@ struct SessionState: public State
 	{
 		None = 0,
 		Authenticating,
+		Failed,
 		ActiveOffline,
 		ActiveConnecting,
 		ActiveOnline,
-		Failed,
+		ActiveFailed,
 	};
 
 	std::string str(unsigned int id) const 
@@ -61,10 +62,11 @@ struct SessionState: public State
 		switch(id) {
 		case None:				return "None";
 		case Authenticating:	return "Authenticating";
+		case Failed:			return "Failed";
 		case ActiveOffline:		return "Active (Offline)";
 		case ActiveConnecting:	return "Active (Connecting)";
 		case ActiveOnline:		return "Active (Online)";
-		case Failed:			return "Failed";
+		case ActiveFailed:		return "Active (Failed)";
 		default:				assert(false);
 		}
 		return "undefined"; 
@@ -91,7 +93,8 @@ public:
 	{ 
 		return stateEquals(SessionState::ActiveOffline)
 			|| stateEquals(SessionState::ActiveConnecting)
-			|| stateEquals(SessionState::ActiveOnline); 
+			|| stateEquals(SessionState::ActiveOnline)
+			|| stateEquals(SessionState::ActiveFailed); 
 	}
 	
 	virtual const char* className() const { return "Session"; }

@@ -9,13 +9,13 @@ namespace Anionu {
 
 
 Event::Event(const string& name, const string& message, time_t time) :
-	severity(Severity::Default), name(name), message(message), time(time) 
+	name(name), message(message), realm(Realm::SpotLocal), severity(Severity::Default), time(time) 
 {
 }
 
 
-Event::Event(Severity severity, const string& name, const string& message, time_t time) :
-	severity(severity), name(name), message(message), time(time) 
+Event::Event(const string& name, const string& message, Realm realm, Severity severity, time_t time) :
+	severity(severity), realm(realm), name(name), message(message), time(time) 
 {
 }
 
@@ -62,6 +62,37 @@ Event::Severity Event::strToSeverity(const string& id)
 		return High;
 	assert(0 && "unknown severity");
 	return Default;
+}
+
+		
+string Event::realmStr() const 
+{
+	return realmToStr(realm);
+}
+
+
+string Event::realmToStr(Realm id) 
+{ 	
+	switch (id) {
+	case SpotLocal:		return "Spot Local";
+	case SpotRemote:	return "Spot Remote";
+	case Dashboard:		return "Dashboard";
+	}
+	assert(0 && "unknown realm");
+	return "Spot Local";
+}
+
+
+Event::Realm Event::strToRealm(const string& id) 
+{ 	
+	if (id == "Spot Local")
+		return SpotLocal;
+	if (id == "Spot Remote")
+		return SpotRemote;
+	else if (id == "Dashboard")
+		return Dashboard;
+	assert(0 && "unknown realm");
+	return SpotLocal;
 }
 
 

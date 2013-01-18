@@ -88,7 +88,7 @@ protected:
 	Media::MotionDetector _motionDetector;
 	PacketStream	_motionStream;
 	TokenList		_mediaTokens;
-	RecordingInfo	_recordingInfo;
+	RecordingAction	_recordingAction;
 	bool			_isConfiguring;
 	bool			_synchronizeVideos;
 };
