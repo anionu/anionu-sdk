@@ -47,6 +47,7 @@ StreamingOptions::StreamingOptions(
 	const string& transport,	// UDP, TCP, TLS
 	const string& protocol,		// Raw, HTTP, RTP/AVP
 	const string& encoding,		// None, Base64, ...
+	const string& mime,			// None, image/jpeg, multipart/x-mixed-replace ...
 	const Media::Format& iformat,
 	const Media::Format& oformat,		
 	int timeout) :
@@ -57,6 +58,7 @@ StreamingOptions::StreamingOptions(
 		transport(transport),
 		protocol(protocol),
 		encoding(encoding),
+		mime(mime),
 		timeout(timeout) 
 {
 }		
@@ -76,6 +78,8 @@ void StreamingOptions::serialize(JSON::Value& root)
 		root["protocol"] = protocol;
 	if (!encoding.empty())
 		root["encoding"] = encoding;
+	if (!mime.empty())
+		root["mime"] = mime;
 	if (oformat.label != "Unknown")
 		root["format"] = oformat.label;
 
@@ -118,6 +122,7 @@ void StreamingOptions::deserialize(JSON::Value& root)
 
 	protocol = root.isMember("protocol") ? root["protocol"].asString() : "Raw";	
 	encoding = root.isMember("encoding") ? root["encoding"].asString() : "None";
+	mime = root.isMember("mime") ? root["mime"].asString() : "None";
 
 	// Video
 	//if (oformat.video.enabled) {

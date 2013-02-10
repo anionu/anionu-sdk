@@ -60,7 +60,8 @@ struct StreamingOptions: public Media::EncoderOptions, public JSON::ISerializabl
 	std::string token;		// The session's unique identification token
 	std::string transport;	// The transport protocol  [UDP, TCP, TLS]
 	std::string protocol;	// The packet protocol [Raw, HTTP, RTP/AVP]
-	std::string encoding;	// The packet encoding method [None, Base64]
+	std::string encoding;	// The packet encoding method [None, Base64, ...]
+	std::string mime;		// The HTTP packet content type [None, image/jpeg, multipart/x-mixed-replace, ...]
 	int timeout;			// The lifetime after disconnection timeout value
 	StreamingOptions(
 		const std::string& peer = "",
@@ -68,6 +69,7 @@ struct StreamingOptions: public Media::EncoderOptions, public JSON::ISerializabl
 		const std::string& transport = "TCP",
 		const std::string& protocol = "Raw",
 		const std::string& encoding = "None",
+		const std::string& mime = "None",
 		const Media::Format& iformat = Media::Format(),
 		const Media::Format& oformat = Media::Format(),
 		int timeout = 20000);

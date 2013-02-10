@@ -49,6 +49,13 @@ struct Event;
 
 namespace Spot {
 
+	
+static const char* SDKVersion = "0.5.0";
+	/// Current Spot SDK version number.
+	/// This version must be bumped whenever the
+	/// current library or dependencies are updated.
+	/// Spot plugins should be compiled with the same
+	/// SDK version as the target Spot application.
 
 static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
 
@@ -76,12 +83,10 @@ public:
 	virtual IStreamingManager& streaming() /*const*/ = 0;
 	virtual IMediaManager& media() /*const*/ = 0;
 	virtual IDiagnosticManager& diagnostics() /*const*/ = 0;
-	//virtual TaskScheduler& scheduler() /*const*/ = 0;
 	virtual Logger& logger() /*const*/ = 0;
 
 	virtual std::string version() const = 0;
-		/// Returns the version string of the installed Spot
-		/// package.
+		/// Returns the current Spot version string.
 	
 	virtual void createEvent(const Anionu::Event& event) = 0;
 		/// Creates a surveillance event via the Anionu REST API.

@@ -2,6 +2,7 @@
    "title" : "Surveillance Mode Plugin",
    "author" : "Sourcey",
    "version" : "0.9.0",
+   "sdk-version" : "0.5.0",
    "package-name" : "SurveillanceModePlugin",
    "class-name" : "SurveillanceModePlugin",
    "file-name" : "SurveillanceModePlugin.dll"
