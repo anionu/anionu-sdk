@@ -87,7 +87,7 @@ public:
 	virtual std::string username() const = 0;
 	//virtual std::string password() const = 0;
 
-	virtual Poco::Path storagePath() const = 0;
+	virtual Poco::Path storagePath() = 0;
 
 	virtual bool isActive() const 
 	{ 

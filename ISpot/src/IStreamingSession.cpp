@@ -49,7 +49,7 @@ StreamingOptions::StreamingOptions(
 	const string& encoding,		// None, Base64, ...
 	const string& mime,			// None, image/jpeg, multipart/x-mixed-replace ...
 	const Media::Format& iformat,
-	const Media::Format& oformat,		
+	const Media::Format& oformat,
 	int timeout) :
 		Media::EncoderOptions(iformat, oformat),
 		token(CryptoProvider::generateRandomKey(32)),
@@ -59,7 +59,10 @@ StreamingOptions::StreamingOptions(
 		protocol(protocol),
 		encoding(encoding),
 		mime(mime),
-		timeout(timeout) 
+		timeout(timeout) ,
+		disableLAN(false) ,
+		disableHost(false) ,
+		disableRelay(false) 
 {
 }		
 

@@ -31,7 +31,7 @@
 
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-//#include "Sourcey/Util/Timer.h"
+#include "Sourcey/Flaggable.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Spot/IModule.h"
 #include "Sourcey/Net/TCPPacketStreamConnection.h"
@@ -56,13 +56,18 @@ class IChannel;
 struct StreamingOptions: public Media::EncoderOptions, public JSON::ISerializable
 {	
 	std::string peer;		// Peer ID of the initiating party
-	std::string channel;	// The canllel we are streaming on
+	std::string channel;	// The channel we are streaming from
 	std::string token;		// The session's unique identification token
-	std::string transport;	// The transport protocol  [UDP, TCP, TLS]
+	std::string transport;	// The transport protocol [UDP, TCP, TLS]
 	std::string protocol;	// The packet protocol [Raw, HTTP, RTP/AVP]
 	std::string encoding;	// The packet encoding method [None, Base64, ...]
 	std::string mime;		// The HTTP packet content type [None, image/jpeg, multipart/x-mixed-replace, ...]
 	int timeout;			// The lifetime after disconnection timeout value
+
+	bool disableLAN;		// Disable LAN candidates
+	bool disableHost;		// Disable Host candidates
+	bool disableRelay;		// Disable Relay candidates
+
 	StreamingOptions(
 		const std::string& peer = "",
 		const std::string& channel = "",
