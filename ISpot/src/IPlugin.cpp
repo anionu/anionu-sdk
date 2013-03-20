@@ -85,7 +85,7 @@ LogStream IPlugin::log(const char* level) const
 	if (_env == NULL)
 		return LogStream();
 	
-	return _env->logger().send(this, level); 
+	return _env->logger().send(level, this); 
 	//LogStream stream(_env->logger().send(level));
 	//printLog(stream);
 	//return stream;

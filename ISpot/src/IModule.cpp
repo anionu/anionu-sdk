@@ -65,7 +65,7 @@ bool IModule::supressEvents() const
 LogStream IModule::log(const char* level) const 
 { 
 	FastMutex::ScopedLock lock(_mutex);
-	return _env.logger().send(this, level);
+	return _env.logger().send(level, this);
 }	
 
 

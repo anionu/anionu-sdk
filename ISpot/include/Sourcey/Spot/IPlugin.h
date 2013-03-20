@@ -40,7 +40,7 @@ namespace Sourcey {
 namespace Spot {
 
 
-class IPlugin: public IConfigurable, public ILoggable
+class IPlugin: public IConfigurable, public IPolymorphic
 	/// A plugin is a runtime module that may be loaded to extend 
 	/// the core functionality of Spot.
 	/// An IEnvironment instance is available to the plugin before

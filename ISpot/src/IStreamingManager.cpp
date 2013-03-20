@@ -152,7 +152,7 @@ void IStreamingManager::registerSession(IStreamingSession* session)
 {
 	assert(session);
 	
-	Log("debug") << "[IStreamingManager] Registering Media ISession: " << session->token() << endl;
+	LogDebug() << "[IStreamingManager] Registering Media ISession: " << session->token() << endl;
 	
 	FastMutex::ScopedLock lock(_mutex);
 	_sessions[session->token()] = session;
@@ -171,7 +171,7 @@ IStreamingSession* IStreamingManager::getSession(const string& token)
 
 bool IStreamingManager::terminateSession(const string& token) 
 {
-	Log("debug") << "[IStreamingManager] Terminating Media ISession: " << token << endl;	
+	LogDebug() << "[IStreamingManager] Terminating Media ISession: " << token << endl;	
 
 	IStreamingSession* session = 0;
 	{
@@ -192,7 +192,7 @@ bool IStreamingManager::terminateSession(const string& token)
 
 bool IStreamingManager::removeSession(const string& token) 
 {
-	Log("debug") << "[IStreamingManager] Removing Media ISession: " << token << endl;	
+	LogDebug() << "[IStreamingManager] Removing Media ISession: " << token << endl;	
 
 	FastMutex::ScopedLock lock(_mutex);
 	IStreamingSessionMap::iterator it = _sessions.find(token);

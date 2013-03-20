@@ -30,6 +30,7 @@
 
 
 #include "Sourcey/Logger.h"
+#include "Sourcey/IPolymorphic.h"
 
 
 namespace Sourcey { 
@@ -39,7 +40,7 @@ namespace Spot {
 class IEnvironment;
 
 
-class IModule: public ILoggable
+class IModule: public IPolymorphic
 	/// This class is the unified interface from which all
 	/// Spot classes inherit from. It ensures all classes
 	/// have an IEnvironment reference and Logger access.
@@ -47,14 +48,11 @@ class IModule: public ILoggable
 public:
 	IModule(IEnvironment& env);
 	virtual ~IModule();
-
-	//virtual void initialize() = 0;
-	//virtual void uninitialize() = 0;
 	
 	virtual void setSupressEvents(bool flag = true);
 	virtual bool supressEvents() const;
-		/// Supresses the creation of events by this module.
-		/// Usefull for reducing redunant events while 
+		/// Suppresses the creation of events by this module.
+		/// Useful for reducing redundant events while 
 		/// deserializing and testing.
 
 	virtual void onSessionStart() {};

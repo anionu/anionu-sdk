@@ -90,17 +90,17 @@ public:
 
 	void onAPITransactionComplete(void*, APIMethod& service, HTTP::Response& response)
 	{
-		Log("trace") << "Anionu API Response:" 
+		LogTrace() << "Anionu API Response:" 
 			<< "\n\tMethod: " << service.name
 			<< "\n\tStatus: " << response.getStatus()
 			<< "\n\tReason: " << response.getReason()
 			<< "\n\tSuccess: " << response.success()
 			<< endl;
 		
-		Log("trace") << "Anionu API Response Headers:" << endl;
+		LogTrace() << "Anionu API Response Headers:" << endl;
 		response.write(cout);
 
-		Log("trace") << "Anionu API Response Body:" << endl;
+		LogTrace() << "Anionu API Response Body:" << endl;
 		cout << response.body.str() << endl;
 	}
 };
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 
 		// List Methods
 		else if (o == 'L') {
-			Log("trace") << "Listing Methods:" << endl;
+			LogTrace() << "Listing Methods:" << endl;
 			api.methods().print(cout);
 		} 
 
@@ -183,6 +183,6 @@ int main(int argc, char** argv)
 		}
 	}
 	
-	Log("trace") << "Bye!" << endl;
+	LogTrace() << "Bye!" << endl;
 	return 0;
 }

@@ -53,14 +53,14 @@ void MediaPlugin::initialize()
 	//
 	// MJPEG High (Streaming)
 	//
-	Format mjpegHigh("MJPEG High", Format::MJPEG, VideoCodec(Codec::MJPEG, "MJPEG", 640, 480, 15));
+	Format mjpegHigh("MJPEG High", "mjpeg", VideoCodec(Codec::MJPEG, "MJPEG", 640, 480, 15));
 	mjpegHigh.video.quality = 100;
 		
 
 	//
 	// MJPEG Low (Streaming)
 	//
-	Format mjpegLow("MJPEG Low", Format::MJPEG, VideoCodec(Codec::MJPEG, "MJPEG", 400, 300, 10));
+	Format mjpegLow("MJPEG Low", "mjpeg", VideoCodec(Codec::MJPEG, "MJPEG", 400, 300, 10));
 	mjpegLow.video.quality = 70;
 	
 
@@ -68,7 +68,7 @@ void MediaPlugin::initialize()
 	//
 	// MP4 (Recording)
 	//
-	Format mp4("MP4", Format::MP4, 
+	Format mp4("MP4", "mp4", 
 		VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 25), 
 		//AudioCodec(Codec::AAC, "AAC")
 		AudioCodec(Codec::AC3, "AC3")
@@ -77,7 +77,7 @@ void MediaPlugin::initialize()
 	//
 	// FLV Low (Streaming)
 	//
-	Format flvVideo("Flash Video", Format::FLV, 
+	Format flvVideo("Flash Video", "flv", 
 		VideoCodec(Codec::FLV, "FLV", 400, 300, 10)
 		//AudioCodec(Codec::NellyMoser, "NellyMoser", 1, 11025) 
 		//AudioCodec(Codec::Speex, "Speex", 1, 16000)
@@ -92,14 +92,14 @@ void MediaPlugin::initialize()
 	// Low-Complexity version of the H.264 Baseline Profile with AAC-LC audio
 	// up to 160 Kbps, 48kHz, stereo audio in .m4v, .mp4, and .mov file formats.
 	Format flvH264("Flash H264", 
-		Format::FLV, VideoCodec(Codec::H264, "H264")//, 
+		"flv", VideoCodec(Codec::H264, "H264")//, 
 		//AudioCodec(Codec::AAC, "AAC")
 		);
 
 	//
 	// Speex (Streaming)
 	//
-	Format flvSpeex("Flash Speex", Format::FLV, 
+	Format flvSpeex("Flash Speex", "flv", 
 		//VideoCodec(Codec::FLV, "FLV", 400, 300, 10),
 		//AudioCodec(Codec::NellyMoser, "NellyMoser", 1, 11025) 
 		AudioCodec(Codec::Speex, "Speex", 1, 16000)
@@ -172,13 +172,13 @@ void MediaPlugin::initialize()
 
 	/* OLD
 	// MP4
-	Format mp4("MP4", Format::MP4, 
+	Format mp4("MP4", "mp4", 
 		VideoCodec(Codec::MPEG4, "MPEG4", 400, 300, 20)//, 
 		//AudioCodec(Codec::AAC, "AAC")
 	);
 
 	// FLV
-	Format flv("FLV", Format::FLV, 
+	Format flv("FLV", "flv", 
 		VideoCodec(Codec::FLV, "FLV", 400, 300, 15), 
 		//AudioCodec(Codec::NellyMoser, "NellyMoser", 1, 11025)
 		//AudioCodec(Codec::Speex, "Speex", 1, 16000)
@@ -210,7 +210,7 @@ void MediaPlugin::initialize()
 		// H.264 video, up to 1.5 Mbps, 640 by 480 pixels, 30 frames per second,
 		// Low-Complexity version of the H.264 Baseline Profile with AAC-LC audio
 		// up to 160 Kbps, 48kHz, stereo audio in .m4v, .mp4, and .mov file formats.
-		Format fh264("Flash H264", Format::FLV, 
+		Format fh264("Flash H264", "flv", 
 			VideoCodec(Codec::H264, "H264"), 
 			AudioCodec(Codec::AAC, "AAC"));
 		
@@ -296,7 +296,7 @@ void MediaPlugin::onInitializeRecordingEncoder(void*, const RecorderOptions& opt
 {
 	log() << "Initialize Recording Encoder" << endl;
 
-	if (options.oformat.id != Format::Raw &&
+	if (options.oformat.id != "rawvideo" &&
 		encoder == NULL) {
 		encoder = createEncoder(options);
 	}
@@ -307,7 +307,7 @@ void MediaPlugin::onInitializeStreamingSession(void*, IStreamingSession& session
 {
 	log() << "Initialize Streaming Session" << endl;
 		
-	if (session.options().oformat.id != Format::Raw &&
+	if (session.options().oformat.id != "rawvideo" &&
 		session.stream().getProcessor<IPacketEncoder>() == NULL) {	
 	
 		RecorderOptions options(

@@ -103,13 +103,15 @@ bool IChannel::valid() const
 
 
 VideoCapture* IChannel::videoCapture(bool whiny) const 
-{
+{	
+	LogTrace() << "[IChannel] Get Video Capture: " << _videoDevice.id << _videoInputFile << endl;
+
 	FastMutex::ScopedLock lock(_mutex);
 
 	VideoCapture* capture = !_videoInputFile.empty() ?
-		MediaFactory::instance()->video.getCapture(_videoInputFile) : 
+		MediaFactory::instance()->createVideoCapture(_videoInputFile, true) : 
 		_videoDevice.id >= 0 ? 
-			MediaFactory::instance()->video.getCapture(_videoDevice.id) : NULL;
+			MediaFactory::instance()->getVideoCapture(_videoDevice.id) : NULL;
 		
 	if (whiny && capture == NULL) 
 		throw NotFoundException(_name + ": No video device");
@@ -123,7 +125,7 @@ AudioCapture* IChannel::audioCapture(int channels, int sampleRate, bool whiny) c
 	FastMutex::ScopedLock lock(_mutex);
 
 	AudioCapture* capture = _audioDevice.id >= 0 ? 
-		MediaFactory::instance()->audio.getCapture(_audioDevice.id, channels, sampleRate) : NULL;
+		MediaFactory::instance()->createAudioCapture(_audioDevice.id, channels, sampleRate) : NULL;
 		
 	if (whiny && capture == NULL) 
 		throw NotFoundException(_name + ": No audio device");

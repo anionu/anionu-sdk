@@ -290,7 +290,7 @@ void SurveillanceMode::onInitializeStreamingSession(void*, IStreamingSession& se
 			// Set the input format to GRAY8 for the encoder.
 			Media::VideoCapture* video = _channel.videoCapture(true);
 			AllocateOpenCVInputFormat(video, session.options().iformat);
-			session.options().iformat.video.pixfmt = Media::PixelFormat::GRAY8;
+			session.options().iformat.video.pixelFmt = "gray";
 
 			// Attach our motion detector to the stream.
 			// The motion detector will be the video source.

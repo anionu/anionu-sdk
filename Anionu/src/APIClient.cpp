@@ -54,16 +54,16 @@ namespace Anionu {
 APIClient::APIClient() :
 	_methods(*this)
 {
-	Log("trace", this) << "Creating" << endl;
+	log("trace") << "Creating" << endl;
 	//loadMethods(false);
 }
 
 
 APIClient::~APIClient()
 {
-	Log("trace", this) << "Destroying" << endl;
+	log("trace") << "Destroying" << endl;
 	cancelTransactions();
-	Log("trace", this) << "Destroying: OK" << endl;
+	log("trace") << "Destroying: OK" << endl;
 }
 
 
@@ -78,7 +78,7 @@ void APIClient::setCredentials(const string& username, const string& password, c
 
 bool APIClient::loadMethods(bool whiny)
 {
-	Log("trace", this) << "Loading Methods" << endl;
+	log("trace") << "Loading Methods" << endl;
 	FastMutex::ScopedLock lock(_mutex);	
 	try 
 	{
@@ -96,7 +96,7 @@ bool APIClient::loadMethods(bool whiny)
 
 void APIClient::cancelTransactions()
 {
-	Log("trace", this) << "Stopping Workers" << endl;
+	log("trace") << "Stopping Workers" << endl;
 	
 	FastMutex::ScopedLock lock(_mutex);
 
@@ -139,7 +139,7 @@ APITransaction* APIClient::call(const APIMethod& method)
 
 APITransaction* APIClient::call(APIRequest* request)
 {
-	Log("trace", this) << "Calling: " << request->method.name << endl;
+	log("trace") << "Calling: " << request->method.name << endl;
 	APITransaction* transaction = new APITransaction(request);
 	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
 	FastMutex::ScopedLock lock(_mutex);
@@ -164,7 +164,7 @@ AsyncTransaction* APIClient::callAsync(const APIMethod& method)
 
 AsyncTransaction* APIClient::callAsync(APIRequest* request)
 {
-	Log("trace", this) << "Calling: " << request->method.name << endl;
+	log("trace") << "Calling: " << request->method.name << endl;
 	AsyncTransaction* transaction = new AsyncTransaction();
 	transaction->setRequest(request);
 	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
@@ -176,13 +176,13 @@ AsyncTransaction* APIClient::callAsync(APIRequest* request)
 
 void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
 {
-	Log("trace", this) << "Transaction Complete" << endl;
+	log("trace") << "Transaction Complete" << endl;
 
 	FastMutex::ScopedLock lock(_mutex);
 	
 	for (vector<APITransaction*>::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
 		if (*it == sender) {
-			Log("trace", this) << "Removing Transaction: " << sender << endl;
+			log("trace") << "Removing Transaction: " << sender << endl;
 			_transactions.erase(it);
 
 			// The transaction is responsible for it's own destruction.
@@ -292,13 +292,13 @@ void APIMethod::format(const string& format)
 APIMethods::APIMethods(APIClient& client) :
 	_client(client)
 {
-	Log("trace") << "[APIMethods] Creating" << endl;
+	LogTrace() << "[APIMethods] Creating" << endl;
 }
 
 
 APIMethods::~APIMethods()
 {
-	Log("trace") << "[APIMethods] Destroying" << endl;
+	LogTrace() << "[APIMethods] Destroying" << endl;
 }
 
 
@@ -310,7 +310,7 @@ bool APIMethods::valid() const
 
 void APIMethods::update()
 {
-	Log("trace") << "[APIMethods] Updating" << endl;
+	LogTrace() << "[APIMethods] Updating" << endl;
 	FastMutex::ScopedLock lock(_mutex); 	
 
 	try 
@@ -323,7 +323,7 @@ void APIMethods::update()
 			throw Exception(format("API query failed: HTTP Error: %d %s", 
 				static_cast<int>(response.getStatus()), response.getReason()));
 
-		Log("trace") << "[APIMethods] Request Complete: " 
+		LogTrace() << "[APIMethods] Request Complete: " 
 			<< response.getStatus() << ": " << response.getReason() 
 			<< "\n\tData: " << response.body.str() 
 			<< endl;
@@ -334,7 +334,7 @@ void APIMethods::update()
 	} 
 	catch (Exception& exc) 
 	{
-		Log("error") << "API Error: " << exc.displayText() << endl;
+		LogError() << "API Error: " << exc.displayText() << endl;
 		exc.rethrow();
 	} 
 }
@@ -349,7 +349,7 @@ string APIMethods::endpoint()
 
 APIMethod APIMethods::get(const string& name, const string& format, const StringMap& params)
 {	
-	Log("trace") << "[APIMethods] Get: " << name << endl;
+	LogTrace() << "[APIMethods] Get: " << name << endl;
 	FastMutex::ScopedLock lock(_mutex); 	
 	APIMethod method;
 
@@ -384,7 +384,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 		method.format(format);
 		method.interpolate(params);
 
-		Log("trace") << "[APIMethods] Got Method"
+		LogTrace() << "[APIMethods] Got Method"
 			 << "\n\tName: " << method.name
 			 << "\n\tMethod: " << method.httpMethod
 			 << "\n\tUri: " << method.uri.toString()
@@ -393,7 +393,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 	}
 	catch (Exception& exc)
 	{
-		Log("error") << "[APIMethods] " << exc.displayText() << endl;
+		LogError() << "[APIMethods] " << exc.displayText() << endl;
 		exc.rethrow();
 	}
 	
@@ -416,19 +416,19 @@ void APIMethods::print(ostream& os) const
 APITransaction::APITransaction(APIRequest* request) : 
 	HTTP::Transaction(request)
 {
-	Log("trace") << "[APITransaction] Creating" << endl;
+	LogTrace() << "[APITransaction] Creating" << endl;
 }
 
 
 APITransaction::~APITransaction()
 {
-	Log("trace") << "[APITransaction] Destroying" << endl;
+	LogTrace() << "[APITransaction] Destroying" << endl;
 }
 
 
 void APITransaction::dispatchCallbacks()
 {	
-	Log("trace") << "[APITransaction] Process Callbacks: " << (!cancelled()) << endl;
+	LogTrace() << "[APITransaction] Process Callbacks: " << (!cancelled()) << endl;
 
 	if (!cancelled()) {
 		//Complete.dispatch(this, _response);
@@ -454,7 +454,7 @@ void APITransaction::dispatchCallbacks()
 		HTTPResponse res;
 		istream& rs = session.receiveResponse(res);
 
-		Log("trace") << "[APIMethods] Request Complete: " 
+		LogTrace() << "[APIMethods] Request Complete: " 
 			<< res.getStatus() << ": " 
 			<< res.getReason() << endl;
 
@@ -466,7 +466,7 @@ void APITransaction::dispatchCallbacks()
 		for (JSON::ValueIterator it = root.begin(); it != root.end(); it++) {		
 			RemotePackage* package = new RemotePackage(*it);
 			if (!package->valid()) {
-				Log("error") << "[PackageManager] Invalid package: " << package->name() << endl;
+				LogError() << "[PackageManager] Invalid package: " << package->name() << endl;
 				delete package;
 				continue;
 			}
@@ -499,5 +499,5 @@ void APITransaction::dispatchCallbacks()
 
 		//load(xml.data());
 
-		//Log("trace") << "[APIMethods] API Methods XML:\n" << endl;
+		//LogTrace() << "[APIMethods] API Methods XML:\n" << endl;
 		//print(cout);

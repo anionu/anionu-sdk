@@ -64,7 +64,7 @@ Authenticator::~Authenticator()
 
 bool Authenticator::validateRequest(UserManager* authenticator, const string& request) 
 {
-	Log("debug") << "[Authenticator] Validating Request: " + request << endl;
+	LogDebug() << "[Authenticator] Validating Request: " + request << endl;
 		
 	string httpMethod = request.substr(0, request.find_first_of(' '));
 	string requestUri = Util::parseURI(request);	
@@ -74,7 +74,7 @@ bool Authenticator::validateRequest(UserManager* authenticator, const string& re
 	string date = Util::parseHeader(request, "Date");
 
 	/*
-	Log("debug") << "Anionu Validating Request:"
+	LogDebug() << "Anionu Validating Request:"
 		<< "\n\tHTTP Method: " << httpMethod
 		<< "\n\tURI: " << requestUri
 		<< "\n\tAuthorization: " << authorization
@@ -127,7 +127,7 @@ string Authenticator::generateSignature(const string& password, const string& ht
 	);
 	encoder.close();
 	
-	Log("debug") << "Anionu Generating Signature:"
+	LogDebug() << "Anionu Generating Signature:"
 		<< "\n\tPassword: " << password
 		<< "\n\tMethod: " << httpMethod
 		<< "\n\tURI: " << requestUri

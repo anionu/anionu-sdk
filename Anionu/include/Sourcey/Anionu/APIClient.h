@@ -175,7 +175,7 @@ typedef std::vector<APITransaction*> APITransactionList;
 
 // ---------------------------------------------------------------------
 //
-class APIClient: public ILoggable
+class APIClient: public IPolymorphic
 {
 public:
 	APIClient();
