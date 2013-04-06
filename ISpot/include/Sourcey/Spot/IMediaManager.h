@@ -103,10 +103,10 @@ public:
 	virtual Media::FormatRegistry& recordingFormats() = 0;
 		/// Media formats for recording media.
 
-	virtual Media::FormatRegistry& localVideoStreamingFormats() = 0;
+	virtual Media::FormatRegistry& videoStreamingFormats() = 0;
 		/// Media formats for streaming media over the local network.
 
-	virtual Media::FormatRegistry& remoteVideoStreamingFormats() = 0;
+	//virtual Media::FormatRegistry& remoteVideoStreamingFormats() = 0;
 		/// Media formats for streaming media over the internet.
 
 	virtual Media::FormatRegistry& audioStreamingFormats() = 0;
@@ -115,11 +115,11 @@ public:
 	virtual Media::Format getRecordingFormat() = 0;
 		/// Returns she current user configured recording media format.
 		
-	virtual Media::Format getLocalVideoStreamingFormat() = 0;
+	virtual Media::Format getVideoStreamingFormat() = 0;
 		/// Returns the current user configured local network streaming
 		/// media format.
 
-	virtual Media::Format getRemoteVideoStreamingFormat() = 0;
+	//virtual Media::Format getRemoteVideoStreamingFormat() = 0;
 		/// The current user configured internet streaming media format.
 
 	virtual Media::Format getAudioStreamingFormat() = 0;
@@ -129,11 +129,11 @@ public:
 		/// Sets the recording media format for the current user
 		/// and updates configuration.
 		
-	virtual void setLocalVideoStreamingFormat(const Media::Format& format) = 0;
+	virtual void setVideoStreamingFormat(const Media::Format& format) = 0;
 		/// Sets the local network streaming media format for the
 		/// current user and updates configuration.
 
-	virtual void setRemoteVideoStreamingFormat(const Media::Format& format) = 0;
+	//virtual void setRemoteVideoStreamingFormat(const Media::Format& format) = 0;
 		/// Sets the internet streaming media format for the current
 		/// user and updates configuration.
 

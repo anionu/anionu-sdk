@@ -25,30 +25,23 @@ public:
 	bool startRecording();
 	bool stopRecording();
 	
-	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
-	
 	void loadConfig();
-
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
 	void printInformation(std::ostream& s);
+	RecordingAction& recordingAction();
+
 	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
 	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
-
-	//void printInformation(std::ostream& s);
-	//void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
-	//void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
+	
+	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
 
 	virtual const char* className() const { return "Recording Mode"; }
 
 private: 
-	//Media::CaptureRecorder	_recorder;
-	//Media::VideoParams		_videoParams;
-	//Media::AudioParams		_audioParams;
+	int		_segmentDuration;
+	bool	_synchronizeVideos;
 	RecordingAction	_recordingAction;
-	//std::string		_recordingToken;
-	int				_segmentDuration;
-	bool			_synchronizeVideos;
 
 	mutable Poco::FastMutex _mutex;
 };

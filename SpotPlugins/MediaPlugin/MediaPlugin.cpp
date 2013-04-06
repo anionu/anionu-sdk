@@ -127,13 +127,13 @@ void MediaPlugin::initialize()
 	//
 	{
 	log() << "Initializing 5" << endl;	
-		media.localVideoStreamingFormats().clear();
-		media.localVideoStreamingFormats().registerFormat(mjpegHigh);
+		media.videoStreamingFormats().clear();
+		media.videoStreamingFormats().registerFormat(mjpegHigh);
 		
 //#ifdef USING_FFMPEG
-		media.localVideoStreamingFormats().registerFormat(flvVideo);
-		media.localVideoStreamingFormats().registerFormat(flvH264);
-		media.localVideoStreamingFormats().setDefault("Flash Video");
+		media.videoStreamingFormats().registerFormat(flvVideo);
+		media.videoStreamingFormats().registerFormat(flvH264);
+		media.videoStreamingFormats().setDefault("Flash Video");
 //#endif
 	log() << "Initializing 6" << endl;	
 	}	
@@ -197,9 +197,9 @@ void MediaPlugin::initialize()
 	// Streaming Formats
 	//
 	{
-		media.localVideoStreamingFormats().registerFormat(flv);
+		media.videoStreamingFormats().registerFormat(flv);
 		media.remoteVideoStreamingFormats().registerFormat(flv);
-		media.localVideoStreamingFormats().setDefault("FLV");
+		media.videoStreamingFormats().setDefault("FLV");
 		media.remoteVideoStreamingFormats().setDefault("FLV");
 
 #if HAVE_H264
@@ -214,9 +214,9 @@ void MediaPlugin::initialize()
 			VideoCodec(Codec::H264, "H264"), 
 			AudioCodec(Codec::AAC, "AAC"));
 		
-		media.localVideoStreamingFormats().registerFormat(fh264);
+		media.videoStreamingFormats().registerFormat(fh264);
 		media.remoteVideoStreamingFormats().registerFormat(fh264);
-		media.localVideoStreamingFormats().setDefault("Flash H264");
+		media.videoStreamingFormats().setDefault("Flash H264");
 		media.remoteVideoStreamingFormats().setDefault("Flash H264");
 //#endif
 	}
@@ -255,10 +255,10 @@ void MediaPlugin::uninitialize()
 	{
 		
 		env().media().recordingFormats().unregisterFormat("MP4");
-		env().media().localVideoStreamingFormats().unregisterFormat("FLV");
+		env().media().videoStreamingFormats().unregisterFormat("FLV");
 		env().media().remoteVideoStreamingFormats().unregisterFormat("FLV");
 #if HAVE_H264
-		env().media().localVideoStreamingFormats().unregisterFormat("Flash H264");
+		env().media().videoStreamingFormats().unregisterFormat("Flash H264");
 		env().media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
 #endif
 	

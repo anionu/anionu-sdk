@@ -4,16 +4,15 @@
 #include "Sourcey/Spot/IChannel.h"
 #include "Sourcey/Spot/ISession.h"
 #include "Sourcey/Spot/ISynchronizer.h"
-//#include "Sourcey/Spot/Util.h"
-//#include "Sourcey/Media/CaptureFactory.h"
 #include "Sourcey/Logger.h"
 
 #include "Poco/File.h"
 
 
 using namespace std;
-using namespace Poco;
 using namespace Sourcey::Media;
+
+using Poco::FastMutex;
 
 
 namespace Sourcey {
@@ -48,10 +47,13 @@ void RecordingMode::loadConfig()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
-	log() << "Loading Config: " << _channel.name() << endl;
+	_segmentDuration = _config.getInt("SegmentDuration", 5 * 60);
+	_synchronizeVideos = _config.getBool("SynchronizeVideos", false);
 
-	_segmentDuration = _config.getInt("SegmentDuration", 3 * 60);
-	_synchronizeVideos = false; //_config.getBool("SynchronizeVideos", false);
+	log() << "Loading Config: " << _channel.name() 
+		<< "\r\tSegmentDuration: " << _segmentDuration 
+		<< "\r\tSynchronizeVideos: " << _synchronizeVideos 
+		<< endl;
 }
 
 
@@ -86,36 +88,24 @@ void RecordingMode::deactivate()
 bool RecordingMode::startRecording()
 {	
 	log() << "Start Recording" << endl;
-
 	FastMutex::ScopedLock lock(_mutex); 
 
 	RecorderOptions options;
-	env().media().initRecorderOptions(_channel, options);
+	_env.media().initRecorderOptions(_channel, options);
 	options.duration = _segmentDuration * 1000;
 		
 	_recordingAction.token = "";
 	_recordingAction.encoder = NULL;
 	_recordingAction.synchronize = _synchronizeVideos;
-	//_recordingAction.supressEvents = true; // Only broadcast mode events to avoid clutter
-	env().media().startRecording(_channel, options, _recordingAction);
+
+	// Tell the media manager to supress recording events for recording mode,
+	// otherwise we will end up with a huge number or recording events.
+	_recordingAction.supressEvents = true;
+	_env.media().startRecording(_channel, options, _recordingAction);
+
+	_recordingAction.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
 
 	log() << "Started Recording: " << _recordingAction.token << endl;
-
-	//assert(_recordingAction.token.empty());
-	
-	//RecordingAction action;
-	//action.synchronize = _synchronizeVideos;
-	//if (info) {
-	//	info->synchronize = _synchronizeVideos;
-	//	_recordingAction = RecordingAction(*info);
-	//	
-	//	return true;
-	//}
-
-	//RecordingAction* info = env().media().startRecording(_channel, options);
-	//_recordingAction.token = info->token;
-	//_recordingAction = env().media().startRecording(_channel, options);
-	//info.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
 	return true;
 }
 
@@ -126,7 +116,7 @@ bool RecordingMode::stopRecording()
 
 	if (!_recordingAction.token.empty()) {
 		_recordingAction.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
-		env().media().stopRecording(_recordingAction.token);
+		_env.media().stopRecording(_recordingAction.token);
 		log() << "Stopped Recording: " << _recordingAction.token << endl;
 		_recordingAction.token = "";
 		_recordingAction.encoder = NULL;
@@ -136,54 +126,111 @@ bool RecordingMode::stopRecording()
 }
 
 
-void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, const EncoderState& oldState)
+void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, const EncoderState&)
 {
 	log() << "Recorder State Changed: " << state.toString() << endl;
 	IEncoder* encoder = reinterpret_cast<IEncoder*>(sender);
 
-	switch (state.id()) {
-
-		case EncoderState::None:	
-		break;
-
-		case EncoderState::Ready:
-		break;
-
-		case EncoderState::Encoding:
-		break;
-
-		case EncoderState::Error:
-		break;
-
-		case EncoderState::Stopped:
-
-			// Start a new recording segment if the mode is 
-			// still active.
-			if (isActive() &&
-				encoder == _recordingAction.encoder) {
-				encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
-				/*
-				{
-					FastMutex::ScopedLock lock(_mutex); 
-
-					// Synchronize video's if required
-					if (_synchronizeVideos) {
-
-						RecorderOptions& options = static_cast<RecorderOptions&>(encoder->options());
-
-						Spot::Job job; 
-						job.type = "Video";
-						job.path = options.ofile;
-
-						_env.synchronizer() >> job;
-					}
-				}
-				*/
-				
-				startRecording();
+	if (state.equals(EncoderState::Stopped)) {
+		// Start a new recording segment if the mode is 
+		// still active.
+		if (isActive() &&
+			encoder == recordingAction().encoder) {
+			encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
+			/*
+			// Synchronize video's if required
+			if (_synchronizeVideos) {
+				RecorderOptions& options = static_cast<RecorderOptions&>(encoder->options());
+				Spot::Job job; 
+				job.type = "Video";
+				job.path = options.ofile;
+				_env.synchronizer() >> job;
 			}
-		break;
+			*/				
+			startRecording();
+		}
 	}
+}
+
+
+void RecordingMode::buildConfigForm(Symple::Form&, Symple::FormElement& element, bool defaultScope)
+{
+	log() << "Creating Config Form" << endl;
+	ModeConfiguration config = this->config();
+	Symple::FormField field;	
+
+	if (defaultScope) {
+		element.setHint(
+			"This form enables you to configure the default settings for Recording Mode. "
+			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration)."
+		);
+	}
+	
+	// Video Segment Duration
+	field = element.addField("number", config.getScopedKey("SegmentDuration", defaultScope), "Video Segment Duration");	
+	field.setHint(
+		"This setting determines the length in seconds of each recorded video. "
+	);
+	field.setValue(config.getInt("SegmentDuration", defaultScope));
+	
+	// Enable Video Synchronization
+	field = element.addField("boolean", config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
+	field.setHint(
+		"Would you like to synchronize/upload recorded videos to your online storage account? "
+		"Synchronizing a constant stream of videos requires a lot of online storage capacity, so appropriate care should be taken when managing this setting."
+		"You can check on the status of your remaining bandwidth and storage from the Account page of your dashboard."
+	);
+	field.setValue(config.getBool("SynchronizeVideos", defaultScope));	
+}
+
+
+void RecordingMode::parseConfigForm(Symple::Form&, Symple::FormElement& element)
+{
+	log() << "Parsing Config Form" << endl;
+
+	IEnvironment& env = this->env();	
+	Symple::FormField field;
+
+	field = element.getField("Recording Mode.SegmentDuration", true);
+	log() << "Parsing Config Form: SynchronizeVideos: " << field.valid() << endl;
+	if (field.valid()) {
+		int value = field.intValue();
+		if (value < 10 ||
+			value > 60 * 60) {
+			field.setError("The segment duration must be between 10 seconds and one hour.");
+		}
+		else
+			env.config().setInt(field.id(), value);
+	}
+
+	field = element.getField("Recording Mode.SynchronizeVideos", true);
+	log() << "Parsing Config Form: SynchronizeVideos: " << field.valid() << ": " << field.boolValue() << endl;
+	if (field.valid())
+		env.config().setBool(field.id(), field.boolValue());
+
+	loadConfig();
+}
+
+
+void RecordingMode::printInformation(std::ostream& s) 
+{
+	s << "<h1>About Recording Mode</h1>"
+		 "<p>Recording Mode provides Spot with the ability to record a constant stream of videos from any surveillance channel. "
+		 "If you require 24/7 surveillance with video backup then Recording Mode is what you need.</p>";
+
+	s << "<h2>Configuring Recording Mode</h2>"
+		"<p>Recorded videos can either stored on your local hard drive, "
+		 "or synchronized with your Anionu account where you can access them online via your dashboard.</p>"
+		"<p>Bear in mind that synchronizing a constant stream of videos requires a lot of online storage capacity, "
+		 "so appropriate care should be taken when considering weather or not to synchronize videos.</p>";
+	
+	//	"Synchronizing a constant stream of videos requires a lot of online storage capacity, so appropriate care should be taken when managing this setting."
+	//	"You can check on the status of your remaining bandwidth and storage from the Account page of your dashboard."
+	//s << "<h2>Recording Mode Options</h2>";
+
+	//s << "<h2>What video formats are available?</h2>";
+	//s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
+	//s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
 }
 
 
@@ -193,92 +240,16 @@ bool RecordingMode::isConfigurable() const
 }
 
 
+RecordingAction& RecordingMode::recordingAction()
+{	
+	FastMutex::ScopedLock lock(_mutex); 
+	return _recordingAction;
+}
+
+
 bool RecordingMode::hasParsableConfig(Symple::Form& form) const
 {
 	return form.hasField(".Recording Mode.", true);
-}
-
-
-void RecordingMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope)
-{
-	log() << "Creating Config Form" << endl;
-
-	FastMutex::ScopedLock lock(_mutex);
-
-	if (defaultScope) {
-		element.setHint(
-			"This form enables you to configure the default settings for Recording Mode. "
-			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration)."
-		);
-	}
-
-	Symple::FormField field;	
-	
-	// Video Segment Duration
-	field = element.addField("number", _config.getScopedKey("SegmentDuration", defaultScope), "Video Segment Duration");	
-	field.setHint(
-		"This setting determines the length in seconds of each recorded video. "
-	);
-	field.setValue(_config.getInt("SegmentDuration", _segmentDuration, defaultScope));
-	
-	/*
-	// Enable Video Synchronization
-	field = element.addField("boolean", _config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
-	field.setHint(
-		"Would you like to upload / synchronize recorded videos with your Anionu account? "
-		"This is not recommended for low-bandwidth accounts otherwise you will use up your bandwidth and storage allocation very quickly."
-	);
-	field.setValue(_synchronizeVideos);	
-	*/
-}
-
-
-void RecordingMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
-{
-	log() << "Parsing Config Form" << endl;
-
-	FastMutex::ScopedLock lock(_mutex); 
-	
-	Symple::FormField field;
-
-	field = element.getField("Recording Mode.SegmentDuration", true);
-	if (field.valid()) {
-		int value = field.intValue();
-		if (value < 10 ||
-			value > 60 * 60) {
-			field.setError("The segment duration must be between 10 seconds and one hour.");
-		}
-		else
-			_env.config().setInt(field.id(), value);
-	}
-
-	/*
-	field = element.getField("Recording Mode.SynchronizeVideos", true);
-	if (field.valid())
-		_env.config().setBool(field.id(), field.boolValue());
-		*/
-
-	loadConfig();
-}
-
-
-void RecordingMode::printInformation(std::ostream& s) 
-{
-	s << "<h2>About Recording Mode</h2>";
-	s << "<p>Recording Mode provides Spot with the ability to constantly record the video footage of the current surveillance channel. ";
-	s << "If you require 24/7 surveillance with video backup then Recording Mode is for you.</p>";
-
-	s << "<h2>Using Recording Mode</h2>";
-	s << "<p>Recorded videos are stored on your local hard drive, ";
-	s << "and can be optionally synchronized with your Anionu account where you can access them online via your dashboard.</p>";
-	s << "<p>We recommend that you keep video synchronization disabled if you have a low-bandwidth account "; 
-	s << "otherwise you will use up your bandwidth and storage allocation very quickly.</p>";
-	
-	//s << "<h2>Recording Mode Options</h2>";
-
-	//s << "<h2>What video formats are available?</h2>";
-	//s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
-	//s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
 }
 
 

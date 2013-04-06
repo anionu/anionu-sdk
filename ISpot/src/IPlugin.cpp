@@ -85,23 +85,8 @@ LogStream IPlugin::log(const char* level) const
 	if (_env == NULL)
 		return LogStream();
 	
-	return _env->logger().send(level, this); 
-	//LogStream stream(_env->logger().send(level));
-	//printLog(stream);
-	//return stream;
+	return _env->logger().send(level, this, className()); 
 }
-
-
-/*
-void IPlugin::printLog(LogStream& ost) const
-{
-	ost << "["
-		<< name()
-		<< ":"
-		<< this
-		<< "] ";
-}
-*/
 
 
 } } // namespace Sourcey::Spot

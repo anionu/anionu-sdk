@@ -38,53 +38,45 @@ void SurveillanceMode::initialize()
 
 	loadConfig();
 	
-	_env.streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);	
-	_env.streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);	
+	env().streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);	
+	env().streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);	
 }
 
 
 void SurveillanceMode::uninitialize() 
 {
 	log() << "UnInitializing" << endl;
-	
-	_env.streaming().InitializeStreamingSession -= delegate(this, &SurveillanceMode::onInitializeStreamingSession);
-	_env.streaming().InitializeStreamingConnection -= delegate(this, &SurveillanceMode::onInitializeStreamingConnection);
 
-	// FIXME: For some reason delegates added across the
-	// process boundary are causing the SignalBase to
-	// crash when cleanup() is called from the other side.
-	_env.streaming().InitializeStreamingSession.cleanup();
-	_env.streaming().InitializeStreamingConnection.cleanup();
+	// XXX: Delegates added across the process boundaries
+	// can caused the SignalBase to  crash when cleanup() 
+	// is called from the other side, so we call cleanup() here.
+	env().streaming().InitializeStreamingSession.cleanup();
+	env().streaming().InitializeStreamingConnection.cleanup();
 }
 
 
 void SurveillanceMode::loadConfig()
 {
 	log() << "Loading Config: " << _channel.name() << endl;
-
-	_motionDetector.options().motionThreshold = _config.getInt("MotionThreshold", 10000);			// 10000 [50 - 50000]
-	_motionDetector.options().minPixelValue = _config.getInt("MinPixelValue", 30);					// 30 [0 - 255]
-	_motionDetector.options().preSurveillanceDelay = _config.getInt("PreSurveillanceDelay", 0);		// 0 seconds
-	_motionDetector.options().postMotionEndedDelay = _config.getInt("PostTriggeredDelay", 3);		// 3 seconds
-	_motionDetector.options().minTriggeredDuration = _config.getInt("MinTriggeredDuration", 5);		// 5 seconds
-	_motionDetector.options().maxTriggeredDuration = _config.getInt("MaxTriggeredDuration", 10);	// 60 seconds (1 min)
-	_motionDetector.options().stableMotionNumFrames = _config.getInt("StableMotionNumFrames", 3);	// 3 frames
-	_motionDetector.options().stableMotionLifetime = _config.getDouble("StableMotionLifetime", 1.0);// 1 (High)
-	_motionDetector.options().captureFPS = _config.getInt("CaptureFPS", 10);						// 10 frames per second
+	
+	FastMutex::ScopedLock lock(_mutex); 
+	MotionDetector::Options& o = _motionDetector.options();
+	o.motionThreshold = _config.getInt("MotionThreshold", 10000);			// 10000 [50 - 50000]
+	o.minPixelValue = _config.getInt("MinPixelValue", 30);					// 30 [0 - 255]
+	o.preSurveillanceDelay = _config.getInt("PreSurveillanceDelay", 0);		// 0 seconds
+	o.postMotionEndedDelay = _config.getInt("PostTriggeredDelay", 3);		// 3 seconds
+	o.minTriggeredDuration = _config.getInt("MinTriggeredDuration", 5);		// 5 seconds
+	o.maxTriggeredDuration = _config.getInt("MaxTriggeredDuration", 10);	// 60 seconds (1 min)
+	o.stableMotionNumFrames = _config.getInt("StableMotionNumFrames", 3);	// 3 frames
+	o.stableMotionLifetime = _config.getDouble("StableMotionLifetime", 1.0);// 1 (High)
+	o.captureFPS = _config.getInt("CaptureFPS", 10);						// 10 frames per second
 	_synchronizeVideos = _config.getBool("SynchronizeVideos", true);
 }
 
 
 void SurveillanceMode::activate() 
 {
-	log() << "Enabling:"
-		<< "\n\tPre Surveillance Delay: " << _motionDetector.options().preSurveillanceDelay
-		<< "\n\tPost Triggered Delay: " << _motionDetector.options().postMotionEndedDelay
-		<< "\n\tMinimum Motion Triggered Duration: " << _motionDetector.options().minTriggeredDuration
-		<< "\n\tMaximum Motion Triggered Duration: " << _motionDetector.options().maxTriggeredDuration
-		//<< "\n\tStable Motion Frames: " << _motionDetector.options().stableMotionNumFrames
-		//<< "\n\tStable Motion Duration: " << _motionDetector.options().stableMotionLifetime
-		<< endl;
+	log() << "Activating" << endl;
 	
 	try
 	{
@@ -102,7 +94,7 @@ void SurveillanceMode::activate()
 
 void SurveillanceMode::deactivate() 
 {
-	log() << "Disabling" << endl;
+	log() << "Deactivating" << endl;
 	stopRecording();
 	stopMotionDetector();
 	IMode::deactivate();
@@ -112,22 +104,19 @@ void SurveillanceMode::deactivate()
 bool SurveillanceMode::startMotionDetector()
 {
 	FastMutex::ScopedLock lock(_mutex); 
-
 	if (_motionDetector.isRunning()) {
-		log("warn") << "The motion detector is already running" << endl;
+		log("warn") << "Cannot start, the motion detector is already running" << endl;
 		return false;
 	}
 
-	Media::VideoCapture* video = _channel.videoCapture(true);
-		
-	_motionStream.attach(video, false);
-
-	// Attach the motion detector to the stream.
-	_motionStream.attach(&_motionDetector, 1, false);
 	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
+	// Setup our packet stream with a video capture
+	// feeding into the motion detector.
+	Media::VideoCapture* video = _channel.videoCapture(true);		
+	_motionStream.attach(video, false);	
+	_motionStream.attach(&_motionDetector, 1, false);
 	_motionStream.start();
-
 	return true;
 }
 
@@ -143,7 +132,7 @@ bool SurveillanceMode::stopMotionDetector()
 		return true;
 	}
 		
-	log("warn") << "Cannot stop the motion detector because it is not running." << endl;
+	log("warn") << "Cannot stop, the motion detector is not running" << endl;
 	_motionStream.close();
 	return false;
 }
@@ -153,33 +142,31 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 {
 	log() << "Motion State Changed: " << state.toString() << endl;
 
-	// Discard events while configuring.
 	{
+		// Discard surveillance events while configuring
 		FastMutex::ScopedLock lock(_mutex); 
 		if (_isConfiguring)
 			return;
 	}
 
 	switch (state.id()) {
-		case Media::MotionDetectorState::Idle:	
-		break;
-
+		case Media::MotionDetectorState::Idle: 
+			break;
 		case Media::MotionDetectorState::Waiting:
 
-			// Stop recording.
-			// Always make this call just to be sure.
+			// Stop recording
+			// Always make this call just to be sure
 			stopRecording();
-
 		break;
-
-		case Media::MotionDetectorState::Vigilant:
-		break;
-
+		case Media::MotionDetectorState::Vigilant: 
+			break;
 		case Media::MotionDetectorState::Triggered:
 
-			// Create a Motion Detected event via the
-			// Anionu API to notify account users.
-			Anionu::Event event("Motion Detected", env().session().name() + ": Motion detected on channel: " + _channel.name(), Anionu::Event::SpotLocal, Anionu::Event::High);
+			// Create a Motion Detected event via the Anionu API to
+			// notify account users.
+			Anionu::Event event("Motion Detected", 
+				env().session().name() + ": Motion detected on channel: " + _channel.name(),
+				Anionu::Event::SpotLocal, Anionu::Event::High);
 			env().createEvent(event);
 			
 			try {	
@@ -188,9 +175,9 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 			} 
 			catch (...) {
 				// Catch and swallow recording errors. 
-				// If the Media Plugin is not installed we will make it here.
-				// We do nothing here since the Recording Failed event will be 
-				// triggered by the MediaManager.
+				// If the Media Plugin is not installed we will make it
+				// here. We do nothing here since the "Recording Failed"
+				// event will be triggered by the MediaManager.
 			}
 
 		break;
@@ -209,19 +196,8 @@ bool SurveillanceMode::startRecording()
 		log() << "Started Recording: " << _recordingAction.token << endl;
 	env().media().startRecording(_channel, options, _recordingAction);
 		
+	//_recordingAction.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
 	return true;
-	/*
-	//params.duration = time(0) + _segmentDuration;
-	RecordingAction* info = env().media().startRecording(_channel, options);
-	if (info) {
-		info->synchronize = _synchronizeVideos;
-		_recordingAction = RecordingAction(*info);
-		//_recordingAction.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
-		return true;
-	}
-	
-	return false;
-	*/
 }
 
 
@@ -278,38 +254,37 @@ void SurveillanceMode::onInitializeStreamingSession(void*, IStreamingSession& se
 {
 	log() << "Initialize Media Session: " << session.token() << endl;
 	
-	// Check if the session matches any of our tokens. 
+	// Check if the session matches any available tokens 
 	Token* token = getStreamingToken(session.token());
 	if (token) {
 
-		// Check the token is still valid.
+		// Ensure token validity
 		if (!token->expired()) {
-
 			log() << "Creating Configuration Media Session: " << session.token() << endl;
 
-			// Set the input format to GRAY8 for the encoder.
+			// Set the input format to GRAY8 for the encoder
 			Media::VideoCapture* video = _channel.videoCapture(true);
 			AllocateOpenCVInputFormat(video, session.options().iformat);
 			session.options().iformat.video.pixelFmt = "gray";
 
-			// Attach our motion detector to the stream.
-			// The motion detector will be the video source.
+			// Attach motion detector to the stream.
+			// The motion detector acts as the video source.
 			session.stream().attach(&_motionDetector, 3, false);			
 			session.StateChange += delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
 
-			// Let the session manager know we have completely
-			// overridden session initialization.
+			// Let the session manager know we have completely overridden 
+			// session initialization.
 			handled = true;
 	
-			// While the isConfiguring flag is set all motion
-			// detector states will be ignored. The flag will 
-			// be unset when the session is terminated.
+			// While the isConfiguring flag is set all motion detector states
+			// will be ignored. The flag will be unset when the media session
+			// is terminated.
 			FastMutex::ScopedLock lock(_mutex); 
 			_isConfiguring = true;
 		}
 
-		// Otherwise the session is no longer valid, so we throw 
-		// an exception to terminate the session in error.
+		// Otherwise the session is no longer valid, so we throw an exception 
+		// to terminate the session in error.
 		else {
 			log() << "Configuration Media Stream Timed Out" << endl;
 			removeStreamingToken(session.token());
@@ -323,21 +298,19 @@ void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession&
 {	
 	log() << "Initialize Media Connection: " << session.token() << endl;		
 	
-	// Check if the session matches any of our tokens. 
-	// If so then we can attach our custom packetizer
-	// to this connection.
+	// Check if the session request matches any of our tokens. 
+	// If so then we can attach our custom packetizer to this connection.
 	if (getStreamingToken(session.token())) {
 
-		log() << "Initializing Media Connection over " << session.options().protocol << endl;		
-			
-		FastMutex::ScopedLock lock(_mutex); 
+		log() << "Initializing Media Connection over " << session.options().protocol << endl;					
 
 		// Override the connection packetizer if we are using HTTP.
-		// HTTP is preferable for the configuration session so we
-		// can display surveillance metadata.
-		// NOTE: We have not completely overridden the connection
-		// stream creation, further encoders and packetizers may
-		// be added depending on streaming configuration.
+		// HTTP is the preferable transport for configuration sessions because
+		// we can prepend surveillance metadata using HTTP headers.
+		// NOTE: We have not completely overridden the connection stream
+		// creation, further encoders and packetizers may be added depending
+		// on streaming configuration.
+		FastMutex::ScopedLock lock(_mutex); 
 		if (session.options().protocol == "HTTP")
 			connection.attach(new SurveillanceMultipartPacketizer(_motionDetector), 12, true);
 	}
@@ -350,7 +323,7 @@ void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingStat
 			
 	log() << "Configuration Media Session State Changed: " << state << endl;
 
-	// Remove the configuration media session token 
+	// Remove the configuration media session token
 	// reference when the session closes or times out.
 	if (state.id() == StreamingState::Terminating) {
 		session->StateChange -= delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
@@ -378,34 +351,28 @@ bool SurveillanceMode::hasParsableConfig(Symple::Form& form) const
 
 void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope)
 {
-	log() << "Creating Config Form" << endl;
-	//log() << "Creating Config Form: " << defaultScope << endl;
-	//log() << "Creating Config Form: " << _config.getScopedKey("MotionThreshold", defaultScope) << endl;
-	//log() << "Creating Config Form: " << _config.getDafaultKey("MotionThreshold") << endl;
-	 
-
+	log() << "Creating Config Form" << endl;	 
+		
+	ModeConfiguration config = this->config();
 	Symple::FormField field;
 
-	// When configuring at channel scope we create a media element
-	// which will display live changes as the channel is configured.
-	// This is achieved by adding a "media" type field with a locally
-	// generated media session token as the value. When a media session
-	// request is received matching our token we create the video stream.
+	// Create a video media element which enables the user to preview motion changes
+	// in real time as the channel is configured. This is achieved by adding a "media"
+	// type field with is associated with a media session token. When an incoming media
+	// session request subscribes to the token we use our motion detector as the streaming
+	// source (see onInitializeStreamingConnection). Media streaming sessions are only 
+	// available when configuring at channel scope ie. defaultScope == false.
+	// While media sessions are active no surveillance events will be created.
 	if (!form.partial() && !defaultScope) {		
 		Token* token = createStreamingToken();
-
-		element.setHint(
-			"This form enables you to configure your surveillance and motion detection settings in real-time. "
-			"Use the help icons below for more information about each field. "
-		);
-
-		field = element.addField("media", _config.getChannelKey("Preview"), "Motion Preview");
-
+		field = element.addField("media", config.getChannelKey("Preview"), "Live Motion Preview");
 		field.setHint(
-			"The video above displays live changes as you modify the form below. "
-			"Keep an eye on the motion levels and motion detector state; "
-			"if motion levels exceed the threshold then the alarm will trigger. "
-			"Note that the video may be slightly delayed. "
+			"The video above enables you to visualize motion in real-time as Spot sees it. "
+			"Use the video to help you fine tune your motion detection settings."
+			"Keep the motion levels and motion state."
+			"If motion level exceeds the threshold then the motion detector will enter the 'Triggered' state."
+			"Use the help icons below for more information about each field. "
+			"Note that the video may be slightly delayed, depending on your connection speed. "
 		);
 		field.setValue(token->id());	
 	}
@@ -416,67 +383,62 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		);
 	}
 
-	field = element.addField("number", _config.getScopedKey("MotionThreshold", defaultScope), "Motion Threshold");	
+	field = element.addField("number", config.getScopedKey("MotionThreshold", defaultScope), "Motion Threshold");	
 	field.setHint(
 		"The 'Motion Threshold' determines the sensitivity of the motion detector. "
 		"Motion is detected if the 'Motion Level' exceeds the 'Motion Threshold' in any given frame."
 	);
-	field.setValue(_config.getInt("MotionThreshold", _motionDetector.options().motionThreshold, defaultScope));
+	field.setValue(config.getInt("MotionThreshold", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("PreSurveillanceDelay", defaultScope), "Pre Surveillance Mode Delay");	
+	field = element.addField("number", config.getScopedKey("PreSurveillanceDelay", defaultScope), "Pre Surveillance Mode Delay");	
 	field.setHint(
 		"This is the delay time (in seconds) before motion detection will actually commence after activating Surveillance Mode. "
 		"This should be set to the amount of time you need to vacate the room/premises after mode activation."
 	);
-	field.setValue(_config.getInt("PreSurveillanceDelay", _motionDetector.options().preSurveillanceDelay, defaultScope));
-	//field.setValue(_motionDetector.options().preSurveillanceDelay);
+	field.setValue(config.getInt("PreSurveillanceDelay", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("MinTriggeredDuration", defaultScope), "Min Triggered Duration");
+	field = element.addField("number", config.getScopedKey("MinTriggeredDuration", defaultScope), "Min Triggered Duration");
 	field.setHint(
 		"This is minimum duration of time that the motion detector can remain in the 'Triggered' state. "
 		"Also, each time motion is detected while in the 'Triggered' state the timer will be extended by 'Min Triggered Duration' seconds."
 	);
-	field.setValue(_config.getInt("MinTriggeredDuration", _motionDetector.options().minTriggeredDuration, defaultScope));
-	//field.setValue(_motionDetector.options().minTriggeredDuration);
+	field.setValue(config.getInt("MinTriggeredDuration", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("MaxTriggeredDuration", defaultScope), "Max Triggered Duration");	
+	field = element.addField("number", config.getScopedKey("MaxTriggeredDuration", defaultScope), "Max Triggered Duration");	
 	field.setHint(
 		"This is the maximum amount of time that the motion detector can remain in the 'Triggered' state. "
 		"In turn it also controls the maximum duration of any videos recorded in Surveillance Mode. "
 		"If the 'Max Triggered Duration' is reached, any videos will stop recording and the system will wait "
 		"for the 'Post Triggered Delay' duration of time before motion detection will recommence."
 	);
-	field.setValue(_config.getInt("MaxTriggeredDuration", _motionDetector.options().maxTriggeredDuration, defaultScope));
-	//field.setValue(_motionDetector.options().maxTriggeredDuration);
+	field.setValue(config.getInt("MaxTriggeredDuration", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("PostTriggeredDelay", defaultScope), "Post Triggered Delay");	
+	field = element.addField("number", config.getScopedKey("PostTriggeredDelay", defaultScope), "Post Triggered Delay");	
 	field.setHint(
 		"This is the delay time (in seconds) after the motion detector's 'Triggered' state has ended before motion detection will recommence."
 	);
-	field.setValue(_config.getInt("PostTriggeredDelay", _motionDetector.options().postMotionEndedDelay, defaultScope));
-	//field.setValue(_motionDetector.options().postMotionEndedDelay);
+	field.setValue(config.getInt("PostTriggeredDelay", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("StableMotionNumFrames", defaultScope), "Stable Motion Frames");
+	field = element.addField("number", config.getScopedKey("StableMotionNumFrames", defaultScope), "Stable Motion Frames");
 	field.setHint(
 		"In order to avoid false alarms the motion detector must detect a 'Stable Motion Frames' of motion frames before the alarm is triggered. "
 		"This is calculated as follows; if motion is detected on a 'Stable Motion Frames' number of frames before a 'Motion Lifetime' duration of time expires then the alarm will trigger."    
 	);
-	field.setValue(_config.getInt("StableMotionNumFrames", _motionDetector.options().stableMotionNumFrames, defaultScope));
-	//field.setValue(_motionDetector.options().stableMotionNumFrames);
+	field.setValue(config.getInt("StableMotionNumFrames", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", _config.getScopedKey("StableMotionLifetime", defaultScope), "Stable Motion Lifetime");	
+	field = element.addField("number", config.getScopedKey("StableMotionLifetime", defaultScope), "Stable Motion Lifetime");	
 	field.setHint(
 		"The duration (in seconds) in which motion pixels are remembered by the system. "
 		"This setting directly affects how long motion frames remain valid. " 
@@ -484,18 +446,16 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 		"of frames exceeding the 'Motion Threshold' are detected within a 'Motion Lifetime' "
 		"duration of time then the alarm will trigger." 
 	);
-	field.setValue(_config.getInt("StableMotionLifetime", _motionDetector.options().stableMotionLifetime, defaultScope));
-	//field.setValue(_motionDetector.options().stableMotionLifetime);
+	field.setValue(config.getInt("StableMotionLifetime", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
 	// Enable Video Synchronization
-	field = element.addField("boolean", _config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
+	field = element.addField("boolean", config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
 	field.setHint(
-		"Do you want to upload / synchronize recorded videos with your Anionu account?"
+		"Do you want to synchronize/upload recorded videos to your Anionu account?"
 	);
-	field.setValue(_config.getBool("SynchronizeVideos", _synchronizeVideos, defaultScope));
-	//field.setValue(_synchronizeVideos);	
+	field.setValue(config.getBool("SynchronizeVideos", defaultScope));
 }
 
 
@@ -504,6 +464,8 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 	log() << "Parsing Config Form" << endl;
 	
 	Symple::FormField field;
+	ModeConfiguration config = this->config();
+	IEnvironment& env = this->env();
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);
 	if (field.valid()) {
@@ -513,36 +475,36 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 			field.setError("The sensitivity setting must be a number between 50 and 50000.");
 		}
 		else
-			_env.config().setInt(field.id(), value);
+			env.config().setInt(field.id(), value);
 	}
 	
 	field = element.getField("Surveillance Mode.PreSurveillanceDelay", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.PostTriggeredDelay", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.MinTriggeredDuration", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.MaxTriggeredDuration", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.StableMotionNumFrames", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.StableMotionLifetime", true);
 	if (field.valid())
-		_env.config().setInt(field.id(), field.intValue());
+		env.config().setInt(field.id(), field.intValue());
 
 	field = element.getField("Surveillance Mode.SynchronizeVideos", true);
 	if (field.valid())
-		_env.config().setBool(field.id(), field.boolValue());
+		env.config().setBool(field.id(), field.boolValue());
 
 	loadConfig();
 }
