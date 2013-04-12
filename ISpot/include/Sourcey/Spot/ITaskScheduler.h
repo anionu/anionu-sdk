@@ -39,8 +39,7 @@ namespace Spot {
 
 
 /*
-// ---------------------------------------------------------------------
-//	
+// ---------------------------------------------------------------------	
 class ITaskScheduler: public IModule
 	/// This class manages timed tasks for Spot.
 {

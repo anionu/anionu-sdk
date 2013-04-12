@@ -41,10 +41,8 @@ namespace Spot {
 	
 	
 // ---------------------------------------------------------------------
-//
 // Synchronizer
 //
-// ---------------------------------------------------------------------
 ISynchronizer::ISynchronizer(IEnvironment& env) :
 	IModule(env)
 {	
@@ -52,10 +50,8 @@ ISynchronizer::ISynchronizer(IEnvironment& env) :
 	
 
 // ---------------------------------------------------------------------
-//
 // Synchronization Task
 //
-// ---------------------------------------------------------------------
 SynchronizerTask::SynchronizerTask() :
 	id(CryptoProvider::generateRandomKey(8)), 
 	priority(0), 

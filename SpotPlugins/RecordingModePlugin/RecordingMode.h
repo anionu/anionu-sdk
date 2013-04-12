@@ -28,7 +28,7 @@ public:
 	void loadConfig();
 	bool isConfigurable() const;
 	bool hasParsableConfig(Symple::Form& form) const;
-	void printInformation(std::ostream& s);
+	std::string infoFile();
 	RecordingAction& recordingAction();
 
 	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);

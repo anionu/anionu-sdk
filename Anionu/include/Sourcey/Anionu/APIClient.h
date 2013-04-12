@@ -49,7 +49,6 @@ namespace Anionu {
 
 
 // ---------------------------------------------------------------------
-//
 class APIMethod 
 {
 public:
@@ -71,7 +70,6 @@ public:
 
 
 // ---------------------------------------------------------------------
-//
 class APIClient;
 
 
@@ -113,7 +111,6 @@ private:
 
 
 // ---------------------------------------------------------------------
-//
 struct APICredentials
 {	
 	std::string username;
@@ -129,7 +126,6 @@ struct APICredentials
 
 
 // ---------------------------------------------------------------------
-//
 struct APIRequest: public HTTP::Request
 {
 	APIRequest() {} 	
@@ -155,7 +151,6 @@ private:
 
 
 // ---------------------------------------------------------------------
-//
 class APITransaction: public HTTP::Transaction
 {
 public:
@@ -174,7 +169,6 @@ typedef std::vector<APITransaction*> APITransactionList;
 
 
 // ---------------------------------------------------------------------
-//
 class APIClient: public IPolymorphic
 {
 public:

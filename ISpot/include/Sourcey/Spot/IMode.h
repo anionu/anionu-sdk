@@ -152,8 +152,6 @@ protected:
 	ModeOptions			_options;
 	std::string			_name;
 	StringMap			_data;
-
-	//friend class ModeConfiguration;
 }; 
 
 

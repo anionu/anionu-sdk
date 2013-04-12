@@ -56,9 +56,10 @@ public:
 		/// the provided form. If false is returned parseConfigForm()
 		/// will not be called.
 
-	virtual void printInformation(std::ostream& ost);
-		/// Prints textual help and information pertaining to the
-		/// current module. Basic HTML markup may be used.
+	virtual std::string infoFile();	
+		/// Returns the relative path to the infomration file
+		/// pertaining to this configurable module.
+		/// Information files are in Markdown format.
 
 	virtual void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope);
 		/// Builds the config form for this module. The defaultScope 

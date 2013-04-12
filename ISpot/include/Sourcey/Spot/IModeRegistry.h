@@ -45,10 +45,8 @@ class IEnvironment;
 
 
 // ---------------------------------------------------------------------
-//
 // IMode Factory
 //
-// ---------------------------------------------------------------------
 template<typename T> 
 IMode* createT(IEnvironment& env, IChannel& channel) { return new T(env, channel); }
 

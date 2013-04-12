@@ -171,7 +171,7 @@ void IMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element, St
 }
 
 
-void IMode::printInformation(ostream& s)
+void IMode::infoFile(ostream& s)
 {
 	s << _name << ": Sorry, no help is available.";
 }
@@ -179,7 +179,6 @@ void IMode::printInformation(ostream& s)
 
 
 // ---------------------------------------------------------------------
-//
 ModeConfiguration::ModeConfiguration(IMode& mode) :
 	mode(mode)
 {

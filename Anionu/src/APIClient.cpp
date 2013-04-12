@@ -47,10 +47,8 @@ namespace Anionu {
 
 
 // ---------------------------------------------------------------------
-//
 // APIClient
 //
-// ---------------------------------------------------------------------
 APIClient::APIClient() :
 	_methods(*this)
 {
@@ -214,10 +212,8 @@ string APIClient::endpoint()
 
 
 // ---------------------------------------------------------------------
-//
 // API Request
 //
-// ---------------------------------------------------------------------
 void APIRequest::prepare()
 {	
 	setMethod(method.httpMethod);
@@ -257,10 +253,8 @@ void APIRequest::prepare()
 
 
 // ---------------------------------------------------------------------
-//
 // API Method Description
 //
-// ---------------------------------------------------------------------
 APIMethod::APIMethod() 
 {
 }
@@ -285,10 +279,8 @@ void APIMethod::format(const string& format)
 
 
 // ---------------------------------------------------------------------
-//
 // API Methods
 //
-// ---------------------------------------------------------------------
 APIMethods::APIMethods(APIClient& client) :
 	_client(client)
 {
@@ -409,10 +401,8 @@ void APIMethods::print(ostream& os) const
 
 
 // ---------------------------------------------------------------------
-//
 // API Transaction
 //
-// ---------------------------------------------------------------------
 APITransaction::APITransaction(APIRequest* request) : 
 	HTTP::Transaction(request)
 {

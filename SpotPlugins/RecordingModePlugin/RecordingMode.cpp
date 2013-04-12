@@ -212,8 +212,10 @@ void RecordingMode::parseConfigForm(Symple::Form&, Symple::FormElement& element)
 }
 
 
-void RecordingMode::printInformation(std::ostream& s) 
+string RecordingMode::infoFile() 
 {
+	return "plugins/RecordingModePlugin/RecordingMode.md";
+	/*
 	s << "<h1>About Recording Mode</h1>"
 		 "<p>Recording Mode provides Spot with the ability to record a constant stream of videos from any surveillance channel. "
 		 "If you require 24/7 surveillance with video backup then Recording Mode is what you need.</p>";
@@ -231,6 +233,7 @@ void RecordingMode::printInformation(std::ostream& s)
 	//s << "<h2>What video formats are available?</h2>";
 	//s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
 	//s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
+	*/
 }
 
 

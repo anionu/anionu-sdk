@@ -39,10 +39,8 @@ namespace Anionu {
 
 
 // ---------------------------------------------------------------------
-//
 // Anionu Authenticator
 //
-// ---------------------------------------------------------------------
 class Authenticator: public HTTP::Authenticator
 {
 public:

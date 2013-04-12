@@ -40,7 +40,6 @@ namespace Spot {
 
 	
 // ---------------------------------------------------------------------
-//
 StreamingOptions::StreamingOptions(
 	const string& peer,			// The initiating peer ID
 	const string& channel,		// The streaming channel name
@@ -83,8 +82,8 @@ void StreamingOptions::serialize(JSON::Value& root)
 		root["encoding"] = encoding;
 	if (!mime.empty())
 		root["mime"] = mime;
-	if (oformat.label != "Unknown")
-		root["format"] = oformat.label;
+	if (oformat.name != "Unknown")
+		root["format"] = oformat.name;
 
 	// BUG: JSON Value does not seem to support
 	// switching references after assignment.
@@ -176,7 +175,6 @@ bool StreamingOptions::valid()
 
 
 // ---------------------------------------------------------------------
-//
 IStreamingSession::IStreamingSession(IEnvironment& env, 
 									 IStreamingManager& service, 
 									 const StreamingOptions& options) :
@@ -189,7 +187,7 @@ IStreamingSession::IStreamingSession(IEnvironment& env,
 	log() << "Creating:"		
 		<< "\n\tPID: " << this	
 		<< "\n\tChannel: " << _options.channel
-		<< "\n\tFormat: " << _options.oformat.label
+		<< "\n\tFormat: " << _options.oformat.name
 		<< "\n\tUsing Video: " << _options.oformat.video.enabled
 		<< "\n\tUsing Audio: " << _options.oformat.audio.enabled
 		<< "\n\tPeer: " << _options.peer

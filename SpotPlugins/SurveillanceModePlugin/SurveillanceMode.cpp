@@ -61,16 +61,16 @@ void SurveillanceMode::loadConfig()
 	
 	FastMutex::ScopedLock lock(_mutex); 
 	MotionDetector::Options& o = _motionDetector.options();
-	o.motionThreshold = _config.getInt("MotionThreshold", 10000);			// 10000 [50 - 50000]
+	o.motionThreshold = _config.getInt("MotionThreshold", 15000);			// 15000 [50 - 100000]
 	o.minPixelValue = _config.getInt("MinPixelValue", 30);					// 30 [0 - 255]
 	o.preSurveillanceDelay = _config.getInt("PreSurveillanceDelay", 0);		// 0 seconds
-	o.postMotionEndedDelay = _config.getInt("PostTriggeredDelay", 3);		// 3 seconds
+	o.postMotionEndedDelay = _config.getInt("PostTriggeredDelay", 0);		// 0 seconds
 	o.minTriggeredDuration = _config.getInt("MinTriggeredDuration", 5);		// 5 seconds
 	o.maxTriggeredDuration = _config.getInt("MaxTriggeredDuration", 10);	// 60 seconds (1 min)
-	o.stableMotionNumFrames = _config.getInt("StableMotionNumFrames", 3);	// 3 frames
-	o.stableMotionLifetime = _config.getDouble("StableMotionLifetime", 1.0);// 1 (High)
+	o.stableMotionNumFrames = _config.getInt("StableMotionFrames", 3);		// 3 frames
+	o.stableMotionLifetime = _config.getDouble("StableMotionLifetime", 1.0);// 1 second
 	o.captureFPS = _config.getInt("CaptureFPS", 10);						// 10 frames per second
-	_synchronizeVideos = _config.getBool("SynchronizeVideos", true);
+	_synchronizeVideos = _config.getBool("SynchronizeVideos", true);		// synchronize by default
 }
 
 
@@ -89,6 +89,8 @@ void SurveillanceMode::activate()
 		setState(this, ModeState::Error);
 		throw exc;
 	}
+
+	log() << "Activating: OK" << endl;
 }
 
 
@@ -98,6 +100,7 @@ void SurveillanceMode::deactivate()
 	stopRecording();
 	stopMotionDetector();
 	IMode::deactivate();
+	log() << "Deactivating: OK" << endl;
 }
 
 
@@ -133,7 +136,7 @@ bool SurveillanceMode::stopMotionDetector()
 	}
 		
 	log("warn") << "Cannot stop, the motion detector is not running" << endl;
-	_motionStream.close();
+	//_motionStream.close();
 	return false;
 }
 
@@ -302,8 +305,6 @@ void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession&
 	// If so then we can attach our custom packetizer to this connection.
 	if (getStreamingToken(session.token())) {
 
-		log() << "Initializing Media Connection over " << session.options().protocol << endl;					
-
 		// Override the connection packetizer if we are using HTTP.
 		// HTTP is the preferable transport for configuration sessions because
 		// we can prepend surveillance metadata using HTTP headers.
@@ -362,16 +363,20 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	// session request subscribes to the token we use our motion detector as the streaming
 	// source (see onInitializeStreamingConnection). Media streaming sessions are only 
 	// available when configuring at channel scope ie. defaultScope == false.
-	// While media sessions are active no surveillance events will be created.
+	// No surveillance events will be triggered while media sessions are active.
 	if (!form.partial() && !defaultScope) {		
+		element.setHint(
+			"This form enables you to configure the settings for Surveillance Mode. "
+			"The video below enables you to visualize motion in real-time as Spot sees it. "
+			"You can use the video as a guide while you fine tune the motion detector settings below. "
+			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results."
+		);
+
 		Token* token = createStreamingToken();
 		field = element.addField("media", config.getChannelKey("Preview"), "Live Motion Preview");
 		field.setHint(
-			"The video above enables you to visualize motion in real-time as Spot sees it. "
-			"Use the video to help you fine tune your motion detection settings."
-			"Keep the motion levels and motion state."
-			"If motion level exceeds the threshold then the motion detector will enter the 'Triggered' state."
-			"Use the help icons below for more information about each field. "
+			"Keep an eye on the motion levels and motion state in the top left hand corner of the video. "
+			"If motion level exceeds the motion threshold then the motion detector will enter the 'Triggered' state. "			
 			"Note that the video may be slightly delayed, depending on your connection speed. "
 		);
 		field.setValue(token->id());	
@@ -379,81 +384,91 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	else {	
 		element.setHint(
 			"This form enables you to configure the default settings for Surveillance Mode. "
-			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration)."
+			"Any settings configured here may be overridden on a per channel basis (see Channel Configuration). "
+			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results. "
 		);
 	}
 
 	field = element.addField("number", config.getScopedKey("MotionThreshold", defaultScope), "Motion Threshold");	
 	field.setHint(
-		"The 'Motion Threshold' determines the sensitivity of the motion detector. "
-		"Motion is detected if the 'Motion Level' exceeds the 'Motion Threshold' in any given frame."
+		"This setting directly affects the sensitivity of the motion detector. "
+		"A lower value means greater sensitivity; If the 'Motion Level' exceeds the 'Motion Threshold' then motion is detected."
 	);
 	field.setValue(config.getInt("MotionThreshold", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", config.getScopedKey("PreSurveillanceDelay", defaultScope), "Pre Surveillance Mode Delay");	
+	field = element.addField("number", config.getScopedKey("PreSurveillanceDelay", defaultScope), "Pre Surveillance Delay");	
 	field.setHint(
-		"This is the delay time (in seconds) before motion detection will actually commence after activating Surveillance Mode. "
-		"This should be set to the amount of time you need to vacate the room/premises after mode activation."
+		"This is the delay time (in seconds) before motion detection will actually commence. "
+		"Set this to the amount of time you need to vacate the surveilled area after activating Surveillance Mode."
 	);
 	field.setValue(config.getInt("PreSurveillanceDelay", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", config.getScopedKey("MinTriggeredDuration", defaultScope), "Min Triggered Duration");
+	field = element.addField("number", config.getScopedKey("MinTriggeredDuration", defaultScope), "Minimum Triggered Duration");
 	field.setHint(
 		"This is minimum duration of time that the motion detector can remain in the 'Triggered' state. "
-		"Also, each time motion is detected while in the 'Triggered' state the timer will be extended by 'Min Triggered Duration' seconds."
+		//"Also, each time motion is detected while in the 'Triggered' state the timer will be extended by 'Min Triggered Duration' seconds."
+		"This is also the minimum duration of any recorded videos."
 	);
 	field.setValue(config.getInt("MinTriggeredDuration", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", config.getScopedKey("MaxTriggeredDuration", defaultScope), "Max Triggered Duration");	
+	field = element.addField("number", config.getScopedKey("MaxTriggeredDuration", defaultScope), "Maximum Triggered Duration");	
 	field.setHint(
 		"This is the maximum amount of time that the motion detector can remain in the 'Triggered' state. "
-		"In turn it also controls the maximum duration of any videos recorded in Surveillance Mode. "
-		"If the 'Max Triggered Duration' is reached, any videos will stop recording and the system will wait "
-		"for the 'Post Triggered Delay' duration of time before motion detection will recommence."
+		"This is also the maximum duration of any recorded videos. "
+		
+		// recorded in Surveillance Mode
+		//"If the 'Max Triggered Duration' is reached, any videos will stop recording and the system will wait "
+		//"for the 'Post Triggered Delay' duration of time before motion detection will recommence."
 	);
 	field.setValue(config.getInt("MaxTriggeredDuration", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	field = element.addField("number", config.getScopedKey("PostTriggeredDelay", defaultScope), "Post Triggered Delay");	
+	field = element.addField("number", config.getScopedKey("StableMotionFrames", defaultScope), "Stable Motion Frames");
 	field.setHint(
-		"This is the delay time (in seconds) after the motion detector's 'Triggered' state has ended before motion detection will recommence."
+		"In order to avoid false alarms, the motion detector must detect a certain number of motion frames inside a time interval before the alarm will trigger. "
+		"This setting determines how many motion frames to detect before motion is considered stable. "
+		"Recommended setting: 3 (3 frames)"
 	);
-	field.setValue(config.getInt("PostTriggeredDelay", defaultScope));
-	if (!defaultScope)
-		field.setLive(true);
-
-	field = element.addField("number", config.getScopedKey("StableMotionNumFrames", defaultScope), "Stable Motion Frames");
-	field.setHint(
-		"In order to avoid false alarms the motion detector must detect a 'Stable Motion Frames' of motion frames before the alarm is triggered. "
-		"This is calculated as follows; if motion is detected on a 'Stable Motion Frames' number of frames before a 'Motion Lifetime' duration of time expires then the alarm will trigger."    
-	);
-	field.setValue(config.getInt("StableMotionNumFrames", defaultScope));
+	field.setValue(config.getInt("StableMotionFrames", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
 	field = element.addField("number", config.getScopedKey("StableMotionLifetime", defaultScope), "Stable Motion Lifetime");	
 	field.setHint(
-		"The duration (in seconds) in which motion pixels are remembered by the system. "
-		"This setting directly affects how long motion frames remain valid. " 
-		"The 'Motion Lifetime' value works as follows; if a 'Stable Motion Frames' "
-		"of frames exceeding the 'Motion Threshold' are detected within a 'Motion Lifetime' "
-		"duration of time then the alarm will trigger." 
+		"This is the duration of time (in seconds) that motion frames remain valid. "
+		"See 'Stable Motion Frames' for further explainiation about this setting. "
+		"Recommended setting: 1 (1 second)"
 	);
 	field.setValue(config.getInt("StableMotionLifetime", defaultScope));
 	if (!defaultScope)
 		field.setLive(true);
 
-	// Enable Video Synchronization
-	field = element.addField("boolean", config.getScopedKey("SynchronizeVideos", defaultScope), "Enable Video Synchronization");	
+	// Disabling this setting as it is not completely necessary, 
+	// and may overcomplicate things.
+	/*
+	field = element.addField("number", config.getScopedKey("PostTriggeredDelay", defaultScope), "Post Triggered Delay");	
 	field.setHint(
-		"Do you want to synchronize/upload recorded videos to your Anionu account?"
+		"This is the duration of time (in seconds) to wait before motion detection will recommence after the 'Triggered' state has ended. "
+		"During this delay, the motion detector will sit in the 'Waiting' state. "
+		"Once this delay is complete, the motion detector will enter the 'Vigilant' state again, and begin detecting motion."
+	);
+	field.setValue(config.getInt("PostTriggeredDelay", defaultScope));
+	if (!defaultScope)
+		field.setLive(true);
+		*/
+
+	// Enable Video Synchronization
+	field = element.addField("boolean", config.getScopedKey("SynchronizeVideos", defaultScope), "Synchronize Videos");	
+	field.setHint(
+		"Do you want to synchronize/upload recorded videos to your online account? "
+		"You can access synchronized videos from your dashboard." //are available 
 	);
 	field.setValue(config.getBool("SynchronizeVideos", defaultScope));
 }
@@ -471,8 +486,8 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 	if (field.valid()) {
 		int value = field.intValue();
 		if (value < 50 ||
-			value > 50000) {
-			field.setError("The sensitivity setting must be a number between 50 and 50000.");
+			value > 100000) {
+			field.setError("Must be a number between 50 and 100000.");
 		}
 		else
 			env.config().setInt(field.id(), value);
@@ -482,9 +497,11 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 	if (field.valid())
 		env.config().setInt(field.id(), field.intValue());
 
+	/*
 	field = element.getField("Surveillance Mode.PostTriggeredDelay", true);
 	if (field.valid())
 		env.config().setInt(field.id(), field.intValue());
+		*/
 
 	field = element.getField("Surveillance Mode.MinTriggeredDuration", true);
 	if (field.valid())
@@ -494,7 +511,7 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 	if (field.valid())
 		env.config().setInt(field.id(), field.intValue());
 
-	field = element.getField("Surveillance Mode.StableMotionNumFrames", true);
+	field = element.getField("Surveillance Mode.StableMotionFrames", true);
 	if (field.valid())
 		env.config().setInt(field.id(), field.intValue());
 
@@ -510,16 +527,58 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 }
 
 
-void SurveillanceMode::printInformation(ostream& s) 
-{
-	s << "<h2>About Surveillance Mode</h2>";
-	s << "<p>Surveillance Mode provides Spot with advanced motion detection capabilities and notifications. ";
+string SurveillanceMode::infoFile() 
+{	
+	return "plugins/SurveillanceModePlugin/SurveillanceMode.md";
+	/*
+	std::ifstream infile;
+	//this->path()
+	infile.open(path().data(), std::ifstream::in);
+	if (!infile.is_open())		
+		throw Poco::OpenFileException("Cannot open input file: " + path);
+
+	JSON::Reader reader;
+	bool res = reader.parse(infile, root);
+	infile.close();
+	s << 
+
+		"<h1>About Surveillance Mode</h1>"
+		"<p>Surveillance Mode provides Spot with motion detection capabilities. "
+		"Surveillance mode is ideal for when you are away from the surveilled premises, and want to protect yourself against unwanted intruders.</p>"
+
+		"<p class=\"note\">The text below includes references to Surveillance Mode configuration options. "
+		"There references are capitalized and enclosed in inverted commas. "
+		"See the Mode Configuration page for a detailed description of each option.</p>"
 	
-	s << "<h2>Using Surveillance Mode</h2>";
+		"<h2>How It Works</h2>"
+		"<p>When Surveillance Mode is activated for a channel, it will begin detecting motion after the 'Pre Surveillance Delay' has elapsed. "
+		"The 'Pre Surveillance Delay' option gives you time to leave the premesis after activating Surveilance Mode.</p>"
+		"<p>When motion is detected the process is as follows:</p>"
+		"<ul>"
+		"<li>A 'Motion Detected' event will be created which will trigger notifications to you or a designated third party. "
+		"See the 'Event Notifiers' page of your dashboard to configure who receives notifications.</li>"
+		"<li>A video will be recorded during the interval of motion, and optionally synchronized with your Anionu account. "
+		"If you want videos to be synchronized be sure to to enable the 'SynchronizeVideos' option on the 'Mode Configuration' page."
+		"</li>"
+		"</ul>"
+
+	
+	s << "<h2>Best Configuration Tips</h2>";
+	
+	configured and Spot will begin detecting motion on the current 
 	s << "<p>Once Surveillance Mode is configured and enabled Spot will begin detecting motion on the current channel.</p>";
 	s << "<p>When motion is detected two things will happen:</p>";
 	s << "<ul><li>A video will be recorded and optionally synchronized with your Anionu account.</li>"; 
 	s << "<ul><li>A 'Motion Detected' event will be created which will trigger notifications.</li>";
+
+	s << "Surveillance mode is ideal for when you are away from your surveilled premises, and want to be notified about any trespasser. ";
+	he Surveillance plugin provides Spot with motion detection capabilities. Surveillance mode is perfect for when you are away from your surveilled premises. The plugin enables you to configure motion detection sensitivities, be notified by SMS when motion is detected, and record videos during intervals of motion.
+	
+		//"This setting directly affects how long motion frames remain valid. " 
+		//"The 'Motion Lifetime' value works as follows; if a 'Stable Motion Frames' "
+		//"of frames exceeding the 'Motion Threshold' are detected within a 'Motion Lifetime' "
+		//"duration of time then the alarm will trigger." 
+		*/
 }
 
 

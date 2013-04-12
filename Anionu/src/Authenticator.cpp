@@ -45,10 +45,8 @@ namespace Anionu {
 
 
 // ---------------------------------------------------------------------
-//
 // Anionu HTTP Authenticator
 //
-// ---------------------------------------------------------------------
 Authenticator::Authenticator(const string& realm, const string& version)
 {
 	_realm = realm;

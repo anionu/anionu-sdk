@@ -74,9 +74,9 @@ void IConfigurable::parseConfigForm(Symple::Form& form, Symple::FormElement& ele
 }
 
 
-void IConfigurable::printInformation(ostream& ost)
+string IConfigurable::infoFile()
 {
-	ost << "No information is available for this module." << endl;
+	return "";
 }
 
 

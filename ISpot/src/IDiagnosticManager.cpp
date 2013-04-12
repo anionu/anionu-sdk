@@ -100,7 +100,6 @@ bool Diagnostic::failed() const
 
 
 // ---------------------------------------------------------------------
-//
 IDiagnosticManager::IDiagnosticManager(IEnvironment& env) :
 	IModule(env)
 {	
