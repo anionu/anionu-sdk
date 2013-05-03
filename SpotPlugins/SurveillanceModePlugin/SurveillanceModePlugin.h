@@ -1,5 +1,5 @@
-#ifndef ANIONU_SPOT_SurveillanceModePluginPlugin_H
-#define ANIONU_SPOT_SurveillanceModePluginPlugin_H
+#ifndef ANIONU_SPOT_SurveillanceModePlugin_H
+#define ANIONU_SPOT_SurveillanceModePlugin_H
 
 
 #include "Sourcey/Spot/IPlugin.h"
@@ -17,32 +17,10 @@ public:
 
 	void initialize();
 	void uninitialize();
-	
-	/*
-	std::string name() const
-	{
-		return "SurveillanceModePlugin";
-	}
-	
-	std::string title() const
-	{
-		return "Surveillance Mode Plugin";
-	}
-	
-	std::string author() const
-	{
-		return "Sourcey";
-	}
-	
-	std::string version() const
-	{
-		return "0.8.0";
-	}
-	*/
 };
 
 
 } } // namespace Sourcey::Spot
 
 
-#endif // ANIONU_SPOT_SurveillanceModePluginPlugin_H
+#endif // ANIONU_SPOT_SurveillanceModePlugin_H

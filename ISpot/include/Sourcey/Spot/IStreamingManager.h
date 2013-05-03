@@ -77,7 +77,7 @@ public:
 		///
 		/// Stream objects should derive from:
 		///
-		///		PacketDispatcher:		source
+		///		PacketEmitter:		source
 		///		Media::IPacketEncoder:	encoder
 		///
 		/// Stream ordering is as follows:

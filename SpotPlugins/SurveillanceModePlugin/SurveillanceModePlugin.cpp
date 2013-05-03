@@ -4,11 +4,8 @@
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IModeRegistry.h"
 
-#include "Poco/ClassLibrary.h"
-
 
 using namespace std;
-using namespace Poco;
 using namespace Sourcey;
 using namespace Sourcey::Spot;
 

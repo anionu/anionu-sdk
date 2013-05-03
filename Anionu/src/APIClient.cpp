@@ -421,9 +421,9 @@ void APITransaction::dispatchCallbacks()
 	LogTrace() << "[APITransaction] Process Callbacks: " << (!cancelled()) << endl;
 
 	if (!cancelled()) {
-		//Complete.dispatch(this, _response);
+		//Complete.emit(this, _response);
 		HTTP::Transaction::dispatchCallbacks();
-		APITransactionComplete.dispatch(this, static_cast<APIRequest*>(_request)->method, _response);
+		APITransactionComplete.emit(this, static_cast<APIRequest*>(_request)->method, _response);
 	}
 }
 

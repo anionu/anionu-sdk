@@ -34,12 +34,10 @@ SurveillanceMode::~SurveillanceMode()
 
 void SurveillanceMode::initialize() 
 {
-	log() << "Initializing" << endl;	
-
-	loadConfig();
-	
-	env().streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);	
-	env().streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);	
+	log() << "Initializing" << endl;
+	loadConfig();	
+	env().streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);
+	env().streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);
 }
 
 
@@ -48,17 +46,18 @@ void SurveillanceMode::uninitialize()
 	log() << "UnInitializing" << endl;
 
 	// XXX: Delegates added across the process boundaries
-	// can caused the SignalBase to  crash when cleanup() 
+	// can caused the SignalBase to crash when cleanup() 
 	// is called from the other side, so we call cleanup() here.
+	env().streaming().InitializeStreamingSession.detachAll(this);
 	env().streaming().InitializeStreamingSession.cleanup();
+	env().streaming().InitializeStreamingConnection.detachAll(this);
 	env().streaming().InitializeStreamingConnection.cleanup();
 }
 
 
 void SurveillanceMode::loadConfig()
 {
-	log() << "Loading Config: " << _channel.name() << endl;
-	
+	log() << "Loading Config: " << _channel.name() << endl;	
 	FastMutex::ScopedLock lock(_mutex); 
 	MotionDetector::Options& o = _motionDetector.options();
 	o.motionThreshold = _config.getInt("MotionThreshold", 15000);			// 15000 [50 - 100000]
@@ -76,8 +75,7 @@ void SurveillanceMode::loadConfig()
 
 void SurveillanceMode::activate() 
 {
-	log() << "Activating" << endl;
-	
+	log() << "Activating" << endl;	
 	try
 	{
 		startMotionDetector();
@@ -89,7 +87,6 @@ void SurveillanceMode::activate()
 		setState(this, ModeState::Error);
 		throw exc;
 	}
-
 	log() << "Activating: OK" << endl;
 }
 
@@ -319,7 +316,7 @@ void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession&
 
 
 void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingState& state, const StreamingState&)
-{
+{  
 	IStreamingSession* session = reinterpret_cast<IStreamingSession*>(sender); 
 			
 	log() << "Configuration Media Session State Changed: " << state << endl;
@@ -410,7 +407,6 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	field = element.addField("number", config.getScopedKey("MinTriggeredDuration", defaultScope), "Minimum Triggered Duration");
 	field.setHint(
 		"This is minimum duration of time that the motion detector can remain in the 'Triggered' state. "
-		//"Also, each time motion is detected while in the 'Triggered' state the timer will be extended by 'Min Triggered Duration' seconds."
 		"This is also the minimum duration of any recorded videos."
 	);
 	field.setValue(config.getInt("MinTriggeredDuration", defaultScope));
@@ -421,10 +417,6 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	field.setHint(
 		"This is the maximum amount of time that the motion detector can remain in the 'Triggered' state. "
 		"This is also the maximum duration of any recorded videos. "
-		
-		// recorded in Surveillance Mode
-		//"If the 'Max Triggered Duration' is reached, any videos will stop recording and the system will wait "
-		//"for the 'Post Triggered Delay' duration of time before motion detection will recommence."
 	);
 	field.setValue(config.getInt("MaxTriggeredDuration", defaultScope));
 	if (!defaultScope)
@@ -450,8 +442,7 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 	if (!defaultScope)
 		field.setLive(true);
 
-	// Disabling this setting as it is not completely necessary, 
-	// and may overcomplicate things.
+	// Disabling this setting as it is not completely necessary, and may overcomplicate things.
 	/*
 	field = element.addField("number", config.getScopedKey("PostTriggeredDelay", defaultScope), "Post Triggered Delay");	
 	field.setHint(

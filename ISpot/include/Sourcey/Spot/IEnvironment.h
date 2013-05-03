@@ -43,18 +43,23 @@ class FormatRegistry;
 }
 
 namespace Anionu {
-struct Event;
+class Event;
+}
+
+namespace Symple {
+class Message;
+class MessageDelegate;
 }
 
 
 namespace Spot {
 
 	
-static const char* SDKVersion = "0.5.0";
+static const char* SDKVersion = "0.5.1";
 	/// Current Spot SDK version number.
 	/// This version must be bumped whenever the
 	/// current library or dependencies are updated.
-	/// Spot plugins should be compiled with the same
+	/// Spot plugins must be compiled with the same
 	/// SDK version as the target Spot application.
 
 static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
@@ -74,16 +79,16 @@ class IDiagnosticManager;
 class IEnvironment: public Runner
 {
 public:
-	virtual IConfiguration& appConfig() /*const*/ = 0;
-	virtual IConfiguration& config() /*const*/ = 0;
-	virtual ISession& session() /*const*/ = 0;
-	virtual ISynchronizer& synchronizer() /*const*/ = 0;
-	virtual IChannelManager& channels() /*const*/ = 0;
-	virtual IModeRegistry& modes() /*const*/ = 0;
-	virtual IStreamingManager& streaming() /*const*/ = 0;
-	virtual IMediaManager& media() /*const*/ = 0;
-	virtual IDiagnosticManager& diagnostics() /*const*/ = 0;
-	virtual Logger& logger() /*const*/ = 0;
+	virtual IConfiguration& appConfig() = 0;
+	virtual IConfiguration& config() = 0;
+	virtual ISession& session() = 0;
+	virtual ISynchronizer& synchronizer() = 0;
+	virtual IChannelManager& channels() = 0;
+	virtual IModeRegistry& modes() = 0;
+	virtual IStreamingManager& streaming() = 0;
+	virtual IMediaManager& media() = 0;
+	virtual IDiagnosticManager& diagnostics() = 0;
+	virtual Logger& logger() = 0;
 
 	virtual std::string version() const = 0;
 		/// Returns the current Spot version string.
@@ -102,10 +107,22 @@ public:
 		/// events which don't need to be stored in the database.
 		/// Returns false if offline, true otherwise.
 	
-	Signal<const Anionu::Event&> Event;
-		/// Signals when a surveillance event has been triggered.
-		/// Called internally by createEvent() to dispatch
-		/// the event to the internal application.
+	virtual void sendMessage(const Symple::Message& message, bool respond = false) = 0;
+		/// Sends a Symple message to a remote peer.
+		/// If the "respond" flag is true, the 'to' and 'from' fields
+		/// will be swapped, so the message is returned to sender.
+		/// An exception will be thrown if the Session is invalid,
+		/// or the Symple client is offline.
+	
+	virtual void attachMessageListener(const Symple::MessageDelegate& delegate) = 0;
+		/// Attach a delegate to listen for Symple presence, messages,
+		/// and/or commands from remote peers.
+		/// If the message is responded to inside this callback,
+		/// a StopPropagation exception should be thrown to break
+		/// out of the callback scope.
+
+	virtual void detachMessageListener(const Symple::MessageDelegate& delegate) = 0;
+		/// Detach any previously attached message delegates.
 };
 
 
@@ -113,13 +130,3 @@ public:
 
 
 #endif // ANIONU_SPOT_IEnvironment_H
-
-
-
-		///
-		/// If the event severity is higher than the minimum 
-		/// severity defined by the user then the event will
-		/// be broadcast over the remote network and saved on
-		/// the user account. If the event is not broadcast
-		/// then server side event notifications will not be
-		/// triggered.

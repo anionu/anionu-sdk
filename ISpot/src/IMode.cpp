@@ -95,7 +95,7 @@ void IMode::setData(const string& name, const string& value)
 		FastMutex::ScopedLock lock(_mutex);	
 		_data[name] = value;
 	}
-	ModeDataChanged.dispatch(this, _data);
+	ModeDataChanged.emit(this, _data);
 }
 
 
@@ -108,7 +108,7 @@ void IMode::removeData(const string& name)
 			_data.erase(it);
 		}
 	}
-	ModeDataChanged.dispatch(this, data());
+	ModeDataChanged.emit(this, data());
 }
 
 
@@ -118,7 +118,7 @@ void IMode::clearData()
 		FastMutex::ScopedLock lock(_mutex);	
 		_data.clear();
 	}
-	ModeDataChanged.dispatch(this, data());
+	ModeDataChanged.emit(this, data());
 }
 
 

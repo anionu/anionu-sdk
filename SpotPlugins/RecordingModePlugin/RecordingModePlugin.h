@@ -17,28 +17,8 @@ public:
 
 	void initialize();
 	void uninitialize();
-	
-	/*
-	std::string name() const
-	{
-		return "RecordingModePlugin";
-	}
-	
-	std::string title() const
-	{
-		return "Recording Mode Plugin";
-	}
-	
-	std::string author() const
-	{
-		return "Sourcey";
-	}
-	
-	std::string version() const
-	{
-		return "0.8.0";
-	}
-	*/
+
+	virtual const char* className() const { return "RecordingModePlugin"; }
 };
 
 

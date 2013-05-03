@@ -50,4 +50,15 @@ IMediaManager::~IMediaManager()
 }
 
 
+// ---------------------------------------------------------------------
+//
+RecordingAction::RecordingAction(
+	const std::string& token, const std::string& channel, const std::string& peer, 
+	Media::IPacketEncoder* encoder, bool synchronize, bool supressEvents) : 
+		token(token), channel(channel), user(user), encoder(encoder), 
+		synchronize(synchronize), supressEvents(supressEvents)
+{
+}
+
+
 } } // namespace Sourcey::Spot

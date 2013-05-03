@@ -1,0 +1,12 @@
+FFmpeg: 
+  - Version: 1.0.1
+  - Link: http://www.ffmpeg.org/releases/ffmpeg-1.0.1.tar.gz
+
+Poco:
+  - Version: 1.4.6p1
+  - Link: http://pocoproject.org/releases/poco-1.4.6/poco-1.4.6p1-all.tar.gz
+  
+OpenSSL:
+  - Version: v1.0.1e
+  - Linux: http://www.openssl.org/source/openssl-1.0.1e.tar.gz
+  - Windows: http://slproweb.com/download/Win32OpenSSL-1_0_1e.exe

@@ -49,7 +49,7 @@ public:
 	void onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled);
 	void onStreamingSessionStateChange(void*, StreamingState& state, const StreamingState&);	
 
-	const char* className() const { return "Surveillance Mode"; }
+	const char* className() const { return "SurveillanceMode"; }
 	
 protected:	
 	mutable Poco::FastMutex _mutex;

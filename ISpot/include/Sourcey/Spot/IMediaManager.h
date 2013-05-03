@@ -25,7 +25,6 @@
 //
 
 
-
 #ifndef ANIONU_SPOT_IMediaManager_H
 #define ANIONU_SPOT_IMediaManager_H
 
@@ -51,26 +50,23 @@ class IChannel;
 struct RecordingAction 
 {
 	std::string token;		// The session's unique identification token
-	std::string channel;	// The canllel we are recording on
-	std::string peer;		// The initigating peer ID, used for broadcating events
-	bool synchronize;		// Weather or not to synchronize the recorded media
-	bool supressEvents;		// Supress event creation for this recorder session
-	Media::IPacketEncoder* encoder;
-	RecordingAction(const std::string& token = "", 
+	std::string channel;	// The channel we're recording on
+	std::string user;		// The user ID of the initiating peer
+	bool synchronize;		// Weather or not to synchronize the recorded video
+	bool supressEvents;		// Supress events for this recording session
+	Media::IPacketEncoder* encoder; // Encoder pointer reference
+	RecordingAction(
+		const std::string& token = "", 
 		const std::string& channel = "", 
 		const std::string& peer = "", 
 		Media::IPacketEncoder* encoder = NULL, 
 		bool synchronize = false, 
-		bool supressEvents = false) : 
-			token(token), 
-			channel(channel), 
-			peer(peer), 
-			encoder(encoder), 
-			synchronize(synchronize), 
-			supressEvents(supressEvents) {}
+		bool supressEvents = false);
 };
 
 
+// ---------------------------------------------------------------------
+//
 class IMediaManager: public TimedManager<std::string, PacketStream>, public IModule
 {
 public:
@@ -87,40 +83,32 @@ public:
 	
 	virtual void startRecording(IChannel& channel, const Media::RecorderOptions& options, RecordingAction& action) = 0;
 		/// Initializes a recorder instance for the current channel.
-		/// RecordingAction fields should be populated as required
-		/// before calling this method.
+		/// RecordingAction values must be correctly populated.
 		/// An descriptive exception will be thrown on error.
 
 	virtual bool stopRecording(const std::string& token, bool whiny = true) = 0;
 		/// Stops the recorder session matching the given token.
 
 	Signal2<const Media::RecorderOptions&, Media::IPacketEncoder*&> InitializeEncoder;
-		/// Provides plugins with the ability to override creation
-		/// of the default recording encoder. A valid IPacketEncoder
-		/// instance must be returned. Encoders should always use
-		/// the channel's device sources.
+		/// Provides plugins with the ability to instantiate the
+		/// recording encoder. If a valid IPacketEncoder instance 
+		/// is returned, it will for encoding.
 	
 	virtual Media::FormatRegistry& recordingFormats() = 0;
 		/// Media formats for recording media.
 
 	virtual Media::FormatRegistry& videoStreamingFormats() = 0;
-		/// Media formats for streaming media over the local network.
-
-	//virtual Media::FormatRegistry& remoteVideoStreamingFormats() = 0;
-		/// Media formats for streaming media over the internet.
+		/// Media formats for streaming video over the internet.
 
 	virtual Media::FormatRegistry& audioStreamingFormats() = 0;
 		/// Media formats for streaming audio over the internet.
 
 	virtual Media::Format getRecordingFormat() = 0;
-		/// Returns she current user configured recording media format.
+		/// Returns the current user configured recording media format.
 		
 	virtual Media::Format getVideoStreamingFormat() = 0;
-		/// Returns the current user configured local network streaming
-		/// media format.
-
-	//virtual Media::Format getRemoteVideoStreamingFormat() = 0;
-		/// The current user configured internet streaming media format.
+		/// Returns the current user configured local network
+		/// streaming media format.
 
 	virtual Media::Format getAudioStreamingFormat() = 0;
 		/// The current user configured audio streaming format.
@@ -132,10 +120,6 @@ public:
 	virtual void setVideoStreamingFormat(const Media::Format& format) = 0;
 		/// Sets the local network streaming media format for the
 		/// current user and updates configuration.
-
-	//virtual void setRemoteVideoStreamingFormat(const Media::Format& format) = 0;
-		/// Sets the internet streaming media format for the current
-		/// user and updates configuration.
 
 	virtual void setAudioStreamingFormat(const Media::Format& format) = 0;
 		/// Sets the internet streaming audio format for the current

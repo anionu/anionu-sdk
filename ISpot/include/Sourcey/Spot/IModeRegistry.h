@@ -72,7 +72,7 @@ public:
 	{ 
         //_types.insert(std::make_pair(name, &createT<T>)); // vc2010 bug
         _types[name] = &createT<T>;
-		ModeRegistered.dispatch(this, name);
+		ModeRegistered.emit(this, name);
     }
 	
     void unregisterMode(const std::string& name)	
@@ -81,7 +81,7 @@ public:
         if (it == _types.end())
             return;
 		_types.erase(it);
-		ModeUnregistered.dispatch(this, name);
+		ModeUnregistered.emit(this, name);
     }
 
     ModeTypeMap types() const { return _types; }

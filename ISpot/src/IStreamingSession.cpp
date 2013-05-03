@@ -233,7 +233,7 @@ void IStreamingSession::notifyCandidates()
 	assert(isActive());
 	CandidateList c = candidates();
 	assert(!c.empty());
-	CandidatesCollected.dispatch(this, c);
+	CandidatesCollected.emit(this, c);
 }
 
 

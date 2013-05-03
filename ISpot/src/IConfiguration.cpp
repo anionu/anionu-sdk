@@ -51,7 +51,7 @@ void IConfiguration::setRaw(const string& key, const string& value)
 {	
 	//log() << "Set Raw: " << key << ": " << value << endl;
 	JSON::Configuration::setRaw(key, value);
-	ConfigurationChanged.dispatch(this, key, value);
+	ConfigurationChanged.emit(this, key, value);
 }
 
 

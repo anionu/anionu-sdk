@@ -96,6 +96,9 @@ public:
 			|| stateEquals(SessionState::ActiveOnline)
 			|| stateEquals(SessionState::ActiveFailed); 
 	}
+		
+	NullSignal SessionStart;
+	NullSignal SessionEnd;
 	
 	virtual const char* className() const { return "Session"; }
 };

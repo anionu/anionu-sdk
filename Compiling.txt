@@ -11,7 +11,7 @@ The Anionu folder should end up in the librourcey/libs folder alongside all othe
 
 3) Compile the Anionu module
 
-1. Open up Cmake. The source directory should point to ".../librourcey", and the binary directory to ".../librourcey/build" the same as when compiling LibSourcey.
+1. Open up Cmake. The source directory should point to ".../libsourcey", and the binary directory to ".../librourcey/build" the same as when compiling LibSourcey.
 
 2. Ensure BUILD_MODULES is checked and generate the project makefiles. Remember that individual modules may be enabled/disabled via advanced options.
 

@@ -36,7 +36,7 @@ public:
 	
 	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
 
-	virtual const char* className() const { return "Recording Mode"; }
+	virtual const char* className() const { return "RecordingMode"; }
 
 private: 
 	int		_segmentDuration;

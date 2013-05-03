@@ -33,6 +33,8 @@
 #include "Sourcey/Spot/IEnvironment.h"
 #include "Sourcey/Spot/IConfigurable.h"
 
+#include "Poco/ClassLibrary.h"
+
 #include <string>
 
 
