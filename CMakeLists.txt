@@ -5,28 +5,10 @@ set(Anionu_API_PASSWORD "password" CACHE PATH "Anionu API Password")
 set(Anionu_API_USERNAME ${Anionu_API_USERNAME} PARENT_SCOPE)
 set(Anionu_API_PASSWORD ${Anionu_API_PASSWORD} PARENT_SCOPE)
 
-#if(BUILD_MODULES)
-#  set(BUILD_SPOT_MODULES ON CACHE BOOL "Build Spot modules")
-#else()
-#  set(BUILD_SPOT_MODULES OFF CACHE BOOL "Build Spot modules")
-#endif()
-
-#if(BUILD_APPLICATIONS AND MSVC)
-#  set(BUILD_SPOT_APPLICATIONS ON CACHE BOOL "Build Spot applications")
-#else()
-#  set(BUILD_SPOT_APPLICATIONS OFF CACHE BOOL "Build Spot applications")
-#endif()
-
-#if(BUILD_SPOT_MODULES)
-#endif()
-
-#if(BUILD_SPOT_APPLICATIONS)
-#endif()
-
 ask_build_sourcey_module(Spot)
 if(BUILD_MODULES AND BUILD_MODULE_Spot) 
   add_subdirectory(Anionu)
-  add_subdirectory(ISpot)
+  add_subdirectory(SpotAPI)
 endif()
 
 ask_build_sourcey_application(SpotPlugins)

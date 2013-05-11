@@ -1,21 +1,22 @@
-#include "Sourcey/Anionu/Event.h"
+#include "Anionu/Event.h"
 #include "assert.h"
+
 
 using namespace std;
 
 
-namespace Sourcey {
+namespace Scy { 
 namespace Anionu {
 
 
 Event::Event(const string& name, const string& message, time_t time) :
-	name(name), message(message), realm(Realm::SpotLocal), severity(Severity::Default), time(time) 
+	name(name), message(message), severity(Event::Default), realm(Event::SpotLocal), time(time) 
 {
 }
 
 
-Event::Event(const string& name, const string& message, Realm realm, Severity severity, time_t time) :
-	severity(severity), realm(realm), name(name), message(message), time(time) 
+Event::Event(const string& name, const string& message, Severity severity, Realm realm, time_t time) :
+	name(name), message(message), severity(severity), realm(realm), time(time) 
 {
 }
 
@@ -96,4 +97,4 @@ Event::Realm Event::strToRealm(const string& id)
 }
 
 
-} } // namespace Sourcey::Anionu
+} } // namespace Scy::Anionu

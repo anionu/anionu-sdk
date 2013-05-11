@@ -2,20 +2,21 @@
 #define ANIONU_SPOT_MediaPlugin_H
 
 
-#include "Sourcey/Spot/IPlugin.h"
-#include "Sourcey/Spot/IStreamingManager.h"
-#include "Sourcey/Spot/IMediaManager.h"
+#include "Anionu/Spot/API/IPlugin.h"
+#include "Anionu/Spot/API/IStreamingManager.h"
+#include "Anionu/Spot/API/IMediaManager.h"
 #include "Sourcey/Media/AVEncoder.h"
 
 #include "Poco/Thread.h"
 #include "Poco/ClassLibrary.h"
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
-class MediaPlugin: public IPlugin
+class MediaPlugin: public API::IPlugin
 {
 public:
 	MediaPlugin();
@@ -25,36 +26,14 @@ public:
 	void uninitialize();
 	
 protected:
-	Media::IPacketEncoder* createEncoder(const Media::RecorderOptions& options);
+	Media::IPacketEncoder* createEncoder(const Media::RecordingOptions& options);
 	
-	void onInitializeStreamingSession(void*, IStreamingSession& session, bool&);
-	void onInitializeRecordingEncoder(void*, const Media::RecorderOptions& options, Media::IPacketEncoder*&);
-	
-	/*
-	std::string title() const
-	{
-		return "Media Provider";
-	}	
-
-	std::string name() const
-	{
-		return "Media";
-	}
-	
-	std::string author() const
-	{
-		return "Anionu";
-	}
-	
-	std::string version() const
-	{
-		return "1";
-	}
-	*/
+	void onSetupStreamingSession(void*, API::IStreamingSession& session, bool&);
+	void onInitializeRecordingEncoder(void*, const Media::RecordingOptions& options, Media::IPacketEncoder*&);
 };
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot
 
 
 #endif // ANIONU_SPOT_MediaPlugin_H

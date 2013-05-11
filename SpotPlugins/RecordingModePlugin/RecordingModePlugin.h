@@ -2,14 +2,15 @@
 #define ANIONU_SPOT_RecordingModePlugin_H
 
 
-#include "Sourcey/Spot/IPlugin.h"
+#include "Anionu/Spot/API/IPlugin.h"
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
-class RecordingModePlugin: public IPlugin
+class RecordingModePlugin: public API::IPlugin
 {
 public:
 	RecordingModePlugin();
@@ -22,7 +23,7 @@ public:
 };
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot
 
 
 #endif // ANIONU_SPOT_RecordingModePlugin_H

@@ -1,20 +1,21 @@
 #include "SurveillanceMode.h"
 #include "SurveillanceMultipartPacketizer.h"
-#include "Sourcey/Spot/IChannel.h"
-#include "Sourcey/Spot/IEnvironment.h"
-#include "Sourcey/Spot/IConfiguration.h"
-#include "Sourcey/Spot/ISession.h"
-#include "Sourcey/Spot/IStreamingManager.h"
-#include "Sourcey/Spot/ISynchronizer.h"
-#include "Sourcey/Anionu/Event.h"
+#include "Anionu/Spot/API/IChannel.h"
+#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/IConfiguration.h"
+#include "Anionu/Spot/API/ISession.h"
+#include "Anionu/Spot/API/IStreamingManager.h"
+#include "Anionu/Spot/API/ISynchronizer.h"
+#include "Anionu/Event.h"
 
 
 using namespace std;
 using namespace Poco;
-using namespace Sourcey::Media;
+using namespace Scy::Media;
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
@@ -36,29 +37,23 @@ void SurveillanceMode::initialize()
 {
 	log() << "Initializing" << endl;
 	loadConfig();	
-	env().streaming().InitializeStreamingSession += delegate(this, &SurveillanceMode::onInitializeStreamingSession);
-	env().streaming().InitializeStreamingConnection += delegate(this, &SurveillanceMode::onInitializeStreamingConnection);
+	env().streaming().SetupStreamingSession += delegate(this, &SurveillanceMode::onSetupStreamingSession);
+	env().streaming().SetupStreamingConnection += delegate(this, &SurveillanceMode::onSetupStreamingConnection);
 }
 
 
 void SurveillanceMode::uninitialize() 
 {
 	log() << "UnInitializing" << endl;
-
-	// XXX: Delegates added across the process boundaries
-	// can caused the SignalBase to crash when cleanup() 
-	// is called from the other side, so we call cleanup() here.
-	env().streaming().InitializeStreamingSession.detachAll(this);
-	env().streaming().InitializeStreamingSession.cleanup();
-	env().streaming().InitializeStreamingConnection.detachAll(this);
-	env().streaming().InitializeStreamingConnection.cleanup();
+	env().streaming().SetupStreamingSession.detach(this);
+	env().streaming().SetupStreamingConnection.detach(this);
 }
 
 
 void SurveillanceMode::loadConfig()
 {
-	log() << "Loading Config: " << _channel.name() << endl;	
 	FastMutex::ScopedLock lock(_mutex); 
+	log() << "Loading Config: " << _channel.name() << endl;	
 	MotionDetector::Options& o = _motionDetector.options();
 	o.motionThreshold = _config.getInt("MotionThreshold", 15000);			// 15000 [50 - 100000]
 	o.minPixelValue = _config.getInt("MinPixelValue", 30);					// 30 [0 - 255]
@@ -127,13 +122,11 @@ bool SurveillanceMode::stopMotionDetector()
 
 	if (_motionDetector.isRunning()) {
 		_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
-		//_motionDetector.stop();
 		_motionStream.close();
 		return true;
 	}
 		
 	log("warn") << "Cannot stop, the motion detector is not running" << endl;
-	//_motionStream.close();
 	return false;
 }
 
@@ -141,7 +134,6 @@ bool SurveillanceMode::stopMotionDetector()
 void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&)
 {
 	log() << "Motion State Changed: " << state.toString() << endl;
-
 	{
 		// Discard surveillance events while configuring
 		FastMutex::ScopedLock lock(_mutex); 
@@ -166,7 +158,7 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 			// notify account users.
 			Anionu::Event event("Motion Detected", 
 				env().session().name() + ": Motion detected on channel: " + _channel.name(),
-				Anionu::Event::SpotLocal, Anionu::Event::High);
+				Anionu::Event::High, Anionu::Event::SpotLocal);
 			env().createEvent(event);
 			
 			try {	
@@ -175,11 +167,9 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 			} 
 			catch (...) {
 				// Catch and swallow recording errors. 
-				// If the Media Plugin is not installed we will make it
-				// here. We do nothing here since the "Recording Failed"
+				// Nothing to do here since the "Recording Failed"
 				// event will be triggered by the MediaManager.
 			}
-
 		break;
 	}
 }
@@ -188,15 +178,12 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 bool SurveillanceMode::startRecording()
 {	
 	FastMutex::ScopedLock lock(_mutex); 
-	_recordingAction.token = "";
-	_recordingAction.encoder = NULL;
-	_recordingAction.synchronize = _synchronizeVideos;
-	Media::RecorderOptions options;
-	env().media().initRecorderOptions(_channel, options);
-		log() << "Started Recording: " << _recordingAction.token << endl;
-	env().media().startRecording(_channel, options, _recordingAction);
-		
-	//_recordingAction.encoder->StateChange += delegate(this, &SurveillanceMode::onEncoderStateChange);
+	log() << "Start Recording" << endl;
+	API::RecordingOptions options = env().media().getRecordingOptions(_channel.name());
+	options.synchronize = _synchronizeVideos;
+	env().media().startRecording(options);
+	log() << "Started Recording: " << options.token << endl;
+	_recordingToken = options.token;
 	return true;
 }
 
@@ -205,12 +192,10 @@ bool SurveillanceMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
-	if (!_recordingAction.token.empty()) {
-		//_recordingAction.encoder->StateChange -= delegate(this, &SurveillanceMode::onEncoderStateChange);
-		env().media().stopRecording(_recordingAction.token);
-		log() << "Stopped Recording: " << _recordingAction.token << endl;
-		_recordingAction.token = "";
-		_recordingAction.encoder = NULL;
+	if (!_recordingToken.empty()) {
+		env().media().stopRecording(_recordingToken);
+		log() << "Stopped Recording: " << _recordingToken << endl;
+		_recordingToken = "";
 		return true;
 	}
 	return false;
@@ -221,16 +206,16 @@ Token* SurveillanceMode::createStreamingToken(long duration)
 {
 	Token token(duration);
 	FastMutex::ScopedLock lock(_mutex);
-	_mediaTokens.push_back(token);
-	_mediaTokens.back().start(); // start the token timer
-	return &_mediaTokens.back();
+	_streamingTokens.push_back(token);
+	_streamingTokens.back().start(); // start the token timer
+	return &_streamingTokens.back();
 }
 
 	
 Token* SurveillanceMode::getStreamingToken(const string& token)
 {
 	FastMutex::ScopedLock lock(_mutex);
-	for (TokenList::iterator it = _mediaTokens.begin(); it != _mediaTokens.end(); ++it)
+	for (TokenList::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it)
 		if (*it == token)
 			return &(*it);           
 	return NULL;
@@ -240,9 +225,9 @@ Token* SurveillanceMode::getStreamingToken(const string& token)
 bool SurveillanceMode::removeStreamingToken(const string& token)
 {
 	FastMutex::ScopedLock lock(_mutex);
-	for (TokenList::iterator it = _mediaTokens.begin(); it != _mediaTokens.end(); ++it) {
+	for (TokenList::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
 		if (*it == token) {
-			_mediaTokens.erase(it);
+			_streamingTokens.erase(it);
 			return true;
 		}
 	}
@@ -250,7 +235,7 @@ bool SurveillanceMode::removeStreamingToken(const string& token)
 }
 
 	
-void SurveillanceMode::onInitializeStreamingSession(void*, IStreamingSession& session, bool& handled)
+void SurveillanceMode::onSetupStreamingSession(void*, API::IStreamingSession& session, bool& handled)
 {
 	log() << "Initialize Media Session: " << session.token() << endl;
 	
@@ -294,7 +279,7 @@ void SurveillanceMode::onInitializeStreamingSession(void*, IStreamingSession& se
 }
 
 
-void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled)
+void SurveillanceMode::onSetupStreamingConnection(void*, API::IStreamingSession& session, API::ConnectionStream& connection, bool& handled)
 {	
 	log() << "Initialize Media Connection: " << session.token() << endl;		
 	
@@ -315,15 +300,15 @@ void SurveillanceMode::onInitializeStreamingConnection(void*, IStreamingSession&
 }
 
 
-void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingState& state, const StreamingState&)
+void SurveillanceMode::onStreamingSessionStateChange(void* sender, API::StreamingState& state, const API::StreamingState&)
 {  
-	IStreamingSession* session = reinterpret_cast<IStreamingSession*>(sender); 
+	API::IStreamingSession* session = reinterpret_cast<API::IStreamingSession*>(sender); 
 			
 	log() << "Configuration Media Session State Changed: " << state << endl;
 
 	// Remove the configuration media session token
 	// reference when the session closes or times out.
-	if (state.id() == StreamingState::Terminating) {
+	if (state.equals(API::StreamingState::Terminating)) {
 		session->StateChange -= delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
 				
 		removeStreamingToken(session->token());
@@ -335,30 +320,32 @@ void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingStat
 }
 
 
-bool SurveillanceMode::isConfigurable() const
+// ---------------------------------------------------------------------
+//
+bool SurveillanceModeFormProcessor::isConfigurable() const
 {	
 	return true;
 }
 
 
-bool SurveillanceMode::hasParsableConfig(Symple::Form& form) const
+bool SurveillanceModeFormProcessor::hasParsableFields(Symple::Form& form) const
 {
 	return form.hasField(".Surveillance Mode.", true);
 }
 
 
-void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope)
-{
-	log() << "Creating Config Form" << endl;	 
-		
-	ModeConfiguration config = this->config();
+void SurveillanceModeFormProcessor::buildForm(Symple::Form& form, Symple::FormElement& element) //, bool defaultScope
+{		
 	Symple::FormField field;
+	ScopedConfiguration config = mode.config();
+	bool defaultScope = element.id().find("channels.") == 0;
+	mode.log() << "Building Form: " << element.id() << endl;	 
 
 	// Create a video media element which enables the user to preview motion changes
 	// in real time as the channel is configured. This is achieved by adding a "media"
 	// type field with is associated with a media session token. When an incoming media
 	// session request subscribes to the token we use our motion detector as the streaming
-	// source (see onInitializeStreamingConnection). Media streaming sessions are only 
+	// source (see onSetupStreamingConnection). Media streaming sessions are only 
 	// available when configuring at channel scope ie. defaultScope == false.
 	// No surveillance events will be triggered while media sessions are active.
 	if (!form.partial() && !defaultScope) {		
@@ -369,8 +356,8 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results."
 		);
 
-		Token* token = createStreamingToken();
-		field = element.addField("media", config.getChannelKey("Preview"), "Live Motion Preview");
+		Token* token = mode.createStreamingToken();
+		field = element.addField("media", config.getModuleScope("Preview"), "Live Motion Preview");
 		field.setHint(
 			"Keep an eye on the motion levels and motion state in the top left hand corner of the video. "
 			"If motion level exceeds the motion threshold then the motion detector will enter the 'Triggered' state. "			
@@ -465,13 +452,12 @@ void SurveillanceMode::buildConfigForm(Symple::Form& form, Symple::FormElement& 
 }
 
 
-void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& element)
+void SurveillanceModeFormProcessor::parseForm(Symple::Form& form, Symple::FormElement& element)
 {
-	log() << "Parsing Config Form" << endl;
-	
+	mode.log() << "Parsing Config Form" << endl;	
 	Symple::FormField field;
-	ModeConfiguration config = this->config();
-	IEnvironment& env = this->env();
+	ScopedConfiguration config = mode.config();
+	IEnvironment& env = mode.env();
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);
 	if (field.valid()) {
@@ -514,63 +500,14 @@ void SurveillanceMode::parseConfigForm(Symple::Form& form, Symple::FormElement& 
 	if (field.valid())
 		env.config().setBool(field.id(), field.boolValue());
 
-	loadConfig();
+	mode.loadConfig();
 }
 
 
-string SurveillanceMode::infoFile() 
+string SurveillanceModeFormProcessor::documentFile() 
 {	
 	return "plugins/SurveillanceModePlugin/SurveillanceMode.md";
-	/*
-	std::ifstream infile;
-	//this->path()
-	infile.open(path().data(), std::ifstream::in);
-	if (!infile.is_open())		
-		throw Poco::OpenFileException("Cannot open input file: " + path);
-
-	JSON::Reader reader;
-	bool res = reader.parse(infile, root);
-	infile.close();
-	s << 
-
-		"<h1>About Surveillance Mode</h1>"
-		"<p>Surveillance Mode provides Spot with motion detection capabilities. "
-		"Surveillance mode is ideal for when you are away from the surveilled premises, and want to protect yourself against unwanted intruders.</p>"
-
-		"<p class=\"note\">The text below includes references to Surveillance Mode configuration options. "
-		"There references are capitalized and enclosed in inverted commas. "
-		"See the Mode Configuration page for a detailed description of each option.</p>"
-	
-		"<h2>How It Works</h2>"
-		"<p>When Surveillance Mode is activated for a channel, it will begin detecting motion after the 'Pre Surveillance Delay' has elapsed. "
-		"The 'Pre Surveillance Delay' option gives you time to leave the premesis after activating Surveilance Mode.</p>"
-		"<p>When motion is detected the process is as follows:</p>"
-		"<ul>"
-		"<li>A 'Motion Detected' event will be created which will trigger notifications to you or a designated third party. "
-		"See the 'Event Notifiers' page of your dashboard to configure who receives notifications.</li>"
-		"<li>A video will be recorded during the interval of motion, and optionally synchronized with your Anionu account. "
-		"If you want videos to be synchronized be sure to to enable the 'SynchronizeVideos' option on the 'Mode Configuration' page."
-		"</li>"
-		"</ul>"
-
-	
-	s << "<h2>Best Configuration Tips</h2>";
-	
-	configured and Spot will begin detecting motion on the current 
-	s << "<p>Once Surveillance Mode is configured and enabled Spot will begin detecting motion on the current channel.</p>";
-	s << "<p>When motion is detected two things will happen:</p>";
-	s << "<ul><li>A video will be recorded and optionally synchronized with your Anionu account.</li>"; 
-	s << "<ul><li>A 'Motion Detected' event will be created which will trigger notifications.</li>";
-
-	s << "Surveillance mode is ideal for when you are away from your surveilled premises, and want to be notified about any trespasser. ";
-	he Surveillance plugin provides Spot with motion detection capabilities. Surveillance mode is perfect for when you are away from your surveilled premises. The plugin enables you to configure motion detection sensitivities, be notified by SMS when motion is detected, and record videos during intervals of motion.
-	
-		//"This setting directly affects how long motion frames remain valid. " 
-		//"The 'Motion Lifetime' value works as follows; if a 'Stable Motion Frames' "
-		//"of frames exceeding the 'Motion Threshold' are detected within a 'Motion Lifetime' "
-		//"duration of time then the alarm will trigger." 
-		*/
 }
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot

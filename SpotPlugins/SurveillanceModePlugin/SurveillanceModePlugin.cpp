@@ -1,21 +1,18 @@
 #include "SurveillanceModePlugin.h"
 #include "SurveillanceMode.h"
 
-#include "Sourcey/Spot/IEnvironment.h"
-#include "Sourcey/Spot/IModeRegistry.h"
+#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/ModeRegistry.h"
 
 
 using namespace std;
-using namespace Sourcey;
-using namespace Sourcey::Spot;
 
 
-POCO_BEGIN_MANIFEST(IPlugin)
-	POCO_EXPORT_CLASS(SurveillanceModePlugin)
-POCO_END_MANIFEST
+DEFINE_SPOT_PLUGIN(Scy::Anionu::Spot::SurveillanceModePlugin)
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
@@ -34,7 +31,7 @@ void SurveillanceModePlugin::initialize()
 {
 	log() << "Initializing" << endl;	
 
-	env().modes().registerMode<SurveillanceMode>("Surveillance Mode");
+	env()->modes().registerMode<SurveillanceMode>("Surveillance Mode");
 }
 
 
@@ -42,8 +39,8 @@ void SurveillanceModePlugin::uninitialize()
 {	
 	log() << "Uninitializing" << endl;
 
-	env().modes().unregisterMode("Surveillance Mode");
+	env()->modes().unregisterMode("Surveillance Mode");
 }
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot

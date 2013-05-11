@@ -8,7 +8,8 @@
 #include "Sourcey/Media/MotionDetector.h"
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
@@ -33,7 +34,7 @@ public:
 };
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot
 
 
 #endif // ANIONU_SPOT_SurveillanceMultipartPacketizer_H

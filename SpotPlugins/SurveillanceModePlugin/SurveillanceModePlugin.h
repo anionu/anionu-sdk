@@ -2,14 +2,15 @@
 #define ANIONU_SPOT_SurveillanceModePlugin_H
 
 
-#include "Sourcey/Spot/IPlugin.h"
+#include "Anionu/Spot/API/IPlugin.h"
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
-class SurveillanceModePlugin: public IPlugin
+class SurveillanceModePlugin: public API::IPlugin
 {
 public:
 	SurveillanceModePlugin();
@@ -20,7 +21,7 @@ public:
 };
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot
 
 
 #endif // ANIONU_SPOT_SurveillanceModePlugin_H

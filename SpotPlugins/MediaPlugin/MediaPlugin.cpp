@@ -1,21 +1,19 @@
 #include "MediaPlugin.h"
 
-#include "Sourcey/Spot/IEnvironment.h"
+#include "Anionu/Spot/API/IEnvironment.h"
 #include "Sourcey/Media/FormatRegistry.h"
 
 
-using namespace Poco;
 using namespace std;
-using namespace Sourcey::Spot;
-using namespace Sourcey::Media;
+using namespace Poco;
+using namespace Scy::Media;
 
 
-POCO_BEGIN_MANIFEST(IPlugin)
-	POCO_EXPORT_CLASS(MediaPlugin)
-POCO_END_MANIFEST
+DEFINE_SPOT_PLUGIN(Scy::Anionu::Spot::MediaPlugin)
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
@@ -33,21 +31,13 @@ void MediaPlugin::initialize()
 {
 	log() << "Initializing" << endl;	
 
-	IMediaManager& media = env().media();
-	
-	log() << "Initializing 1" << endl;	
+	API::IMediaManager& media = env()->media();
 
 	// Since we will be the default media provider in most
 	// cases, we should listen in on the signals at a lower
 	// priority so other providers can create the encoder first.
-	//log() << "Initializing 0: " << env().streaming().items().size() << endl;	
-	log() << "Initializing 0" << endl;	
-	log() << "Initializing 01: " << env().streaming().InitializeStreamingSession.delegates().size() << endl;	
-	env().streaming().InitializeStreamingSession += delegate(this, &MediaPlugin::onInitializeStreamingSession, -1);
-	log() << "Initializing 02" << endl;	
-	media.InitializeEncoder += delegate(this, &MediaPlugin::onInitializeRecordingEncoder, -1);
-		
-	log() << "Initializing 2" << endl;	
+	env()->streaming().SetupStreamingSession += delegate(this, &MediaPlugin::onSetupStreamingSession, -1);
+	media.CreateEncoder += delegate(this, &MediaPlugin::onInitializeRecordingEncoder, -1);
 		
 	/*
 	//
@@ -241,25 +231,19 @@ void MediaPlugin::uninitialize()
 {	
 	log() << "Uninitializing" << endl;
 	
-	env().streaming().InitializeStreamingSession -= delegate(this, &MediaPlugin::onInitializeStreamingSession);
-	env().media().InitializeEncoder -= delegate(this, &MediaPlugin::onInitializeRecordingEncoder);
-	
-	// FIXME: For some reason delegates added across the
-	// process boundary are causing the SignalBase to
-	// crash when cleanup() is called from the other side.
-	env().streaming().InitializeStreamingSession.cleanup();
-	env().media().InitializeEncoder.cleanup();
+	env()->streaming().SetupStreamingSession.detach(this);
+	env()->media().CreateEncoder.detach(this);
 
 	/*
 	try 
 	{
 		
-		env().media().recordingFormats().unregisterFormat("MP4");
-		env().media().videoStreamingFormats().unregisterFormat("FLV");
-		env().media().remoteVideoStreamingFormats().unregisterFormat("FLV");
+		env()->media().recordingFormats().unregisterFormat("MP4");
+		env()->media().videoStreamingFormats().unregisterFormat("FLV");
+		env()->media().remoteVideoStreamingFormats().unregisterFormat("FLV");
 #if HAVE_H264
-		env().media().videoStreamingFormats().unregisterFormat("Flash H264");
-		env().media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
+		env()->media().videoStreamingFormats().unregisterFormat("Flash H264");
+		env()->media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
 #endif
 	
 		//setState(PluginState::Disabled);
@@ -273,7 +257,7 @@ void MediaPlugin::uninitialize()
 }
 
 
-IPacketEncoder* MediaPlugin::createEncoder(const RecorderOptions& options)
+IPacketEncoder* MediaPlugin::createEncoder(const RecordingOptions& options)
 {
 	log() << "Initializing AV Encoder" << endl;	
 
@@ -292,7 +276,7 @@ IPacketEncoder* MediaPlugin::createEncoder(const RecorderOptions& options)
 }
 
 
-void MediaPlugin::onInitializeRecordingEncoder(void*, const RecorderOptions& options, IPacketEncoder*& encoder)
+void MediaPlugin::onInitializeRecordingEncoder(void*, const RecordingOptions& options, IPacketEncoder*& encoder)
 {
 	log() << "Initialize Recording Encoder" << endl;
 
@@ -303,14 +287,14 @@ void MediaPlugin::onInitializeRecordingEncoder(void*, const RecorderOptions& opt
 }
 
 
-void MediaPlugin::onInitializeStreamingSession(void*, IStreamingSession& session, bool&)
+void MediaPlugin::onSetupStreamingSession(void*, API::IStreamingSession& session, bool&)
 {
 	log() << "Initialize Streaming Session" << endl;
 		
 	if (session.options().oformat.id != "rawvideo" &&
 		session.stream().getProcessor<IPacketEncoder>() == NULL) {	
 	
-		RecorderOptions options(
+		RecordingOptions options(
 			session.options().iformat, 
 			session.options().oformat);
 		IPacketEncoder* encoder = createEncoder(options);
@@ -320,4 +304,4 @@ void MediaPlugin::onInitializeStreamingSession(void*, IStreamingSession& session
 }
 
 
-} } // namespace Sourcey::Spot
+} } } // namespace Scy::Anionu::Spot

@@ -1,0 +1,1 @@
+define_spot_plugin(EventPlugin)

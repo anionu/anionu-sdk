@@ -2,18 +2,19 @@
 #define ANIONU_SPOT_RecordingMode_H
 
 
-#include "Sourcey/Spot/IMode.h"
-#include "Sourcey/Spot/IMediaManager.h"
+#include "Anionu/Spot/API/IMode.h"
+#include "Anionu/Spot/API/IMediaManager.h"
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
 
 
-class RecordingMode: public IMode
+class RecordingMode: public API::IMode
 {
 public:
-	RecordingMode(IEnvironment& env, IChannel& channel);
+	RecordingMode(API::IEnvironment& env,  API::IChannel& channel);
 	~RecordingMode();
 
 	void initialize();
@@ -26,28 +27,55 @@ public:
 	bool stopRecording();
 	
 	void loadConfig();
-	bool isConfigurable() const;
-	bool hasParsableConfig(Symple::Form& form) const;
-	std::string infoFile();
-	RecordingAction& recordingAction();
-
-	void buildConfigForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
-	void parseConfigForm(Symple::Form& form, Symple::FormElement& element);
+	std::string recordingToken();
 	
-	void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
+	void onRecordingStopped(void* sender, API::RecorderStream& stream);
 
 	virtual const char* className() const { return "RecordingMode"; }
 
 private: 
-	int		_segmentDuration;
-	bool	_synchronizeVideos;
-	RecordingAction	_recordingAction;
-
+	int	_segmentDuration;
+	bool _synchronizeVideos;
+	std::string	_recordingToken;
 	mutable Poco::FastMutex _mutex;
 };
 
 
-} } // namespace Sourcey::Spot
+// ---------------------------------------------------------------------
+//
+class RecordingModeFormProcessor: public Symple::IFormProcessor
+{	
+	RecordingModeFormProcessor(RecordingMode& mode) : mode(mode) {};
+
+	bool isConfigurable() const;
+	bool hasParsableFields(Symple::Form& form) const;
+	void buildForm(Symple::Form& form, Symple::FormElement& element);
+	void parseForm(Symple::Form& form, Symple::FormElement& element);
+	std::string documentFile();
+
+	RecordingMode& mode;
+};
+
+
+} } } // namespace Scy::Anionu::Spot
 
 
 #endif // ANIONU_SPOT_RecordingMode_H
+
+
+
+	/*
+	bool isConfigurable() const;
+	bool hasParsableFields(Symple::Form& form) const;	
+	std::string documentFile();
+
+	void buildForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
+	void parseForm(Symple::Form& form, Symple::FormElement& element);
+	*/
+	
+	//void onRecordingStarted(void* sender, API::RecorderStream& stream);
+	//void onEncoderStateChange(void* sender, Media::EncoderState& state, const Media::EncoderState& oldState);
+	//Signal2<const API::RecordingOptions&, API::RecordingStream*&> RecordingStarted;
+	//Signal2<const API::RecordingOptions&, API::RecordingStream*&> RecordingStopped;
+	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
+	//env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);

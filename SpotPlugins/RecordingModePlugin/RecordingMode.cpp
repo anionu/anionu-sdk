@@ -1,22 +1,24 @@
 #include "RecordingMode.h"
-#include "Sourcey/Spot/IEnvironment.h"
-#include "Sourcey/Spot/IConfiguration.h"
-#include "Sourcey/Spot/IChannel.h"
-#include "Sourcey/Spot/ISession.h"
-#include "Sourcey/Spot/ISynchronizer.h"
+#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/IConfiguration.h"
+#include "Anionu/Spot/API/IChannel.h"
+#include "Anionu/Spot/API/ISession.h"
+#include "Anionu/Spot/API/ISynchronizer.h"
 #include "Sourcey/Logger.h"
 
 #include "Poco/File.h"
 
 
 using namespace std;
-using namespace Sourcey::Media;
+using namespace Scy::Media;
 
 using Poco::FastMutex;
 
 
-namespace Sourcey {
+namespace Scy {
+namespace Anionu { 
 namespace Spot {
+	using namespace API;
 
 
 RecordingMode::RecordingMode(IEnvironment& env, IChannel& channel) :
@@ -35,11 +37,13 @@ RecordingMode::~RecordingMode()
 void RecordingMode::initialize() 
 {
 	loadConfig();
+	env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
 }
 
 
 void RecordingMode::uninitialize() 
 {
+	env().media().RecordingStopped.detach(this);
 }
 
 
@@ -71,7 +75,7 @@ void RecordingMode::activate()
 	{
 		log("error")  << "Error:" << exc.displayText() << endl;
 		setState(this, ModeState::Error);
-		throw exc;
+		exc.rethrow();
 	}
 }
 
@@ -90,22 +94,16 @@ bool RecordingMode::startRecording()
 	log() << "Start Recording" << endl;
 	FastMutex::ScopedLock lock(_mutex); 
 
-	RecorderOptions options;
-	_env.media().initRecorderOptions(_channel, options);
+	API::RecordingOptions options = env().media().getRecordingOptions(_channel.name());
+	options.synchronize = _synchronizeVideos;
 	options.duration = _segmentDuration * 1000;
-		
-	_recordingAction.token = "";
-	_recordingAction.encoder = NULL;
-	_recordingAction.synchronize = _synchronizeVideos;
 
-	// Tell the media manager to supress recording events for recording mode,
-	// otherwise we will end up with a huge number or recording events.
-	_recordingAction.supressEvents = true;
-	_env.media().startRecording(_channel, options, _recordingAction);
-
-	_recordingAction.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
-
-	log() << "Started Recording: " << _recordingAction.token << endl;
+	// Tell the media manager to supress events for recording mode,
+	// otherwise we will end up with a rediculous number or events.
+	options.supressEvents = true;
+	_env.media().startRecording(options);
+	log() << "Started Recording: " << options.token << endl;
+	_recordingToken = options.token;
 	return true;
 }
 
@@ -114,50 +112,52 @@ bool RecordingMode::stopRecording()
 {
 	FastMutex::ScopedLock lock(_mutex); 
 
-	if (!_recordingAction.token.empty()) {
-		_recordingAction.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
-		_env.media().stopRecording(_recordingAction.token);
-		log() << "Stopped Recording: " << _recordingAction.token << endl;
-		_recordingAction.token = "";
-		_recordingAction.encoder = NULL;
+	if (!_recordingToken.empty()) {
+		_env.media().stopRecording(_recordingToken);
+		log() << "Stopped Recording: " << _recordingToken << endl;
+		_recordingToken = "";
 		return true;
 	}
 	return false;
 }
 
 
-void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, const EncoderState&)
+void RecordingMode::onRecordingStopped(void* sender, API::RecorderStream& stream)
 {
-	log() << "Recorder State Changed: " << state.toString() << endl;
-	IEncoder* encoder = reinterpret_cast<IEncoder*>(sender);
-
-	if (state.equals(EncoderState::Stopped)) {
-		// Start a new recording segment if the mode is 
-		// still active.
-		if (isActive() &&
-			encoder == recordingAction().encoder) {
-			encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
-			/*
-			// Synchronize video's if required
-			if (_synchronizeVideos) {
-				RecorderOptions& options = static_cast<RecorderOptions&>(encoder->options());
-				Spot::Job job; 
-				job.type = "Video";
-				job.path = options.ofile;
-				_env.synchronizer() >> job;
-			}
-			*/				
-			startRecording();
-		}
+	if (!isActive() || 
+		recordingToken().empty() || 
+		recordingToken() != stream.options.token) 
+		return;
+	
+	try {	
+		// Start a new recording segment if the
+		// mode is still active.
+		startRecording();
+	} 
+	catch (...) {
+		// Catch and swallow recording errors. 
+		// Nothing to do here since the "Recording Failed"
+		// event will be triggered by the MediaManager.
 	}
 }
 
 
-void RecordingMode::buildConfigForm(Symple::Form&, Symple::FormElement& element, bool defaultScope)
+string RecordingMode::recordingToken()
+{	
+	FastMutex::ScopedLock lock(_mutex); 
+	return _recordingToken;
+}
+
+
+
+// ---------------------------------------------------------------------
+//
+void RecordingModeFormProcessor::buildForm(Symple::Form&, Symple::FormElement& element) //, bool defaultScope
 {
-	log() << "Creating Config Form" << endl;
-	ModeConfiguration config = this->config();
-	Symple::FormField field;	
+	Symple::FormField field;
+	ScopedConfiguration config = mode.config();
+	bool defaultScope = element.id().find("channels.") == 0;
+	mode.log() << "Building Form: " << element.id() << endl;	
 
 	if (defaultScope) {
 		element.setHint(
@@ -184,37 +184,73 @@ void RecordingMode::buildConfigForm(Symple::Form&, Symple::FormElement& element,
 }
 
 
-void RecordingMode::parseConfigForm(Symple::Form&, Symple::FormElement& element)
+void RecordingModeFormProcessor::parseForm(Symple::Form&, Symple::FormElement& element)
 {
-	log() << "Parsing Config Form" << endl;
+	mode.log() << "Parsing Config Form" << endl;
+	if (!element.hasField(".Recording Mode.", true))
+		return;
 
-	IEnvironment& env = this->env();	
+	IEnvironment& env = mode.env();	
 	Symple::FormField field;
 
+	// TODO: Non synchronized videos can have a longer duration.
+	// See RecordingMode.md
+
 	field = element.getField("Recording Mode.SegmentDuration", true);
-	log() << "Parsing Config Form: SynchronizeVideos: " << field.valid() << endl;
 	if (field.valid()) {
 		int value = field.intValue();
 		if (value < 10 ||
-			value > 60 * 60) {
-			field.setError("The segment duration must be between 10 seconds and one hour.");
+			value > 15 * 60) {
+			field.setError("The segment duration must be between 10 seconds and 15 minutes.");
 		}
 		else
 			env.config().setInt(field.id(), value);
 	}
 
 	field = element.getField("Recording Mode.SynchronizeVideos", true);
-	log() << "Parsing Config Form: SynchronizeVideos: " << field.valid() << ": " << field.boolValue() << endl;
 	if (field.valid())
 		env.config().setBool(field.id(), field.boolValue());
 
-	loadConfig();
+	mode.loadConfig();
 }
 
 
-string RecordingMode::infoFile() 
+string RecordingModeFormProcessor::documentFile() 
 {
 	return "plugins/RecordingModePlugin/RecordingMode.md";
+}
+
+
+bool RecordingModeFormProcessor::isConfigurable() const
+{	
+	return true;
+}
+
+
+bool RecordingModeFormProcessor::hasParsableFields(Symple::Form& form) const
+{
+	return form.hasField(".Recording Mode.", true);
+}
+
+
+} } } // namespace Scy::Anionu::Spot
+
+
+
+
+
+/*
+	
+	//Signal2<const API::RecordingOptions&, API::RecordingStream*&> RecordingStarted;
+	//Signal2<const API::RecordingOptions&, API::RecordingStream*&> RecordingStopped;
+	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
+	//env().media().RecordingStarted.detach(this);
+		//_recordingToken.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
+	//_recordingToken.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
+void RecordingMode::onRecordingStarted(void* sender, API::RecorderStream& stream)
+{
+}
+*/
 	/*
 	s << "<h1>About Recording Mode</h1>"
 		 "<p>Recording Mode provides Spot with the ability to record a constant stream of videos from any surveillance channel. "
@@ -234,26 +270,31 @@ string RecordingMode::infoFile()
 	//s << "<p>Due to the licensing restrictions we can only provide you with a couple of basic video formats by default.</p>";
 	//s << "<p>We do however provide a free demonstrational Media Plugin which adds support for other popular proprietary formats like H264 and XviD.</p>";
 	*/
-}
-
-
-bool RecordingMode::isConfigurable() const
-{	
-	return true;
-}
-
-
-RecordingAction& RecordingMode::recordingAction()
-{	
-	FastMutex::ScopedLock lock(_mutex); 
-	return _recordingAction;
-}
-
-
-bool RecordingMode::hasParsableConfig(Symple::Form& form) const
+			/*
+void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, const EncoderState&)
 {
-	return form.hasField(".Recording Mode.", true);
+	log() << "Recorder State Changed: " << state.toString() << endl;
+	IEncoder* encoder = reinterpret_cast<IEncoder*>(sender);
+
+	if (state.equals(EncoderState::Stopped)) {
+		// Start a new recording segment if the
+		// mode is still active.
+		if (isActive() &&
+			encoder == recordingOptions().encoder) {			
+			startRecording();
+		}
+	}
 }
+			*/	
 
-
-} } // namespace Sourcey::Spot
+/*
+			encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
+			// Synchronize video's if required
+			if (_synchronizeVideos) {
+				RecordingOptions& options = static_cast<RecordingOptions&>(encoder->options());
+				Spot::Job job; 
+				job.type = "Video";
+				job.path = options.ofile;
+				_env.synchronizer() >> job;
+			}
+			*/
