@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IChannel_H
-#define ANIONU_SPOT_API_IChannel_H
+#ifndef Anionu_Spot_API_IChannel_H
+#define Anionu_Spot_API_IChannel_H
 
 
 #include "Sourcey/Base.h"
@@ -41,7 +41,6 @@ namespace Media {
 namespace Anionu {
 namespace Spot { 
 namespace API { 
-	class IModeManager;
 
 
 class IChannel
@@ -53,7 +52,6 @@ public:
 	virtual Media::Device audioDevice() const = 0;
 	virtual Media::VideoCapture* videoCapture(bool whiny = false) const = 0;
 	virtual Media::AudioCapture* audioCapture(int channels = 2, int sampleRate = 44100, bool whiny = false) const = 0;
-	virtual IModeManager& modes() = 0;
 
 	virtual bool valid() const = 0;
 		/// The channel is considered valid when both
@@ -76,4 +74,4 @@ typedef std::vector<IChannel*> IChannelList;
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IChannel_H
+#endif // Anionu_Spot_API_IChannel_H

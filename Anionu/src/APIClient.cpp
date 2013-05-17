@@ -156,9 +156,7 @@ void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
 		if (*it == sender) {
 			log("trace") << "Removing Transaction: " << sender << endl;
 			_transactions.erase(it);
-			// The transaction is responsible for it's own destruction.
-			// TODO: Not so sure about this?
-			assert(0);
+			// The transaction is self destructing.
 			return;
 		}
 	}
@@ -187,70 +185,22 @@ string APIClient::endpoint()
 
 
 // ---------------------------------------------------------------------
-// API Request
-//
-void APIRequest::prepare()
-{	
-	setMethod(method.httpMethod);
-	setURI(method.uri.toString());
-	HTTP::Request::prepare();
-
-	if (!method.anonymous) {
-		
-		// Using basic auth over SSL
-		Poco::Net::HTTPBasicCredentials cred(
-			credentials.username,
-			credentials.password);
-		cred.authenticate(*this); 
-	}
-}
-
-
-// ---------------------------------------------------------------------
-// API Method Description
-//
-APIMethod::APIMethod() 
-{
-}
-
-
-void APIMethod::interpolate(const StringMap& params) 
-{
-	string path = uri.getPath();
-	for (StringMap::const_iterator it = params.begin(); it != params.end(); ++it) {	
-		replaceInPlace(path, (*it).first, (*it).second);
-	}
-	uri.setPath(path);
-}
-
-
-void APIMethod::format(const string& format) 
-{
-	string path = uri.getPath();
-	replaceInPlace(path, ":format", format.data());
-	uri.setPath(path);
-}
-
-
-// ---------------------------------------------------------------------
 // API Methods
 //
 APIMethods::APIMethods(APIClient& client) :
 	_client(client)
 {
-	LogTrace("APIMethods") << "Creating" << endl;
 }
 
 
 APIMethods::~APIMethods()
 {
-	LogTrace("APIMethods") << "Destroying" << endl;
 }
 
 
 bool APIMethods::loaded() const
 {
-	return (*this).empty();
+	return !(*this).empty();
 }
 
 
@@ -261,31 +211,20 @@ void APIMethods::load()
 		JSON::Reader reader;
 		if (!reader.parse(APIv1, *this))
 			throw Exception(reader.getFormatedErrorMessages());
+		LogTrace() << "Loaded API Methods: " << JSON::stringify(*this, true) << endl;
 	} 
 	catch (Exception& exc) 
 	{
 		LogError() << "API Load Error: " << exc.displayText() << endl;
 		exc.rethrow();
-	} 
-	catch (exception& exc) 
-	{
-		LogError() << "API Load Error: JSON Parser:" << exc.what() << endl;
-		throw exc;
-	} 
-}
-
-
-string APIMethods::endpoint()
-{
-	FastMutex::ScopedLock lock(_mutex); 
-	return ANIONU_API_ENDPOINT;
+	}  
 }
 
 
 APIMethod APIMethods::get(const string& name, const string& format, const StringMap& params)
 {	
 	if (!loaded())
-		throw Exception("Anionu API methods lot loaded.");
+		throw Exception("Anionu API methods not loaded.");
 	
 	APIMethod method;
 	try
@@ -294,13 +233,13 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 		LogTrace("APIMethods") << "Get: " << name << endl;	
 		for (JSON::ValueIterator it = this->begin(); it != this->end(); it++) {	
 			JSON::Value& meth = (*it);		
+			LogTrace() << "Get API Method: " << JSON::stringify(meth, true) << endl;
 			if (meth.isObject() &&
 				meth["name"] == name) {
+				LogTrace() << "Get API Method name: " << meth["name"].asString() << endl;
 				method.name = meth["name"].asString();
 				method.httpMethod = meth["http"].asString();
-				method.uri = (isMember("endpoint") ? 
-					(*this)["endpoint"].asString() : 
-					ANIONU_API_ENDPOINT) + meth["uri"].asString();
+				method.url = _client.endpoint() + meth["uri"].asString();
 				method.anonymous = meth["anon"].asBool();
 				break;
 			}
@@ -331,6 +270,52 @@ void APIMethods::print(ostream& os) const
 
 
 // ---------------------------------------------------------------------
+// API Method Description
+//
+APIMethod::APIMethod() 
+{
+}
+
+
+void APIMethod::interpolate(const StringMap& params) 
+{
+	string path = url.getPath();
+	for (StringMap::const_iterator it = params.begin(); it != params.end(); ++it) {	
+		replaceInPlace(path, (*it).first, (*it).second);
+	}
+	url.setPath(path);
+}
+
+
+void APIMethod::format(const string& format) 
+{
+	string path = url.getPath();
+	replaceInPlace(path, ":format", format.data());
+	url.setPath(path);
+}
+
+
+// ---------------------------------------------------------------------
+// API Request
+//
+void APIRequest::prepare()
+{	
+	setMethod(method.httpMethod);
+	setURI(method.url.toString());
+	HTTP::Request::prepare();
+
+	if (!method.anonymous) {
+		
+		// Using basic auth over SSL
+		Poco::Net::HTTPBasicCredentials cred(
+			credentials.username,
+			credentials.password);
+		cred.authenticate(*this); 
+	}
+}
+
+
+// ---------------------------------------------------------------------
 // API Transaction
 //
 APITransaction::APITransaction(APIRequest* request) : 
@@ -343,8 +328,6 @@ APITransaction::APITransaction(APIRequest* request) :
 APITransaction::~APITransaction()
 {
 	LogTrace("APITransaction") << "Destroying" << endl;
-	assert(0);
-
 }
 
 
@@ -353,7 +336,8 @@ void APITransaction::onComplete()
 	LogTrace("APITransaction") << "Callbacks: " << !cancelled() << endl;
 
 	assert(!cancelled());
-	// Send the complete event from the APITransaction instance.
+	// Send from the current instance, so the
+	// sender can be cast as an APITransaction.
 	HTTP::Transaction::Complete.emit(this, _response);
 }
 

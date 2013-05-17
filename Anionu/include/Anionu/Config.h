@@ -1,13 +1,13 @@
-#ifndef ANIONU_Config_H
-#define ANIONU_Config_H
+#ifndef Anionu_Config_H
+#define Anionu_Config_H
 
 
 #include "Sourcey/Base.h"
 
 
-#ifndef ANIONU_API_ENDPOINT
-#define ANIONU_API_ENDPOINT "https://anionu.com"
+#ifndef Anionu_API_ENDPOINT
+#define Anionu_API_ENDPOINT "https://anionu.com"
 #endif
 
 
-#endif // ANIONU_Config_H
+#endif // Anionu_Config_H

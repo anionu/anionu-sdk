@@ -25,101 +25,99 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IEnvironment_H
-#define ANIONU_SPOT_API_IEnvironment_H
+#ifndef Anionu_Spot_API_IEnvironment_H
+#define Anionu_Spot_API_IEnvironment_H
 
 
-#include "Sourcey/Base.h"
-#include "Sourcey/Signal.h"
+#include "Anionu/Spot/API/Config.h"
 
 
 namespace Scy {
+	class Logger;
+	class IConfiguration;
+	/*
 namespace Media {
 	class FormatRegistry;}
 namespace Symple {
 	class Message;
 	struct MessageDelegate;}
+	class ModeRegistry;
+	class IStreamingSession;
+	*/
 namespace Anionu {		
-	struct Event;
 namespace Spot { 
 namespace API { 
 
-	// Forward declare API interfaces
-	class ISession;
-	class IConfiguration;
-	class ISynchronizer;
-	class IChannelManager;
-	class ModeRegistry;
-	class IMediaManager;
-	class IStreamingManager;
-	class IStreamingSession;
+
+/// Forward declare ABI agnostic base interfaces
+class IEventManagerBase;
+class IMediaManagerBase;
+class ISympleClientBase;
+class ISynchronizerBase;
+class ISessionBase;
 
 
-static const char* SDKVersion = "0.5.1";
-	/// Current Spot SDK version number.
-	/// This version is be bumped whenever the API or
-	/// dependencies change, breaking binary compatability.
-	/// Spot plugins must be built with the same compiler,
-	/// dependencies, and SDK version as the target Spot client.
-	/// See Compatability.txt for more information.
-
-
-static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
-
-
-class IEnvironment
+class IEnvironmentBase
+	/// ABI agnostic API
 {
 public:
-	virtual API::IConfiguration& appConfig() = 0;
-	virtual API::IConfiguration& config() = 0;
-	virtual API::ISession& session() = 0;
+	virtual API::ISynchronizerBase& synchronizerBase() = 0;
+	virtual API::ISympleClientBase& clientBase() = 0;
+	virtual API::IMediaManagerBase& mediaBase() = 0;
+	virtual API::IEventManagerBase& eventsBase() = 0;
+	virtual API::ISessionBase& sessionBase() = 0;
+	
+	virtual const char* logBase(const char* message, const char* level = "trace") const = 0;
+
+	virtual const char* version() const = 0;
+		/// Returns the installed Spot package version.
+		
+protected:
+	virtual ~IEnvironmentBase() = 0 {};
+};
+
+
+// ---------------------------------------------------------------------
+//
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+//
+// Forward declare API interfaces so
+// they can be included as required.
+class IStreamingManager;
+class IChannelManager;
+class IEventManager;
+class IMediaManager;
+class ISynchronizer;
+class ISympleClient;
+class ISession;
+
+
+class IEnvironment: public IEnvironmentBase
+	/// The ABI strict API environment.
+	/// This class provides references to all Spot's
+	/// internal components.
+{
+public:
+	virtual IConfiguration& config() = 0;
+	virtual IConfiguration& appConfig() = 0;
 	virtual API::IMediaManager& media() = 0;
+	virtual API::IEventManager& events() = 0;
 	virtual API::IChannelManager& channels() = 0;
 	virtual API::IStreamingManager& streaming() = 0;
 	virtual API::ISynchronizer& synchronizer() = 0;
-	virtual API::ModeRegistry& modes() = 0;
+	virtual API::ISympleClient& client() = 0;	
+	virtual API::ISession& session() = 0;
 	virtual Logger& logger() = 0;
-
-	virtual std::string version() const = 0;
-		/// Returns the installed Spot package version.
-	
-	virtual void createEvent(const Anionu::Event& event) = 0;
-		/// Creates a surveillance event via the Anionu REST API.
-		/// Once created the event will be broadcasted over the 
-		/// network to online peers.
-		/// This method should be used for important events which
-		/// need to be stored in the database.
-
-	virtual bool broadcastEvent(const Anionu::Event& event) = 0;
-		/// Broadcasts a surveillance event over the network to 
-		/// online peers.
-		/// This method should be used for messages or trivial
-		/// events which don't need to be stored in the database.
-		/// Returns false if offline, true otherwise.
-	
-	virtual void sendMessage(const Symple::Message& message, bool respond = false) = 0;
-		/// Sends a Symple message to a remote peer.
-		/// If the "respond" flag is true, the 'to' and 'from' fields
-		/// will be swapped, so the message is returned to sender.
-		/// An exception will be thrown if the ISession is invalid,
-		/// or the Symple client is offline.
-	
-	virtual void attachMessageListener(const Symple::MessageDelegate& delegate) = 0;
-		/// Attach a delegate to listen for Symple presence, messages,
-		/// and/or commands from remote peers.
-		/// If the message is responded to inside this callback,
-		/// a StopPropagation exception should be thrown to break
-		/// out of the callback scope.
-
-	virtual void detachMessageListener(const Symple::MessageDelegate& delegate) = 0;
-		/// Detach any previously attached message delegates.
 		
 protected:
 	virtual ~IEnvironment() = 0 {};
 };
 
 
+#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+
+
 } } } } // namespace Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IEnvironment_H
+#endif // Anionu_Spot_API_IEnvironment_H

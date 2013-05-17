@@ -2,11 +2,12 @@
 #include "RecordingMode.h"
 
 #include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/ModeRegistry.h"
+
 
 
 using namespace std;
 using namespace Poco;
+using namespace Scy::Anionu::Spot::API;
 
 
 DEFINE_SPOT_PLUGIN(Scy::Anionu::Spot::RecordingModePlugin)
@@ -27,17 +28,32 @@ RecordingModePlugin::~RecordingModePlugin()
 }
 
 
-void RecordingModePlugin::initialize() 
+bool RecordingModePlugin::load() 
 {
 	log() << "Initializing" << endl;	
-	env()->modes().registerMode<RecordingMode>("Recording Mode");
+	//env->modes().registerMode<RecordingMode>("Recording Mode");
+	return true;
 }
 
 
-void RecordingModePlugin::uninitialize() 
+void RecordingModePlugin::unload() 
 {	
 	log() << "Uninitializing" << endl;	
-	env()->modes().unregisterMode("Recording Mode");
+	//env->modes().unregisterMode("Recording Mode");
+}
+
+
+IMode* RecordingModePlugin::createModeInstance(const char* mode, const char* channel)
+{
+	assert(strcmp(mode, "Recording Mode") == 0);
+	return new RecordingMode(*env, channel);
+}
+
+
+const char** RecordingModePlugin::modeNames() const
+{
+	static const char* modeNames[] = { "Recording Mode", NULL };
+	return modeNames;
 }
 
 

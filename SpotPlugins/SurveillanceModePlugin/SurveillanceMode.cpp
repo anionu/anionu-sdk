@@ -2,21 +2,23 @@
 #include "SurveillanceMultipartPacketizer.h"
 #include "Anionu/Spot/API/IChannel.h"
 #include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/IConfiguration.h"
 #include "Anionu/Spot/API/ISession.h"
 #include "Anionu/Spot/API/IStreamingManager.h"
+#include "Anionu/Spot/API/IEventManager.h"
 #include "Anionu/Spot/API/ISynchronizer.h"
 #include "Anionu/Event.h"
+#include "Sourcey/IConfiguration.h"
 
 
 using namespace std;
 using namespace Poco;
-using namespace Scy::Media;
+using namespace Scy::Anionu::Spot::API;
 
 
 namespace Scy {
 namespace Anionu { 
 namespace Spot {
+	using namespace API;
 
 
 SurveillanceMode::SurveillanceMode(IEnvironment& env, IChannel& channel) :
@@ -131,7 +133,7 @@ bool SurveillanceMode::stopMotionDetector()
 }
 
 
-void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&)
+void SurveillanceMode::onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&)
 {
 	log() << "Motion State Changed: " << state.toString() << endl;
 	{
@@ -142,24 +144,24 @@ void SurveillanceMode::onMotionStateChange(void* sender, Media::MotionDetectorSt
 	}
 
 	switch (state.id()) {
-		case Media::MotionDetectorState::Idle: 
+		case Anionu::MotionDetectorState::Idle: 
 			break;
-		case Media::MotionDetectorState::Waiting:
+		case Anionu::MotionDetectorState::Waiting:
 
 			// Stop recording
 			// Always make this call just to be sure
 			stopRecording();
 		break;
-		case Media::MotionDetectorState::Vigilant: 
+		case Anionu::MotionDetectorState::Vigilant: 
 			break;
-		case Media::MotionDetectorState::Triggered:
+		case Anionu::MotionDetectorState::Triggered:
 
 			// Create a Motion Detected event via the Anionu API to
 			// notify account users.
 			Anionu::Event event("Motion Detected", 
 				env().session().name() + ": Motion detected on channel: " + _channel.name(),
 				Anionu::Event::High, Anionu::Event::SpotLocal);
-			env().createEvent(event);
+			env().events().createEvent(event);
 			
 			try {	
 				// Start recording.
@@ -322,24 +324,24 @@ void SurveillanceMode::onStreamingSessionStateChange(void* sender, API::Streamin
 
 // ---------------------------------------------------------------------
 //
-bool SurveillanceModeFormProcessor::isConfigurable() const
+bool SurveillanceMode::isConfigurable() const
 {	
 	return true;
 }
 
 
-bool SurveillanceModeFormProcessor::hasParsableFields(Symple::Form& form) const
+bool SurveillanceMode::hasParsableFields(Symple::Form& form) const
 {
 	return form.hasField(".Surveillance Mode.", true);
 }
 
 
-void SurveillanceModeFormProcessor::buildForm(Symple::Form& form, Symple::FormElement& element) //, bool defaultScope
+void SurveillanceMode::buildForm(Symple::Form& form, Symple::FormElement& element) //, bool defaultScope
 {		
 	Symple::FormField field;
-	ScopedConfiguration config = mode.config();
+	ScopedConfiguration config = this->config();
 	bool defaultScope = element.id().find("channels.") == 0;
-	mode.log() << "Building Form: " << element.id() << endl;	 
+	this->log() << "Building Form: " << element.id() << endl;	 
 
 	// Create a video media element which enables the user to preview motion changes
 	// in real time as the channel is configured. This is achieved by adding a "media"
@@ -356,7 +358,7 @@ void SurveillanceModeFormProcessor::buildForm(Symple::Form& form, Symple::FormEl
 			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results."
 		);
 
-		Token* token = mode.createStreamingToken();
+		Token* token = this->createStreamingToken();
 		field = element.addField("media", config.getModuleScope("Preview"), "Live Motion Preview");
 		field.setHint(
 			"Keep an eye on the motion levels and motion state in the top left hand corner of the video. "
@@ -452,12 +454,12 @@ void SurveillanceModeFormProcessor::buildForm(Symple::Form& form, Symple::FormEl
 }
 
 
-void SurveillanceModeFormProcessor::parseForm(Symple::Form& form, Symple::FormElement& element)
+void SurveillanceMode::parseForm(Symple::Form& form, Symple::FormElement& element)
 {
-	mode.log() << "Parsing Config Form" << endl;	
+	this->log() << "Parsing Config Form" << endl;	
 	Symple::FormField field;
-	ScopedConfiguration config = mode.config();
-	IEnvironment& env = mode.env();
+	ScopedConfiguration config = this->config();
+	IEnvironment& env = this->env();
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);
 	if (field.valid()) {
@@ -500,11 +502,11 @@ void SurveillanceModeFormProcessor::parseForm(Symple::Form& form, Symple::FormEl
 	if (field.valid())
 		env.config().setBool(field.id(), field.boolValue());
 
-	mode.loadConfig();
+	this->loadConfig();
 }
 
 
-string SurveillanceModeFormProcessor::documentFile() 
+string SurveillanceMode::helpFile() 
 {	
 	return "plugins/SurveillanceModePlugin/SurveillanceMode.md";
 }

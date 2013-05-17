@@ -1,5 +1,5 @@
-#ifndef ANIONU_Event_H
-#define ANIONU_Event_H
+#ifndef Anionu_Event_H
+#define Anionu_Event_H
 
 
 #include "Anionu/Config.h"
@@ -67,4 +67,4 @@ struct Event
 } } // namespace Scy::Anionu
 
 
-#endif // ANIONU_Event_H
+#endif // Anionu_Event_H

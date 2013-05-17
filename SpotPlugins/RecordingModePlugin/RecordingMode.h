@@ -3,7 +3,10 @@
 
 
 #include "Anionu/Spot/API/IMode.h"
+#include "Anionu/Spot/API/IModule.h"
+#include "Anionu/Spot/API/IChannel.h"
 #include "Anionu/Spot/API/IMediaManager.h"
+#include "Anionu/Spot/API/ISympleProcessors.h"
 
 
 namespace Scy {
@@ -11,16 +14,16 @@ namespace Anionu {
 namespace Spot {
 
 
-class RecordingMode: public API::IMode
+class RecordingMode: public API::IMode, public API::IModule
 {
 public:
-	RecordingMode(API::IEnvironment& env,  API::IChannel& channel);
+	RecordingMode(API::IEnvironment& env, const std::string& channel); // API::IChannel& channel
 	~RecordingMode();
 
-	void initialize();
-	void uninitialize();
+	//void initialize();
+	//void uninitialize();
 
-	void activate();
+	bool activate();
 	void deactivate();
 	
 	bool startRecording();
@@ -28,32 +31,31 @@ public:
 	
 	void loadConfig();
 	std::string recordingToken();
-	
-	void onRecordingStopped(void* sender, API::RecorderStream& stream);
-
-	virtual const char* className() const { return "RecordingMode"; }
-
-private: 
-	int	_segmentDuration;
-	bool _synchronizeVideos;
-	std::string	_recordingToken;
-	mutable Poco::FastMutex _mutex;
-};
-
-
-// ---------------------------------------------------------------------
-//
-class RecordingModeFormProcessor: public Symple::IFormProcessor
-{	
-	RecordingModeFormProcessor(RecordingMode& mode) : mode(mode) {};
-
+		
+	/*
+	//
+	/// Symple::IFormProcessor methods
 	bool isConfigurable() const;
 	bool hasParsableFields(Symple::Form& form) const;
 	void buildForm(Symple::Form& form, Symple::FormElement& element);
 	void parseForm(Symple::Form& form, Symple::FormElement& element);
-	std::string documentFile();
+	*/
+	
+	void onRecordingStopped(void* sender, API::RecorderStream& stream);
+	
+	const char* helpFile() const;	
+	const char* channel() const;
+	const char* error() const;
+	const char* name() const { return "Recording Mode"; }
+	const char* className() const { return "RecordingMode"; }
 
-	RecordingMode& mode;
+private: 
+	int	_segmentDuration;
+	bool _synchronizeVideos;
+	std::string _error;
+	std::string _channel;
+	std::string	_recordingToken;
+	mutable Poco::FastMutex _mutex;
 };
 
 
@@ -67,7 +69,7 @@ class RecordingModeFormProcessor: public Symple::IFormProcessor
 	/*
 	bool isConfigurable() const;
 	bool hasParsableFields(Symple::Form& form) const;	
-	std::string documentFile();
+	std::string helpFile();
 
 	void buildForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
 	void parseForm(Symple::Form& form, Symple::FormElement& element);

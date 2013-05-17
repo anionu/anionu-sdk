@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IStreamingSession_H
-#define ANIONU_SPOT_API_IStreamingSession_H
+#ifndef Anionu_Spot_API_IStreamingSession_H
+#define Anionu_Spot_API_IStreamingSession_H
 
 
 #include "Sourcey/Base.h"
@@ -180,4 +180,4 @@ protected:
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IStreamingSession_H
+#endif // Anionu_Spot_API_IStreamingSession_H

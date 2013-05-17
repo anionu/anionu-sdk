@@ -25,17 +25,42 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_ISynchronizer_H
-#define ANIONU_SPOT_API_ISynchronizer_H
+#ifndef Anionu_Spot_API_ISynchronizer_H
+#define Anionu_Spot_API_ISynchronizer_H
 
 
+#include "Anionu/Spot/API/Config.h"
+
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 #include "Sourcey/Signal.h"
+#endif
 
 
 namespace Scy {
 namespace Anionu {
 namespace Spot { 
 namespace API { 
+
+
+// ---------------------------------------------------------------------
+//
+class ISynchronizerBase
+	/// ABI agnostic API
+{
+public:
+	virtual bool sync(const char* file, const char* type = "Video", int priority = 0) = 0;
+		/// Synchronizes the given file with online storage using
+		/// the Anionu REST API. Returns on HTTP request error. 
+		/// Full error message in log file.
+		
+protected:
+	virtual ~ISynchronizerBase() = 0 {};
+};
+
+
+// ---------------------------------------------------------------------
+//
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 
 
 struct ISynchronizerTask
@@ -57,15 +82,16 @@ struct ISynchronizerTask
 };
 
 
-class ISynchronizer
+class ISynchronizer: public ISynchronizerBase
 {
 public:
-	virtual void synchronize(
-		const std::string& type, /// Asset type [Video, Audio, Image, Archive, Text]
+	virtual void sync(
 		const std::string& file, /// Asset file path
+		const std::string& type, /// Asset type [Video, Audio, Image, Archive, Text]
 		int priority = 0		 /// Task priority [0 - 100]
 		) = 0;
 		/// Pushes a task onto the synchronization queue.
+		/// Throws an exception on error.
 	
 	Signal<ISynchronizerTask&> TaskAdded;
 	Signal<ISynchronizerTask&> TaskRemoved;
@@ -77,7 +103,10 @@ protected:
 };
 
 
+#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+
+
 } } } } // namespace Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_ISynchronizer_H
+#endif // Anionu_Spot_API_ISynchronizer_H

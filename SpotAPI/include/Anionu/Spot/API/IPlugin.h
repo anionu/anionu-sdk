@@ -25,113 +25,200 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IPlugin_H
-#define ANIONU_SPOT_API_IPlugin_H
+#ifndef Anionu_Spot_API_IPlugin_H
+#define Anionu_Spot_API_IPlugin_H
 
 
-#include "Sourcey/Logger.h"
-#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/Config.h"
 #include "Poco/ClassLibrary.h"
-#include "Poco/Mutex.h"
 
 
 namespace Scy {
-namespace Symple {
-	class IFormProcessor;
-	/// The symple form processor can be optionally included
-	/// for integrating your plugin with the Anionu dashboard
-	/// for remote configuration.
-}
 namespace Anionu {
 namespace Spot { 
 namespace API { 
-	class IEnvironment;
 	
-
+	
 class IPlugin
+	/// This class defines the ABI agnostic virtual interface
+	/// that Spot uses to load shared libraries and plugins.
+	///
+	/// This class should only be used if you want to build
+	/// Spot plugins using ABI incompatable compilers and
+	/// dependencies to build your plugins, and still maintain
+	/// compatability. If you want to utilize the full Spot API
+	/// environment, then your libraries should implement the 
+	/// IPlugin interface instead.
+	///
+	/// See the EventPlugin (included in the Anionu SDK) for an
+	/// example of how IPlugin can be combined with the
+	/// ISympleProcessors to process all incoming and outgoing
+	/// Spot client/server messages without compormising ABI
+	/// compatability.
+	///
+{
+public:
+	virtual ~IPlugin() = 0 {};
+
+	virtual bool load() = 0;
+		/// This method initializes the shared library when it
+		/// is loaded by Spot, either on startup, or manually 
+		/// by the user.
+		///
+		/// Any runtime or system compatibility checks they should
+		/// be done here. If there is an unrecoverable error, this
+		/// method should return false. A detailed error message may
+		/// be returned to the client via the error() method.
+
+	virtual void unload() = 0;
+		/// This method uninitializes the library when it is unloaded
+		/// by Spot, either on shutdown or manually by the user.
+		///
+		/// Any memory allocated by the library should be freed here.
+
+	virtual const char* error() const { return 0; };
+		/// Returns a detailed error message if load() fails.
+		/// Override this method if you want to provide an error message.
+
+	virtual void setPath(const char* path) {};
+		/// The full path to the plugin shared library will be set
+		/// by Spot before the load() method is called.
+		/// Override this method if you want access to the path.
+
+	virtual const char* helpFile() { return 0; };
+		/// Returns the relative path (from the Spot binary dir)
+		/// to the optional help guide/documentation pertaining
+		/// to the current module.
+		/// Information files should be in Markdown format.
+};
+
+
+} } } } // namespace Scy::Anionu::Spot::API
+
+
+#define DEFINE_SPOT_PLUGIN(ClassName)					 \
+POCO_BEGIN_MANIFEST(Scy::Anionu::Spot::API::IPlugin) \
+	POCO_EXPORT_CLASS(ClassName)						 \
+POCO_END_MANIFEST										 \
+
+
+#endif /// Anionu_Spot_API_IPlugin_H
+
+
+
+
+
+/*
+
+	//virtual void onSessionStart() {};
+	//virtual void onSessionEnd() {};	
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+
+
+class IPlugin: public IPlugin
 	/// The plugin interface exposes the Spot API environment
 	/// for building shared libraries that extend the core
 	/// functionality of the Spot client.
+	///
+	/// IPlugin should be extended with any interfaces you
+	/// intend on implementing. See the Anionu SDK for full 
+	/// plugin examples.
 {
 public:
-	IPlugin::IPlugin() : _env(NULL), _proc(NULL) {};
-	virtual ~IPlugin() = 0 {};
-
-	virtual void initialize() = 0;
-		/// This method initializes the plugin when the plugin is
-		/// loaded by Spot, either on startup, or manually via Spot 
-		/// or the online dashboard.
-		///
-		/// The IEnvironment instance has already been set, exposing 
-		/// the Spot API interface to the plugin. See IPlugin::env().
-		///
-		/// Any system compatibility or runtime checks they should
-		/// be done here. If there is an unrecoverable error, an 
-		/// Exception with a descriptive message should be thrown
-		/// to set the plugin in an error state.
-
-	virtual void uninitialize() = 0;
-		/// This method uninitializes the plugin when the plugin is
-		/// unloaded by Spot, either on shutdown or manually via
-		/// Spot or online dashboard.
-		///
-		/// Any memory allocated but he plugin should be freed.
-	
-	API::IEnvironment* env() const
-		/// Returns the Spot API interface pointer.
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		return _env; 
-	}
-	
-	Symple::IFormProcessor* proc() const
-		/// Returns the optional Symple Form processor pointer.
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		return _proc; 
-	}
+	//IPlugin::IPlugin() : _env(NULL) {};
+	virtual ~IPlugin() = 0 {};	
 
 	std::string path() const
-		/// Returns the full path to the plugin library.
+		/// Returns the full path to the plugin shared library.
+		/// Do not attempt to call inside constructor.
+		/// Available only inside and after load() has been called.
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);
+		assert(!_path.empty());
 		return _path;
-	}
-		
-	LogStream log(const char* level = "debug") const
-		/// This method sends log messages the Spot logger.
+	}	
+
+	virtual const char* error() const 
+		/// Overrides the IPlugin base to return a descriptive
+		/// error message on plugin load failure.
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);
-
-		// The IEnvironment instance will be NULL
-		// until setEnvironment is been called, 
-		// therefore messages logged before the 
-		// plugin is intialized will be lost.
-		if (_env == NULL)
-			return LogStream();
+		return _error.empty() ? 0 : _error.data();
+	}
 	
-		return _env->logger().send(level, this, className()); 
+
+	//
+	/// Private methods
+	//	
+
+	void setPath(const char* path)
+		/// The full path of the plugin will be set by 
+		/// Spot before the load() method is called.
+	{ 
+		Poco::FastMutex::ScopedLock lock(_mutex);
+		_path = path; 
 	}
 
+private:
+	std::string _path;
+	std::string _error;
+};
+
+
+#endif /// ENFORCE_STRICT_ABI_COMPATABILITY
+
+*/
+
+	/*
+	virtual bool load() = 0;
+		/// This method initializes the plugin when it is loaded
+		/// by Spot, either on startup, or manually by the user.
+		///
+		/// The IEnvironment instance has already been set,
+		/// exposing  the Spot API environment to the plugin. 
+		/// See IPlugin::env()
+		///
+		/// Any runtime or system compatibility checks they should
+		/// be done here. If there is an unrecoverable error, this
+		/// method should return false. A detailed error message may
+		/// be returned to the client via the error() method.
+
+	virtual void unload() = 0;
+		/// This method uninitializes the library when it is unloaded
+		/// by Spot, either on shutdown or manually by the user.
+		///
+		/// Any memory allocated by the library should be freed here.
+		*/
+
+/*
+
+#define DEFINE_SPOT_PLUGIN(ClassName)			     \
+POCO_BEGIN_MANIFEST(Scy::Anionu::Spot::API::IPlugin) \
+	POCO_EXPORT_CLASS(ClassName)				     \
+POCO_END_MANIFEST								     \
+*/
+	
+	
+	/*, _proc(NULL)
+	
 
 	//
 	/// Private Methods
 	//	
 
-	void setEnvironment(API::IEnvironment* env)
-		/// The IEnvironment instance will be set by
-		/// Spot before plugin initialization.
+	
+protected:
+
+
+	API::IFormProcessor* proc() const
+		/// Returns the optional Symple Form processor pointer.
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);
-		_env = env; 
-
-		// Also set the default logger instance, otherwise
-		// a new default logger instance will be created
-		// for the plugin process.
-		Logger::setInstance(&_env->logger());
+		return _proc; 
 	}
-
-	void setFormProcessor(Symple::IFormProcessor* proc)
+	*/
+	/*
+	void setFormProcessor(API::IFormProcessor* proc)
 		/// The should be set during initialize() in the plugin
 		/// is designed to intergrate with the online dashboard
 		/// for remote configuration. 
@@ -139,33 +226,5 @@ public:
 		Poco::FastMutex::ScopedLock lock(_mutex);
 		_proc = proc; 
 	}
-
-	void setPath(const std::string& path)
-		/// The full path of the plugin will be set by
-		/// Spot before plugin initialization.
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		_path = path; 
-	}
-
-	virtual const char* className() const { return "Plugin"; }
-		/// Override this method for named logging.
-	
-private:
-	std::string _path;
-	API::IEnvironment* _env;
-	Symple::IFormProcessor* _proc;
-	mutable Poco::FastMutex _mutex;
-};
-
-
-} } } } // namespace Scy::Anionu::Spot::API
-
-
-#define DEFINE_SPOT_PLUGIN(ClassName)			     \
-POCO_BEGIN_MANIFEST(Scy::Anionu::Spot::API::IPlugin) \
-	POCO_EXPORT_CLASS(ClassName)				     \
-POCO_END_MANIFEST								     \
-
-
-#endif /// ANIONU_SPOT_API_IPlugin_H
+	//API::IFormProcessor* _proc;
+	*/

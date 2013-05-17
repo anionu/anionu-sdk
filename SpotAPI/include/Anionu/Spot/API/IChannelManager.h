@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IChannelManager_H
-#define ANIONU_SPOT_API_IChannelManager_H
+#ifndef Anionu_Spot_API_IChannelManager_H
+#define Anionu_Spot_API_IChannelManager_H
 
 
 #include "Anionu/Spot/API/IChannel.h"
@@ -36,6 +36,7 @@ namespace Scy {
 namespace Anionu { 
 namespace Spot { 
 namespace API { 
+	class IModeManager;
 	
 
 class IChannelManager
@@ -49,6 +50,7 @@ public:
 		// Returns the first channel in the list.
 
 	virtual IChannelList list() const = 0;
+	virtual IModeManager& modes() = 0;
 		
 	Signal<API::IChannel&> ChannelAdded;
 	Signal<API::IChannel&> ChannelRemoved;
@@ -61,4 +63,4 @@ protected:
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IChannelManager_H
+#endif // Anionu_Spot_API_IChannelManager_H

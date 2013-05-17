@@ -3,6 +3,8 @@
 
 
 #include "Anionu/Spot/API/IPlugin.h"
+#include "Anionu/Spot/API/IModule.h"
+#include "Anionu/Spot/API/IMode.h"
 
 
 namespace Scy {
@@ -10,16 +12,28 @@ namespace Anionu {
 namespace Spot {
 
 
-class RecordingModePlugin: public API::IPlugin
+class RecordingModePlugin: 
+	public API::IPlugin, 
+	public API::IModule, 
+	public API::IModeFactory
 {
 public:
 	RecordingModePlugin();
 	virtual ~RecordingModePlugin();
+	
+	//
+	/// IPlugin
+	bool load();
+	void unload();
 
-	void initialize();
-	void uninitialize();
-
-	virtual const char* className() const { return "RecordingModePlugin"; }
+	//
+	/// IModeFactory
+	API::IMode* createModeInstance(const char* mode, const char* channel);
+	const char** modeNames() const;
+		
+	//
+	/// IModule
+	const char* className() const { return "RecordingModePlugin"; }
 };
 
 

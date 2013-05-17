@@ -27,19 +27,19 @@ SurveillanceModePlugin::~SurveillanceModePlugin()
 }
 
 
-void SurveillanceModePlugin::initialize() 
+void SurveillanceModePlugin::load() 
 {
 	log() << "Initializing" << endl;	
 
-	env()->modes().registerMode<SurveillanceMode>("Surveillance Mode");
+	env().modes().registerMode<SurveillanceMode>("Surveillance Mode");
 }
 
 
-void SurveillanceModePlugin::uninitialize() 
+void SurveillanceModePlugin::unload() 
 {	
 	log() << "Uninitializing" << endl;
 
-	env()->modes().unregisterMode("Surveillance Mode");
+	env().modes().unregisterMode("Surveillance Mode");
 }
 
 

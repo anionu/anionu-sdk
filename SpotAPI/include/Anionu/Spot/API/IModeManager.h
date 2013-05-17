@@ -25,27 +25,43 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IModeManager_H
-#define ANIONU_SPOT_API_IModeManager_H
+#ifndef Anionu_Spot_API_IModeManager_H
+#define Anionu_Spot_API_IModeManager_H
 
 
+#include "Anionu/Spot/API/Config.h"
 #include "Anionu/Spot/API/IMode.h"
+
+#include "Sourcey/Signal.h"
+
+#include <vector>
+#include <string>
 
 
 namespace Scy { 
 namespace Anionu {
 namespace Spot { 
 namespace API { 
+	
+
+typedef std::vector<IMode*> IModeList;
 
 
 class IModeManager
 {
 public:
-	virtual void activate(const std::string& name) = 0;
-	virtual void deactivate(const std::string& name) = 0;
+	virtual void activate(const std::string& name, const std::string& channel) = 0;
+	virtual void deactivate(const std::string& name, const std::string& channel) = 0;
 
 	virtual IModeList list() const = 0;
-	
+			
+	Signal<const std::string&> ModeRegistered;
+	Signal<const std::string&> ModeUnregistered;
+
+	Signal<API::IMode&> ModeActivated;
+	Signal<API::IMode&> ModeDeactivated;
+	Signal<API::IMode&> ModeError;
+
 protected:
 	virtual ~IModeManager() = 0 {};
 };
@@ -54,4 +70,4 @@ protected:
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IModeManager_H
+#endif // Anionu_Spot_API_IModeManager_H

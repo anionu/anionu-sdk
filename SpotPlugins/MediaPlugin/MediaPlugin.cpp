@@ -1,7 +1,6 @@
 #include "MediaPlugin.h"
 
 #include "Anionu/Spot/API/IEnvironment.h"
-#include "Sourcey/Media/FormatRegistry.h"
 
 
 using namespace std;
@@ -27,19 +26,84 @@ MediaPlugin::~MediaPlugin()
 }
 
 
-void MediaPlugin::initialize() 
+void MediaPlugin::load() 
 {
 	log() << "Initializing" << endl;	
 
-	API::IMediaManager& media = env()->media();
+	API::IMediaManager& media = env().media();
 
 	// Since we will be the default media provider in most
 	// cases, we should listen in on the signals at a lower
 	// priority so other providers can create the encoder first.
-	env()->streaming().SetupStreamingSession += delegate(this, &MediaPlugin::onSetupStreamingSession, -1);
+	env().streaming().SetupStreamingSession += delegate(this, &MediaPlugin::onSetupStreamingSession, -1);
 	media.CreateEncoder += delegate(this, &MediaPlugin::onInitializeRecordingEncoder, -1);
+}
+
+
+void MediaPlugin::unload() 
+{	
+	log() << "Uninitializing" << endl;
+	
+	env().streaming().SetupStreamingSession.detach(this);
+	env().media().CreateEncoder.detach(this);
+}
+
+
+IPacketEncoder* MediaPlugin::createEncoder(const RecordingOptions& options)
+{
+	log() << "Initializing AV Encoder" << endl;	
+
+	IPacketEncoder* encoder = NULL;
+	try {
+		encoder = new AVEncoder(options);
+		encoder->initialize();
+	}
+	catch (Exception& exc) {
+		log("error") << "Encoder Initialization Failed: " << exc.displayText() << endl;
+		if (encoder)
+			delete encoder;
+		encoder = NULL;
+	}
+	return encoder;
+}
+
+
+void MediaPlugin::onInitializeRecordingEncoder(void*, const RecordingOptions& options, IPacketEncoder*& encoder)
+{
+	log() << "Initialize Recording Encoder" << endl;
+
+	if (options.oformat.id != "rawvideo" &&
+		encoder == NULL) {
+		encoder = createEncoder(options);
+	}
+}
+
+
+void MediaPlugin::onSetupStreamingSession(void*, API::IStreamingSession& session, bool&)
+{
+	log() << "Initialize Streaming Session" << endl;
+		
+	if (session.options().oformat.id != "rawvideo" &&
+		session.stream().getProcessor<IPacketEncoder>() == NULL) {	
+	
+		RecordingOptions options(
+			session.options().iformat, 
+			session.options().oformat);
+		IPacketEncoder* encoder = createEncoder(options);
+		if (encoder)
+			session.stream().attach(encoder, 5, true);			
+	}
+}
+
+
+} } } // namespace Scy::Anionu::Spot
+
+
+
+
 		
 	/*
+#include "Sourcey/Media/FormatRegistry.h"
 	//
 	// MJPEG High (Streaming)
 	//
@@ -224,26 +288,18 @@ void MediaPlugin::initialize()
 		throw exc;
 	}
 	*/
-}
 
-
-void MediaPlugin::uninitialize() 
-{	
-	log() << "Uninitializing" << endl;
-	
-	env()->streaming().SetupStreamingSession.detach(this);
-	env()->media().CreateEncoder.detach(this);
 
 	/*
 	try 
 	{
 		
-		env()->media().recordingFormats().unregisterFormat("MP4");
-		env()->media().videoStreamingFormats().unregisterFormat("FLV");
-		env()->media().remoteVideoStreamingFormats().unregisterFormat("FLV");
+		env().media().recordingFormats().unregisterFormat("MP4");
+		env().media().videoStreamingFormats().unregisterFormat("FLV");
+		env().media().remoteVideoStreamingFormats().unregisterFormat("FLV");
 #if HAVE_H264
-		env()->media().videoStreamingFormats().unregisterFormat("Flash H264");
-		env()->media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
+		env().media().videoStreamingFormats().unregisterFormat("Flash H264");
+		env().media().remoteVideoStreamingFormats().unregisterFormat("Flash H264");
 #endif
 	
 		//setState(PluginState::Disabled);
@@ -254,54 +310,3 @@ void MediaPlugin::uninitialize()
 		throw exc;
 	}
 	*/
-}
-
-
-IPacketEncoder* MediaPlugin::createEncoder(const RecordingOptions& options)
-{
-	log() << "Initializing AV Encoder" << endl;	
-
-	IPacketEncoder* encoder = NULL;
-	try {
-		encoder = new AVEncoder(options);
-		encoder->initialize();
-	}
-	catch (Exception& exc) {
-		log("error") << "Encoder Initialization Failed: " << exc.displayText() << endl;
-		if (encoder)
-			delete encoder;
-		encoder = NULL;
-	}
-	return encoder;
-}
-
-
-void MediaPlugin::onInitializeRecordingEncoder(void*, const RecordingOptions& options, IPacketEncoder*& encoder)
-{
-	log() << "Initialize Recording Encoder" << endl;
-
-	if (options.oformat.id != "rawvideo" &&
-		encoder == NULL) {
-		encoder = createEncoder(options);
-	}
-}
-
-
-void MediaPlugin::onSetupStreamingSession(void*, API::IStreamingSession& session, bool&)
-{
-	log() << "Initialize Streaming Session" << endl;
-		
-	if (session.options().oformat.id != "rawvideo" &&
-		session.stream().getProcessor<IPacketEncoder>() == NULL) {	
-	
-		RecordingOptions options(
-			session.options().iformat, 
-			session.options().oformat);
-		IPacketEncoder* encoder = createEncoder(options);
-		if (encoder)
-			session.stream().attach(encoder, 5, true);			
-	}
-}
-
-
-} } } // namespace Scy::Anionu::Spot

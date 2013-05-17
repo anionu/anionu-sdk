@@ -25,25 +25,52 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_ISession_H
-#define ANIONU_SPOT_API_ISession_H
+#ifndef Anionu_Spot_API_ISession_H
+#define Anionu_Spot_API_ISession_H
 
 
+#include "Anionu/Spot/API/Config.h"
+
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-
-
 #include "Poco/Path.h"
-
 #include <iostream>
-#include <string>
-#include <assert.h>
+#endif
 
 
 namespace Scy { 
 namespace Anionu {
 namespace Spot { 
 namespace API { 
+
+	
+class ISessionBase
+	/// ABI agnostic API
+{
+public:		
+	virtual const char* cName() const = 0;
+		/// Spot client name on the network.
+
+	virtual const char* cUsername() const = 0;
+		/// Currently authenticated username.
+
+	virtual const char* cStoragePath() const = 0;
+		/// Storage path configured for the current user.
+	
+	virtual bool isActive() const = 0;
+		/// True when the user is authenticated,
+		/// but we not have a client connection.
+
+	virtual bool isOnline() const = 0;
+		/// The Symple client is connected, 
+		/// the session is fully online.
+};
+
+
+// ---------------------------------------------------------------------
+//
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 
 
 struct SessionState: public State 
@@ -76,15 +103,15 @@ struct SessionState: public State
 };
 
 
-class ISession: public StatefulSignal<SessionState>
+class ISession: public ISessionBase, public StatefulSignal<SessionState>
 {		
 public:	
 	virtual std::string name() const = 0;
 	virtual std::string username() const = 0;
-
-	virtual Poco::Path storagePath() = 0;
-
+	virtual std::string storagePath() const = 0;
+	
 	virtual bool isActive() const = 0;
+	virtual bool isOnline() const = 0;
 		
 	NullSignal SessionStart;
 	NullSignal SessionEnd;
@@ -94,7 +121,10 @@ protected:
 };
 
 
+#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+
+
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_ISession_H
+#endif // Anionu_Spot_API_ISession_H

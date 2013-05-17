@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IStreamingManager_H
-#define ANIONU_SPOT_API_IStreamingManager_H
+#ifndef Anionu_Spot_API_IStreamingManager_H
+#define Anionu_Spot_API_IStreamingManager_H
 
 
 #include "Anionu/Spot/API/IStreamingSession.h"
@@ -96,4 +96,4 @@ protected:
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IStreamingManager_H
+#endif // Anionu_Spot_API_IStreamingManager_H

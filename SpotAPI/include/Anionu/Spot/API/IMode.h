@@ -25,35 +25,99 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IMode_H
-#define ANIONU_SPOT_API_IMode_H
+#ifndef Anionu_Spot_API_IMode_H
+#define Anionu_Spot_API_IMode_H
 
 
+#include "Anionu/Spot/API/Config.h"
+
+/*
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-#include "Sourcey/Symple/Form.h"
+#include "Sourcey/IConfiguration.h"
 #include "Sourcey/Util/ScopedConfiguration.h"
 #include "Anionu/Spot/API/IEnvironment.h"
-//#include "Anionu/Spot/API/IFormProcessor.h"
-#include "Anionu/Spot/API/IConfiguration.h"
 #include "Anionu/Spot/API/IChannel.h"
-
 #include "Poco/Net/NameValueCollection.h"
 #include "Poco/Format.h"
+#endif
+*/
 
 
 namespace Scy {
-namespace Symple {
-	class IFormProcessor;
-	/// The symple form processor can be optionally included
-	/// for integrating your plugin with the Anionu dashboard
-	/// for remote configuration.
-}
 namespace Anionu {
 namespace Spot { 
 namespace API { 
 
 
+class IMode
+	/// This class defines the ABI agnostic virtual interface
+	/// for all IMode implementations.
+{
+public:
+	virtual ~IMode() = 0 {}
+	
+	virtual bool activate() = 0;
+	virtual void deactivate() = 0;
+		/// TODO: Make these two private, with the ModeManager
+		/// as a freind.
+	
+	virtual const char* name() const = 0;
+		/// Returns the name of this mode.
+	
+	virtual const char* channel() const = 0;
+		/// Returns the channel name this mode is activated on.
+
+	virtual const char* error() const { return 0; };
+		/// Returns a detailed error message if activate() fails.
+	
+	virtual const char* helpFile() { return 0; };
+		/// Returns the relative path (from the Spot binary dir)
+		/// to the optional help guide/documentation pertaining
+		/// to the current module.
+		/// Information files should be in Markdown format.
+};
+
+
+// ---------------------------------------------------------------------
+//
+class IModeFactory
+{
+public:
+	virtual IMode* createModeInstance(const char* mode, const char* channel) = 0;
+		/// Instantiates the given mode for the given channel.
+		/// The channel name should be passed to the IMode instance
+		/// via the constructor.
+
+	virtual const char** modeNames() const = 0;
+		/// Returns a NULL terminated array of modes names 
+		/// implemented by this plugin.
+};
+
+
+} } } } // namespace Scy::Anionu::Spot::API
+
+
+#endif // Anionu_Spot_API_IMode_H
+
+
+
+
+
+
+
+/*const char* channel
+		/// See IMode for implementation specifics.
+//namespace Symple {
+	//class IFormProcessor;
+	/// The symple form processor can be optionally included
+	/// for integrating your plugin with the Anionu dashboard
+	/// for remote configuration.
+//}
+
+
+TODO: Move to mode wrapper
 struct ModeState: public State 
 {
 	enum Type
@@ -75,12 +139,14 @@ struct ModeState: public State
 		return "undefined"; 
 	};
 };	
-
-
 typedef Poco::Net::NameValueCollection ModeOptions;
+*/
+	
+/*
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 
 
-class IMode: public StatefulSignal<ModeState>
+class IMode: public IMode//, public StatefulSignal<ModeState>
 	/// The IMode interface defines a specific operational mode
 	/// for a Spot channel that can be activated and deactivated.
 	/// See the Surveillance Mode and Recording Mode plugins for
@@ -91,10 +157,9 @@ public:
 		_env(env), 
 		_channel(channel), 
 		_name(name), 
-		_proc(NULL),
 		_config(env.config(), 
 			//
-			/// Cannel Scope: channels.[name].modes.[name].[value]
+			/// Channel Scope: channels.[name].modes.[name].[value]
 			Poco::format("channels.%s.modes.%s.", channel.name(), name),
 			//
 			/// Base Scope: modes.[name].[value]
@@ -112,8 +177,8 @@ public:
 	/// Initializers
 	//
 	
-	virtual void initialize() { /* override me */ }
-	virtual void uninitialize() { /* override me */ }
+	virtual void initialize() {}
+	virtual void uninitialize() {}
 		/// If unrecoverable errors are encountered during
 		/// the the initialization process, the mode state
 		/// should be set to Error and an Exception thrown.
@@ -121,13 +186,13 @@ public:
 	virtual void activate()
 	{
 		// override me, calling base method
-		setState(this, ModeState::Active);
+		//setState(this, ModeState::Active);
 	}
 
 	virtual void deactivate()
 	{
 		// override me, calling base method
-		setState(this, ModeState::Inactive);
+		//setState(this, ModeState::Inactive);
 	}
 	
 
@@ -135,12 +200,12 @@ public:
 	/// Accessors
 	//
 
-	std::string name() const
+	const char* name() const
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);	
-		return _name; 
+		return _name.data(); 
 	}
-
+	
 	API::IEnvironment& env() const
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);	
@@ -152,7 +217,7 @@ public:
 		Poco::FastMutex::ScopedLock lock(_mutex);	
 		return _channel; 
 	}
-
+	
 	ScopedConfiguration& config()
 	{ 
 		Poco::FastMutex::ScopedLock lock(_mutex);	
@@ -168,87 +233,14 @@ public:
 	bool isActive() const { return stateEquals(ModeState::Active); }
 	bool isError() const { return stateEquals(ModeState::Error); }
 
-
-	//
-	/// Mode data manipulation
-	//
-
-	void setData(const std::string& name, const std::string& value)
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			_data[name] = value;
-		}
-		ModeDataChanged.emit(this, _data);
-	}
-
-	void removeData(const std::string& name)
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			StringMap::iterator it = _data.find(name);
-			if (it != _data.end()) {
-				_data.erase(it);
-			}
-		}
-		ModeDataChanged.emit(this, data());
-	}
-
-	void clearData()
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			_data.clear();
-		}
-		ModeDataChanged.emit(this, data());
-	}
-
-	StringMap data() const
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
-		return _data; 
-	}
-	
-	Signal<const StringMap&> ModeDataChanged;
-		/// Signals when mode data changes.
-		
-	
-	//
-	/// Remote configuration
-	//
-	
-	Symple::IFormProcessor* proc() const
-		/// Returns the optional Symple Form processor pointer.
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		return _proc; 
-	}
-
-	void setFormProcessor(Symple::IFormProcessor* proc)
-		/// The should be set during initialize() in the mode
-		/// is designed to intergrate with the online dashboard
-		/// for remote configuration. 
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		_proc = proc; 
-	}
-
-
 	//
 	/// Logging and help
 	//
 
-	virtual std::string documentFile() const { return ""; }
-		/// Returns the relative path (from the Spot directory) to the optional
-		/// information file pertaining to this configurable module. 
-		/// Information files should contain configuration assistance, 
-		/// and are in Markdown format.
-
 	LogStream log(const char* level = "debug") const
-		/// This method sends log messages the Spot logger.
+		/// This method sends log messages the Spot application logger.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		return _env.logger().send(level, this, className()); 
+		return env().logger().send(level, this, className()); 
 	}
 	
 	virtual const char* className() const { return "Mode"; }
@@ -257,18 +249,40 @@ protected:
 	mutable Poco::FastMutex	_mutex;	
 	API::IEnvironment&	_env;
 	API::IChannel&		_channel;
-	ScopedConfiguration	_config;
-	ModeOptions			_options;
-	Symple::IFormProcessor* _proc;
+	//ScopedConfiguration	_config;
+	//ModeOptions			_options;
 	std::string			_name;
-	StringMap			_data;
+	//StringMap			_data;
 }; 
 
 
-typedef std::vector<IMode*> IModeList;
+#endif /// ENFORCE_STRICT_ABI_COMPATABILITY
 
+	*/
 
-} } } } // namespace Scy::Anionu::Spot::API
+	
+	/*
+	virtual std::string helpFile() const { return ""; }
+		/// Returns the relative path (from the Spot directory) to the optional
+		/// information file pertaining to this configurable module. 
+		/// Information files should contain configuration assistance, 
+		/// and are in Markdown format.
 
+	API::IFormProcessor* proc() const
+		/// Returns the optional Symple Form processor pointer.
+	{ 
+		Poco::FastMutex::ScopedLock lock(_mutex);
+		return _proc; 
+	}
 
-#endif // ANIONU_SPOT_API_IMode_H
+	void setFormProcessor(API::IFormProcessor* proc)
+		/// The should be set during initialize() in the mode
+		/// is designed to intergrate with the online dashboard
+		/// for remote configuration. 
+	{ 
+		Poco::FastMutex::ScopedLock lock(_mutex);
+		_proc = proc; 
+	}
+		_proc(NULL),
+	API::IFormProcessor* _proc;
+	*/

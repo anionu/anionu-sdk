@@ -16,8 +16,8 @@ public:
 	SurveillanceModePlugin();
 	virtual ~SurveillanceModePlugin();
 
-	void initialize();
-	void uninitialize();
+	void load();
+	void unload();
 };
 
 

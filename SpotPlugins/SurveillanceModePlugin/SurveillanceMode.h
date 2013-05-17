@@ -3,27 +3,23 @@
 
 
 #include "Anionu/Spot/API/IMode.h"
-#include "Anionu/Spot/API/IStreamingSession.h"
 #include "Anionu/Spot/API/IMediaManager.h"
+#include "Anionu/Spot/API/IStreamingSession.h"
+#include "Anionu/Spot/API/ISympleProcessor.h"
+#include "Anionu/MotionDetector.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Token.h"
-#include "Sourcey/Media/MotionDetector.h"
 
 
 namespace Scy {
 namespace Anionu { 
 namespace Spot {
-
-	
-using namespace API;
-	/// Specify the API namespace.
-	/// Use this value to switch SpotAPI versions.
 	
 
-class SurveillanceMode: public IMode
+class SurveillanceMode: public API::IMode
 {
 public:
-	SurveillanceMode(IEnvironment& env, IChannel& channel);
+	SurveillanceMode(API::IEnvironment& env, API::IChannel& channel);
 	~SurveillanceMode();
 	
 	void initialize();
@@ -44,37 +40,29 @@ public:
 	Token* getStreamingToken(const std::string& token);
 	bool removeStreamingToken(const std::string& token);
 
-	void onMotionStateChange(void* sender, Media::MotionDetectorState& state, const Media::MotionDetectorState&);
-	void onSetupStreamingSession(void*, IStreamingSession& session, bool& handled);
-	void onSetupStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled);
+	//
+	/// Symple::ISympleFormProcessor methods
+	bool isConfigurable() const;
+	bool hasParsableFields(Symple::Form& form) const;
+	void buildForm(Symple::Form& form, Symple::FormElement& element);
+	void parseForm(Symple::Form& form, Symple::FormElement& element);
+	std::string helpFile();
+
+	void onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&);
+	void onSetupStreamingSession(void*, API::IStreamingSession& session, bool& handled);
+	void onSetupStreamingConnection(void*, API::IStreamingSession& session, API::ConnectionStream& connection, bool& handled);
 	void onStreamingSessionStateChange(void*, API::StreamingState& state, const API::StreamingState&);	
 
 	const char* className() const { return "SurveillanceMode"; }
 	
 protected:	
 	mutable Poco::FastMutex _mutex;
-	Media::MotionDetector _motionDetector;
+	Anionu::MotionDetector _motionDetector;
 	PacketStream	_motionStream;
 	std::string		_recordingToken;
 	TokenList		_streamingTokens;
 	bool			_isConfiguring;
 	bool			_synchronizeVideos;
-};
-
-
-// ---------------------------------------------------------------------
-//
-class SurveillanceModeFormProcessor: public Symple::IFormProcessor
-{	
-	SurveillanceModeFormProcessor(SurveillanceMode& mode) : mode(mode) {};
-
-	bool isConfigurable() const;
-	bool hasParsableFields(Symple::Form& form) const;
-	void buildForm(Symple::Form& form, Symple::FormElement& element);
-	void parseForm(Symple::Form& form, Symple::FormElement& element);
-	std::string documentFile();
-
-	SurveillanceMode& mode;
 };
 
 

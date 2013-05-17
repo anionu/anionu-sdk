@@ -25,8 +25,8 @@
 //
 
 
-#ifndef ANIONU_APIClient_H
-#define ANIONU_APIClient_H
+#ifndef Anionu_APIClient_H
+#define Anionu_APIClient_H
 
 
 #include "Anionu/Config.h"
@@ -105,7 +105,7 @@ public:
 	std::string name;
 	std::string httpMethod; // HTTP method ie. GET, POST, PUT, DELETE
 	std::string contentType;
-	Poco::URI uri;
+	Poco::URI url;
 	bool anonymous;
 };
 
@@ -127,9 +127,6 @@ public:
 
 	virtual bool loaded() const;
 		/// Returns true methods have been loaded.
-
-	virtual std::string endpoint();
-		/// The Anionu web service endpoint
 	
 	virtual APIMethod get(const std::string& name, const std::string& format = "json", const StringMap& params = StringMap());
 
@@ -152,7 +149,7 @@ struct APICredentials
 	APICredentials(
 		const std::string& username = "", 
 		const std::string& password = "", 
-		const std::string& endpoint = ANIONU_API_ENDPOINT) :
+		const std::string& endpoint = Anionu_API_ENDPOINT) :
 		username(username), password(password), endpoint(endpoint) {} 
 };
 
@@ -190,8 +187,6 @@ class APITransaction: public HTTP::Transaction
 public:
 	APITransaction(APIRequest* request = NULL);
 	virtual ~APITransaction();
-	
-	//Signal2<APIMethod&, HTTP::Response&> APITransactionComplete;
 
 protected:
 	virtual void onComplete();
@@ -213,20 +208,20 @@ public:
 	virtual void setCredentials(
 		const std::string& username, 
 		const std::string& password = "", 
-		const std::string& endpoint = ANIONU_API_ENDPOINT);
+		const std::string& endpoint = Anionu_API_ENDPOINT);
 		// Sets the HTTP authentication credentials.
 		// This must be called before calling any API methods.
+
+	virtual bool loaded();
+		// Returns true when method descriptions are loaded and
+		// the API is available.
 
 	virtual APIMethods& methods();
 		// Returns the API method descriptions.
 
 	virtual std::string endpoint();
 		// Returns the API HTTP endpoint.
-		// Defaults to ANIONU_API_ENDPOINT declaration.
-
-	virtual bool loaded();
-		// Returns true when method descriptions are loaded and
-		// the API is available.
+		// Defaults to Anionu_API_ENDPOINT declaration.
 	
 	virtual APIRequest* createRequest(const APIMethod& method);
 	virtual APIRequest* createRequest(const std::string& method, 

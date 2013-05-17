@@ -25,12 +25,21 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_Config_H
-#define ANIONU_SPOT_API_Config_H
+#ifndef Anionu_Spot_API_Config_H
+#define Anionu_Spot_API_Config_H
+
+	
+#define ENFORCE_STRICT_ABI_COMPATABILITY
+	/// This is to specify that we are creating an ABI compatible plugin.
+	/// The current compiler must match the compiler used to create the original Spot binary.
+	/// If the version and dependency check fail the build will fail with an error.
 
 
-#include "Sourcey/Base.h"
-#include "Sourcey/Stateful.h"
+// TODO: Check dependency and compiler versions
+#ifndef ENFORCE_STRICT_ABI_COMPATABILITY
+#error "Please easure strict ABI compatability and define \
+		ENFORCE_STRICT_ABI_COMPATABILITY before including the Spot C++ API"
+#endif
 
 
 namespace Scy {
@@ -38,11 +47,23 @@ namespace Anionu {
 namespace Spot { 
 namespace API { 
 
+	
+/// Current Spot SDK version number.
+/// This version is be bumped whenever the API or
+/// dependencies change, breaking binary compatability.
+/// Spot plugins must be built with the same compiler,
+/// dependencies, and SDK version as the target Spot client.
+/// See Compatability.txt for more information.
+///
+static const char* SDKVersion = "0.5.1";
 
-// : )
+
+/// Date Format
+///
+static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace Sc  y::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_Config_H
+#endif // Anionu_Spot_API_Config_H

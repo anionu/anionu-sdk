@@ -24,10 +24,10 @@ macro(define_spot_plugin name)
     include_directories(${LibSourcey_INCLUDE_DIRS})    
     link_directories(${LibSourcey_LIBRARY_DIRS})
     
-    include_sourcey_modules(Base Net JSON Media HTTP Anionu SpotAPI HTTP Symple SocketIO Util ${ARGN})
+    include_sourcey_modules(Base SpotAPI Net JSON Media HTTP Anionu HTTP Symple SocketIO Util ${ARGN})
     include_directories(
       "${LibSourcey_INSTALL_DIR}/lib"
-      "${CMAKE_SOURCE_DIR}/projects/Anionu/ISpot/include")
+      "${CMAKE_SOURCE_DIR}/src/AnionuSDK/SpotAPI/include")
 
     add_library(${name} MODULE ${lib_srcs} ${lib_hdrs})
     

@@ -22,8 +22,8 @@ public:
 	MediaPlugin();
 	virtual ~MediaPlugin();
 
-	void initialize();
-	void uninitialize();
+	void load();
+	void unload();
 	
 protected:
 	Media::IPacketEncoder* createEncoder(const Media::RecordingOptions& options);

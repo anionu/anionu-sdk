@@ -25,14 +25,18 @@
 //
 
 
-#ifndef ANIONU_SPOT_API_IMediaManager_H
-#define ANIONU_SPOT_API_IMediaManager_H
+#ifndef Anionu_Spot_API_IMediaManager_H
+#define Anionu_Spot_API_IMediaManager_H
 
 
+#include "Anionu/Spot/API/Config.h"
+
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 #include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Media/IEncoder.h"
+#endif
 
 
 namespace Scy {
@@ -42,6 +46,35 @@ namespace Media {
 namespace Anionu {
 namespace Spot { 
 namespace API { 
+
+
+// ---------------------------------------------------------------------
+//
+class IMediaManagerBase
+	/// ABI agnostic API
+{
+public:
+	virtual void startRecording(const char* channel, const char* ofile = NULL, bool synchronize = false) = 0;
+		/// Starts recording the video input of the given
+		/// surveillance channel.
+		
+		/// A medium severity "Recording Failed" event will
+		/// be ceated and propagated on the system which 
+		/// contains the full error message.
+
+	virtual bool stopRecording(const char* token) = 0;
+		/// Stops the recorder instance matching the given token.
+		/// Returns true on success, or if whiny is set then an 
+		/// exception will be thrown on error.
+		
+protected:
+	virtual ~IMediaManagerBase() = 0 {};
+};
+
+
+// ---------------------------------------------------------------------
+//
+#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 
 
 struct RecordingOptions: public Media::RecordingOptions
@@ -67,9 +100,7 @@ struct RecorderStream: public PacketStream
 };
 
 
-// ---------------------------------------------------------------------
-//
-class IMediaManager
+class IMediaManager: public IMediaManagerBase
 {
 public:	
 	virtual void startRecording(API::RecordingOptions& options) = 0;
@@ -142,7 +173,10 @@ protected:
 };
 
 
+#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+
+
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // ANIONU_SPOT_API_IMediaManager_H
+#endif // Anionu_Spot_API_IMediaManager_H
