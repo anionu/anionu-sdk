@@ -35,14 +35,12 @@ struct Event
 	};
 
 	Event(const std::string& name, 
-		const std::string& message, 
-		time_t time = ::time(0));
+		const std::string& message);
 
 	Event(const std::string& name = "", 
 		const std::string& message = "", 	
 		Severity severity = Default,
-		Realm realm = SpotLocal,
-		time_t time = ::time(0));
+		Realm realm = SpotLocal);
 	
 	std::string name;
 	std::string message;

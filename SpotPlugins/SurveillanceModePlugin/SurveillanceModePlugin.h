@@ -3,6 +3,8 @@
 
 
 #include "Anionu/Spot/API/IPlugin.h"
+#include "Anionu/Spot/API/IModule.h"
+#include "Anionu/Spot/API/IMode.h"
 
 
 namespace Scy {
@@ -10,14 +12,28 @@ namespace Anionu {
 namespace Spot {
 
 
-class SurveillanceModePlugin: public API::IPlugin
+class SurveillanceModePlugin: 
+	public API::IPlugin, 
+	public API::IModule, 
+	public API::IModeFactory
 {
 public:
 	SurveillanceModePlugin();
 	virtual ~SurveillanceModePlugin();
-
-	void load();
+	
+	//
+	/// IPlugin
+	bool load();
 	void unload();
+
+	//
+	/// IModeFactory
+	API::IMode* createModeInstance(const char* modeName, const char* channelName);
+	const char** modeNames() const;
+		
+	//
+	/// IModule
+	const char* className() const { return "SurveillanceModePlugin"; }
 };
 
 

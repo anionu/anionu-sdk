@@ -31,18 +31,9 @@
 
 #include "Anionu/Spot/API/Config.h"
 
-/*
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
-#include "Sourcey/Base.h"
-#include "Sourcey/Stateful.h"
-#include "Sourcey/IConfiguration.h"
-#include "Sourcey/Util/ScopedConfiguration.h"
-#include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/IChannel.h"
-#include "Poco/Net/NameValueCollection.h"
-#include "Poco/Format.h"
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#include "Sourcey/Signal.h"
 #endif
-*/
 
 
 namespace Scy {
@@ -60,19 +51,24 @@ public:
 	
 	virtual bool activate() = 0;
 	virtual void deactivate() = 0;
-		/// TODO: Make these two private, with the ModeManager
-		/// as a freind.
+		/// Activation logic should be implemented here.
+		/// If there was an error, activate() hould return false.
+
+	virtual bool isActive() const = 0;
+		/// Returns true if the mode is currently active.
 	
-	virtual const char* name() const = 0;
+	virtual const char* modeName() const = 0;
 		/// Returns the name of this mode.
+		/// Alpha numerics and spaces allowed.
 	
-	virtual const char* channel() const = 0;
+	virtual const char* channelName() const = 0;
 		/// Returns the channel name this mode is activated on.
 
-	virtual const char* error() const { return 0; };
-		/// Returns a detailed error message if activate() fails.
+	virtual const char* errorMessage() const { return 0; };
+		/// Returns a detailed error message if initialize() or 
+		/// activate() fails.
 	
-	virtual const char* helpFile() { return 0; };
+	virtual const char* docFile() { return 0; };
 		/// Returns the relative path (from the Spot binary dir)
 		/// to the optional help guide/documentation pertaining
 		/// to the current module.
@@ -85,7 +81,7 @@ public:
 class IModeFactory
 {
 public:
-	virtual IMode* createModeInstance(const char* mode, const char* channel) = 0;
+	virtual IMode* createModeInstance(const char* modeName, const char* channelName) = 0;
 		/// Instantiates the given mode for the given channel.
 		/// The channel name should be passed to the IMode instance
 		/// via the constructor.
@@ -94,6 +90,63 @@ public:
 		/// Returns a NULL terminated array of modes names 
 		/// implemented by this plugin.
 };
+
+
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+
+// ---------------------------------------------------------------------
+//
+class IDataMode
+{	
+public:
+	virtual ~IDataMode() = 0 {};
+
+	void setData(const std::string& name, const std::string& value)
+	{
+		{
+			Poco::FastMutex::ScopedLock lock(_mutex);	
+			_data[name] = value;
+		}
+		DataChanged.emit(this, _data);
+	}
+
+	void removeData(const std::string& name)
+	{
+		{
+			Poco::FastMutex::ScopedLock lock(_mutex);	
+			StringMap::iterator it = _data.find(name);
+			if (it != _data.end()) {
+				_data.erase(it);
+			}
+		}
+		DataChanged.emit(this, data());
+	}
+
+	void clearData()
+	{
+		{
+			Poco::FastMutex::ScopedLock lock(_mutex);	
+			_data.clear();
+		}
+		DataChanged.emit(this, data());
+	}
+
+	StringMap data() const
+	{ 
+		Poco::FastMutex::ScopedLock lock(_mutex);	
+		return _data; 
+	}
+	
+	Signal<const StringMap&> DataChanged;
+		/// Signals the outside application when
+		/// internal mode data changes.
+
+protected:		
+	mutable Poco::FastMutex	_mutex;	
+	StringMap _data;
+}; 
+
+#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 } } } } // namespace Scy::Anionu::Spot::API
@@ -105,6 +158,22 @@ public:
 
 
 
+
+/*
+	
+	//virtual bool initialize() = 0;
+	//virtual void uninitialize() = 0;
+		/// Initialization logic should be implemented here.
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#include "Sourcey/Base.h"
+#include "Sourcey/Stateful.h"
+#include "Sourcey/IConfiguration.h"
+#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/IChannel.h"
+#include "Poco/Net/NameValueCollection.h"
+#include "Poco/Format.h"
+#endif
+*/
 
 
 /*const char* channel
@@ -143,7 +212,7 @@ typedef Poco::Net::NameValueCollection ModeOptions;
 */
 	
 /*
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 class IMode: public IMode//, public StatefulSignal<ModeState>
@@ -256,13 +325,13 @@ protected:
 }; 
 
 
-#endif /// ENFORCE_STRICT_ABI_COMPATABILITY
+#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 	*/
 
 	
 	/*
-	virtual std::string helpFile() const { return ""; }
+	virtual std::string docFile() const { return ""; }
 		/// Returns the relative path (from the Spot directory) to the optional
 		/// information file pertaining to this configurable module. 
 		/// Information files should contain configuration assistance, 

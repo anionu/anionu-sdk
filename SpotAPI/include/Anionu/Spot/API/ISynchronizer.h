@@ -31,7 +31,7 @@
 
 #include "Anionu/Spot/API/Config.h"
 
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 #include "Sourcey/Signal.h"
 #endif
 
@@ -60,7 +60,7 @@ protected:
 
 // ---------------------------------------------------------------------
 //
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 struct ISynchronizerTask
@@ -103,7 +103,7 @@ protected:
 };
 
 
-#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+#endif // Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 } } } } // namespace Anionu::Spot::API

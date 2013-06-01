@@ -30,11 +30,10 @@
 
 
 #include "Anionu/Spot/API/Config.h"
-
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
 #include "Anionu/Spot/API/IEnvironment.h"
+
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 #include "Sourcey/Logger.h"
-#include "Poco/Mutex.h"
 #endif
 
 
@@ -43,54 +42,85 @@ namespace Anionu {
 namespace Spot { 
 namespace API { 
 
-		
-class IModuleBase
-	/// ABI agnostic API
+
+template <class IEnvType>
+class IModuleTmpl
+	/// This module template lets you link your compiled plugins and modes  
+	/// with different levels of the Spot API environment.
 	///
-	/// Spot's base API is ABI agnostic, so it *should* be
-	/// safe to still use your favoirate compiler and maintain
-	/// binary compatability with Spot.
+	/// See IModuleBase and IModule for the two different implementations.
 {
 public:
-	IModuleBase(API::IEnvironmentBase* env = NULL) : env(env) {};
+	IModuleTmpl(IEnvType* env = NULL) : _env(env) {};
 
-	API::IEnvironmentBase* env;
-		/// The Spot API base interface pointer.
+	virtual IEnvType* env() const
+		/// Returns a pointer to the Spot API environment instance.
 		///
-		/// Take care as the IEnvironmentBase pointer may be
-		/// initialized as NULL. If not passed, it is guaranteed
-		/// to be set by the outside application directly after
-		/// instation.
+		/// Do not attempt to access the environment pointer from inside
+		/// the constructor for IPlugin implementations. See setEnvironment() 
+		/// below for details. This is not an issue for IMode implementations
+		/// as the pointer should be passed in via the consatructor.
+		///
+		/// Override this method if you require mutex synchronization.
+	{ 
+		return _env; 
+	}
 
-	const char* className() const { return "IModule"; }
+	virtual void log(const std::string& message, const char* level = "debug") 
+		/// Sends log messages the Spot application logger.
+		///
+		/// Note that no STL types are shared with the client so we
+		/// don't hace to break binary compatability between versions.
+	{
+		env()->log(message.data(), level, className());
+	}	
+
+	virtual const char* className() const { return "IModule"; }
 		/// Override for named logging.
 	
+
+	//
+	/// Private Methods
+	//
+
+	void setEnvironment(IEnvType* env)
+		/// Provides Spot with the means to set the environment instance
+		/// for IPlugin implementations.
+		///
+		/// Spot will set the environment instance directly after plugin
+		/// instantiation, so IPlugin implementations must not attempt
+		/// to access the environment pointer inside the constructor.
+		/// Once the instance is set Spot will not touch the pointer again.
+	{ 
+		_env = env; 
+	}
+	
 protected:
-	virtual ~IModuleBase() = 0 {};
+	virtual ~IModuleTmpl() = 0 {};	
+	IEnvType* _env;
 };
 
 
 // ---------------------------------------------------------------------
-//
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
-	
-class IModule: public IModuleBase
-{
-public:
-	IModule(API::IEnvironment* env = NULL) : env(env) {};
-	virtual ~IModule() = 0 {};
-
-	API::IEnvironment* env;
-	
-	LogStream log(const char* level = "debug") const
-		/// This method sends log messages the Spot logger.
-	{ 
-		return env->logger().send(level, this, className()); 
-	}
-};
+//	
+typedef IModuleTmpl<API::IEnvironmentBase> IModuleBase;
+	/// IModuleBase exposes Spot's base API environment instance to plugins
+	/// and modes that extend for here. 
+	///
+	/// See IEnvironmentBase for more information.
 
 
-#endif /// ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+
+// ---------------------------------------------------------------------
+//		
+typedef IModuleTmpl<API::IEnvironment> IModule;
+	/// IModuleBase exposes Spot's core API environment instance to plugins 
+	/// and modes that extend for here.
+	///
+    /// See IEnvironment for more information.
+
+#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 } } } } // namespace Scy::Anionu::Spot::API
@@ -99,66 +129,27 @@ public:
 #endif /// Anionu_Spot_API_IModule_H
 
 
-	
-
-
 /*
-// ---------------------------------------------------------------------
-//
-class IDataModule
-{	
-public:
-	void setData(const std::string& name, const std::string& value)
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			_data[name] = value;
-		}
-		DataChanged.emit(this, _data);
-	}
-
-	void removeData(const std::string& name)
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			StringMap::iterator it = _data.find(name);
-			if (it != _data.end()) {
-				_data.erase(it);
-			}
-		}
-		DataChanged.emit(this, data());
-	}
-
-	void clearData()
-	{
-		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
-			_data.clear();
-		}
-		DataChanged.emit(this, data());
-	}
-
-	StringMap data() const
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
-		return _data; 
-	}
 	
-	Signal<const StringMap&> DataChanged;
-		/// Signals when data changes.
 
-protected:		
+		/// If the environment instance is not passed in via the constructor, 
+		/// then the instance is guaranteed to be set by Spot directly 
+		/// after instantiation. Such is the case when extending IPlugin.
+		Poco::FastMutex::ScopedLock lock(_mutex);
 	mutable Poco::FastMutex	_mutex;	
-	StringMap _data;
-}; 
-*/
 
-	/*
-	
-//protected:
-	//API::IEnvironment* _env;
-	//mutable Poco::FastMutex _mutex;
-	API::IEnvironment& env() const
+
+class IModuleTmpl
+	/// ABI agnostic API
+	///
+	/// Spot's base API is ABI agnostic, so it *should* be
+	/// safe to still use your favoirate compiler and maintain
+	/// binary compatability with Spot.
+{
+public:
+	IModuleTmpl(API::IEnvironmentBase* env = NULL) : _env(env) {};
+
+	API::IEnvironmentBase& env() const
 		/// Returns the Spot API interface pointer.
 		/// Do not attempt to call inside constructor.
 	{ 
@@ -166,19 +157,62 @@ protected:
 		assert(_env);
 		return *_env; 
 	}
-	
-	void setEnvironment(API::IEnvironment* env)
-		/// The IEnvironment instance will be set by 
-		/// Spot after the module is instantiated.
-	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
-		_env = env; 
 
-		// Set the default logger instance, otherwise
-		// a new default logger instance will be
-		// created for the plugin process.
-		//Logger::setInstance(&_env->logger());
+	API::IEnvironmentBase* _env;
+		/// The Spot API base ABI agnostic interface pointer.
+		///
+		/// Note that the IEnvironmentBase pointer might be
+		/// initialized as NULL. If the pointer is not passed
+		/// into the constructor, it is guaranteed to be set
+		/// by Spot directly after instantiation.
+
+	virtual void log(const std::string& message, const char* level = "debug") 
+		/// Sends log messages the Spot application logger.
+	{
+		if (_env == NULL) 
+			return;
+		_env->log(message.data(), level, className());
 	}
+	
+
+	virtual const char* className() const { return "IModule"; }
+		/// Override for named logging.
+	
+protected:
+	virtual ~IModuleTmpl() = 0 {};
+	mutable Poco::FastMutex	_mutex;	
+};
+*/
+
+	
+
+
+	
+
+/*
+// ---------------------------------------------------------------------
+//
+class IModule: public IModuleTmpl
+{
+public:
+	IModule(API::IEnvironment* env = NULL) : env(env) {};
+	virtual ~IModule() = 0 {};
+
+	API::IEnvironment* env;
+		/// The Spot API interface pointer.
+};
+*/
+/*
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#include "Poco/Mutex.h"
+#endif
+*/
+
+	/*
+	
+//protected:
+	//API::IEnvironment* _env;
+	//mutable Poco::FastMutex _mutex;
 	*/
 	
 	/*
@@ -187,13 +221,13 @@ protected:
 	/// have an IEnvironment reference and Logger access.
 
 
-#define ENFORCE_STRICT_ABI_COMPATABILITY
+#define Anionu_Spot_ENABLE_ABI_COMPATABILITY
 	/// This is to specify that we are creating an ABI compatible library.
 	/// The current compiler must match the compiler used to create the original Spot binary.
 	/// If the version and dependency check fail the build will fail with an error.
 
 	static const bool isABICompatible =
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 		false;
 #else
 		false;

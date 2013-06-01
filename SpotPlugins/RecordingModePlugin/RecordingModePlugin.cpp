@@ -30,23 +30,26 @@ RecordingModePlugin::~RecordingModePlugin()
 
 bool RecordingModePlugin::load() 
 {
-	log() << "Initializing" << endl;	
-	//env->modes().registerMode<RecordingMode>("Recording Mode");
+	// Set the default logger instance, otherwise
+	// a new default logger instance will be
+	// created for the plugin process.
+	Logger::setInstance(&env()->logger());
+
+	log("Loading");	
 	return true;
 }
 
 
 void RecordingModePlugin::unload() 
 {	
-	log() << "Uninitializing" << endl;	
-	//env->modes().unregisterMode("Recording Mode");
+	log("Unloading");	
 }
 
 
-IMode* RecordingModePlugin::createModeInstance(const char* mode, const char* channel)
+IMode* RecordingModePlugin::createModeInstance(const char* modeName, const char* channelName)
 {
-	assert(strcmp(mode, "Recording Mode") == 0);
-	return new RecordingMode(*env, channel);
+	assert(strcmp(modeName, "Recording Mode") == 0);
+	return new RecordingMode(*env(), channelName);
 }
 
 

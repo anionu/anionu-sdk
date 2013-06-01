@@ -114,7 +114,7 @@ public:
 	virtual int motionLevel() const;
 	virtual Options& options();	
 	
-	virtual bool isRunning() const;
+	virtual bool isActive() const;
 	virtual bool isProcessing() const;
 	
 	const char* className() const { return "MotionDetector"; }

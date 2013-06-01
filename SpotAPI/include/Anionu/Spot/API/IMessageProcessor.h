@@ -25,59 +25,46 @@
 //
 
 
-#ifndef Anionu_Spot_API_IModeManager_H
-#define Anionu_Spot_API_IModeManager_H
+#ifndef Anionu_Spot_API_IEventManager_H
+#define Anionu_Spot_API_IEventManager_H
 
 
 #include "Anionu/Spot/API/Config.h"
-#include "Anionu/Spot/API/IMode.h"
 
+
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
+#include "Anionu/Event.h"
+#endif
 
-#include <vector>
-#include <string>
 
-
-namespace Scy { 
-namespace Anionu {
+namespace Scy {
+namespace Anionu { 
 namespace Spot { 
 namespace API { 
 	
-
-typedef std::vector<IMode*> IModeList;
-
-
-class IModeManager
+	
+class IMessageProcessor
+	/// The message processor provides an ABI agnostic
+	/// interface for procession all incoming, outgoing
+	/// and local messages passing through the Spot client.
 {
-public:
-	virtual void activate(const std::string& mode, const std::string& channel) = 0;
-	virtual void deactivate(const std::string& mode, const std::string& channel) = 0;
-	virtual bool isActive(const std::string& mode, const std::string& channel) = 0;
+public:		
+	virtual bool onMessage(const char* message) { return false; };
+		/// Handle incoming messages.
+		/// Return true if the message has been responded to.
 
-	virtual StringVec types() const = 0;
-			
-	Signal<const std::string&> ModeRegistered;
-	Signal<const std::string&> ModeUnregistered;
-			
-	Signal<API::IMode&> ModeActivated;
-	Signal<API::IMode&> ModeDeactivated;
-	Signal<API::IMode&> ModeError;
+	virtual bool onCommand(const char* command) { return false; };
+		/// Handle incoming commands.
+		/// Return true if the command has been handled.
 
-protected:
-	virtual ~IModeManager() = 0 {};
+	virtual void onPresence(const char* presence) {};
+	virtual void onEvent(const char* event) {};
 };
 
 
 } } } } // namespace Scy::Anionu::Spot::API
 
 
-#endif // Anionu_Spot_API_IModeManager_H
-
-
-	
-	//class IChannel;
-	//virtual IChannel& channel() = 0;
-		/// The parent channel instance
-
-	//virtual IModeList list() const = 0;
-		/// A list of all mode instances for this channel
+#endif // Anionu_Spot_API_IEventManager_H

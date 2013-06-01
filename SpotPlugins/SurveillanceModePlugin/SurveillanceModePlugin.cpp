@@ -2,7 +2,6 @@
 #include "SurveillanceMode.h"
 
 #include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/ModeRegistry.h"
 
 
 using namespace std;
@@ -23,24 +22,33 @@ SurveillanceModePlugin::SurveillanceModePlugin()
 
 SurveillanceModePlugin::~SurveillanceModePlugin()
 {
-	log() << "Destroying" << endl;
 }
 
 
-void SurveillanceModePlugin::load() 
+bool SurveillanceModePlugin::load() 
 {
-	log() << "Initializing" << endl;	
-
-	env().modes().registerMode<SurveillanceMode>("Surveillance Mode");
+	log("Loading");	
+	return true;
 }
 
 
 void SurveillanceModePlugin::unload() 
 {	
-	log() << "Uninitializing" << endl;
-
-	env().modes().unregisterMode("Surveillance Mode");
+	log("Unloading");	
 }
 
+
+API::IMode* SurveillanceModePlugin::createModeInstance(const char* modeName, const char* channelName)
+{
+	assert(strcmp(modeName, "Surveillance Mode") == 0);
+	return new SurveillanceMode(*env(), channelName);
+}
+
+
+const char** SurveillanceModePlugin::modeNames() const
+{
+	static const char* modeNames[] = { "Surveillance Mode", NULL };
+	return modeNames;
+}
 
 } } } // namespace Scy::Anionu::Spot

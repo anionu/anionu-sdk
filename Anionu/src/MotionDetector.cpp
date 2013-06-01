@@ -261,10 +261,10 @@ bool MotionDetector::isProcessing() const
 }
 
 
-bool MotionDetector::isRunning() const 
+bool MotionDetector::isActive() const 
 { 
 	FastMutex::ScopedLock lock(_mutex); 
-	return stateEquals(MotionDetectorState::Idle);
+	return !stateEquals(MotionDetectorState::Idle);
 }
 
 

@@ -6,7 +6,7 @@
 #include "Anionu/Spot/API/IModule.h"
 #include "Anionu/Spot/API/IChannel.h"
 #include "Anionu/Spot/API/IMediaManager.h"
-#include "Anionu/Spot/API/ISympleProcessors.h"
+#include "Anionu/Spot/API/IFormProcessor.h"
 
 
 namespace Scy {
@@ -14,44 +14,41 @@ namespace Anionu {
 namespace Spot {
 
 
-class RecordingMode: public API::IMode, public API::IModule
+class RecordingMode: 
+	public API::IMode, 
+	public API::IModule, 
+	public API::IFormProcessor
 {
 public:
-	RecordingMode(API::IEnvironment& env, const std::string& channel); // API::IChannel& channel
+	RecordingMode(API::IEnvironment& env, const std::string& channel);
 	~RecordingMode();
-
-	//void initialize();
-	//void uninitialize();
-
+	
 	bool activate();
 	void deactivate();
-	
-	bool startRecording();
-	bool stopRecording();
+		
+	void startRecording();
+	void stopRecording();
 	
 	void loadConfig();
+	bool isActive() const;
+	bool isRecording() const;
 	std::string recordingToken();
 		
-	/*
-	//
-	/// Symple::IFormProcessor methods
-	bool isConfigurable() const;
-	bool hasParsableFields(Symple::Form& form) const;
 	void buildForm(Symple::Form& form, Symple::FormElement& element);
 	void parseForm(Symple::Form& form, Symple::FormElement& element);
-	*/
-	
+		
 	void onRecordingStopped(void* sender, API::RecorderStream& stream);
 	
-	const char* helpFile() const;	
-	const char* channel() const;
-	const char* error() const;
-	const char* name() const { return "Recording Mode"; }
+	const char* docFile() const;	
+	const char* errorMessage() const;
+	const char* channelName() const;
+	const char* modeName() const { return "Recording Mode"; }
 	const char* className() const { return "RecordingMode"; }
 
 private: 
 	int	_segmentDuration;
 	bool _synchronizeVideos;
+	bool _isActive;
 	std::string _error;
 	std::string _channel;
 	std::string	_recordingToken;
@@ -67,9 +64,16 @@ private:
 
 
 	/*
+	//
+	/// Symple::IFormProcessor methods
+	//bool isConfigurable() const;
+	//bool hasParsableFields(Symple::Form& form) const;
+	
+	//void initialize();
+	//void uninitialize();
 	bool isConfigurable() const;
 	bool hasParsableFields(Symple::Form& form) const;	
-	std::string helpFile();
+	std::string docFile();
 
 	void buildForm(Symple::Form& form, Symple::FormElement& element, bool defaultScope = false);
 	void parseForm(Symple::Form& form, Symple::FormElement& element);

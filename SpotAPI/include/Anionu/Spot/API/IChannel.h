@@ -52,6 +52,14 @@ public:
 	virtual Media::Device audioDevice() const = 0;
 	virtual Media::VideoCapture* videoCapture(bool whiny = false) const = 0;
 	virtual Media::AudioCapture* audioCapture(int channels = 2, int sampleRate = 44100, bool whiny = false) const = 0;
+	
+	virtual void startRecording() = 0;
+	virtual void stopRecording() = 0;
+	virtual bool isRecording() const = 0;
+		
+	virtual void activateMode(const std::string& name) = 0;
+	virtual void deactivateMode(const std::string& name) = 0;
+	virtual bool isModeActive(const std::string& name) const = 0;
 
 	virtual bool valid() const = 0;
 		/// The channel is considered valid when both

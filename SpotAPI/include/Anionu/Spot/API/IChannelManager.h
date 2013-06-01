@@ -35,8 +35,7 @@
 namespace Scy {
 namespace Anionu { 
 namespace Spot { 
-namespace API { 
-	class IModeManager;
+namespace API {
 	
 
 class IChannelManager
@@ -49,8 +48,12 @@ public:
     virtual API::IChannel* getDefaultChannel() const = 0;
 		// Returns the first channel in the list.
 
+	virtual IChannel* at(int index) const = 0;
+		// Returns the channel at the given 0 based 
+		// index position, or NULL.
+
 	virtual IChannelList list() const = 0;
-	virtual IModeManager& modes() = 0;
+		// Returns the list of channels.
 		
 	Signal<API::IChannel&> ChannelAdded;
 	Signal<API::IChannel&> ChannelRemoved;

@@ -28,7 +28,7 @@ public:
 
 	//
 	/// IModeFactory
-	API::IMode* createModeInstance(const char* mode, const char* channel);
+	API::IMode* createModeInstance(const char* modeName, const char* channelName);
 	const char** modeNames() const;
 		
 	//

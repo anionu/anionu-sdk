@@ -9,14 +9,14 @@ namespace Scy {
 namespace Anionu {
 
 
-Event::Event(const string& name, const string& message, time_t time) :
-	name(name), message(message), severity(Event::Default), realm(Event::SpotLocal), time(time) 
+Event::Event(const string& name, const string& message) :
+	name(name), message(message), severity(Event::Default), realm(Event::SpotLocal), time(::time(0)) 
 {
 }
 
 
-Event::Event(const string& name, const string& message, Severity severity, Realm realm, time_t time) :
-	name(name), message(message), severity(severity), realm(realm), time(time) 
+Event::Event(const string& name, const string& message, Severity severity, Realm realm) :
+	name(name), message(message), severity(severity), realm(realm), time(::time(0)) 
 {
 }
 

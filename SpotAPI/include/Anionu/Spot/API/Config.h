@@ -29,16 +29,35 @@
 #define Anionu_Spot_API_Config_H
 
 	
-#define ENFORCE_STRICT_ABI_COMPATABILITY
-	/// This is to specify that we are creating an ABI compatible plugin.
-	/// The current compiler must match the compiler used to create the original Spot binary.
-	/// If the version and dependency check fail the build will fail with an error.
+#define Anionu_Spot_ENABLE_ABI_COMPATABILITY
+	// This is to specify that we are creating an ABI compatible plugin.
+	// The current compiler must match the compiler used to create the original Spot binary.
+	// If the version and dependency check fail the build will fail with an error.
 
 
-// TODO: Check dependency and compiler versions
-#ifndef ENFORCE_STRICT_ABI_COMPATABILITY
-#error "Please easure strict ABI compatability and define \
-		ENFORCE_STRICT_ABI_COMPATABILITY before including the Spot C++ API"
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY	
+	//
+	// Enforce strict ABI compatable build environment 
+	//
+	// VS 2003 (VC7.1): 1310
+	// VS 2005 (VC8): 1400
+	// VS 2008 (VC9): 1500
+	// VS 2010 (VC10): 1600
+	// VS 2012 (VC11): 1700
+	#if _WIN32
+		#if _MSC_VER != 1600
+			#error "Must use MS Visual Studio 2010 to compile binary \
+				compatable plugins using the current API version."
+		#endif
+	#endif
+
+	#include "Sourcey/Base.h"
+	#if SOURCEY_MAJOR_VERSION != 0 || SOURCEY_MINOR_VERSION != 8 || SOURCEY_PATCH_VERSION != 2
+		#error "Must use LibSourcey 0.8.2 to compile binary \
+				compatable plugins using the current API version."
+	#endif
+
+	// TODO: Enforce third party dependency library versions
 #endif
 
 

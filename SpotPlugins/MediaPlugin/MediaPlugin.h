@@ -3,12 +3,10 @@
 
 
 #include "Anionu/Spot/API/IPlugin.h"
+#include "Anionu/Spot/API/IModule.h"
 #include "Anionu/Spot/API/IStreamingManager.h"
 #include "Anionu/Spot/API/IMediaManager.h"
 #include "Sourcey/Media/AVEncoder.h"
-
-#include "Poco/Thread.h"
-#include "Poco/ClassLibrary.h"
 
 
 namespace Scy {
@@ -16,20 +14,24 @@ namespace Anionu {
 namespace Spot {
 
 
-class MediaPlugin: public API::IPlugin
+class MediaPlugin: 
+	public API::IPlugin, 
+	public API::IModule
 {
 public:
 	MediaPlugin();
 	virtual ~MediaPlugin();
 
-	void load();
+	bool load();
 	void unload();
 	
 protected:
 	Media::IPacketEncoder* createEncoder(const Media::RecordingOptions& options);
 	
-	void onSetupStreamingSession(void*, API::IStreamingSession& session, bool&);
-	void onInitializeRecordingEncoder(void*, const Media::RecordingOptions& options, Media::IPacketEncoder*&);
+	void onInitStreamingSession(void*, API::IStreamingSession& session, bool&);
+	void onInitRecordingEncoder(void*, const API::RecordingOptions& options, Media::IPacketEncoder*&);
+
+	void registerMediaFormats();
 };
 
 

@@ -7,10 +7,9 @@
 	/// This is the only header that is required for 
 	/// creating plugins.
 
-#include "Anionu/Spot/API/IEnvironment.h"
 #include "Anionu/Spot/API/IModule.h"
 
-#include "Anionu/Spot/API/ISympleProcessors.h"
+#include "Anionu/Spot/API/IMessageProcessor.h"
 	/// The message processor provides an ABI agnostic
 	/// interface for procession all incoming, outgoing
 	/// and local messages passing through the Spot client.
@@ -26,13 +25,32 @@ namespace Spot {
 
 
 class EventPlugin: 
-	public API::IPlugin, 
-	public API::IModuleBase, 
-	public API::IMessageProcessor
-	/// Define our EventPlugin class, which extends the IPlugin interface.
+	/// Define the EventPlugin class.
 	///
-	/// The plugin class name must match the plugin "id"
-	/// specified in the manifest.json file.
+	/// Note that the plugin class name must match the "id" of
+	/// the plugin specified in the accompanying manifest.json.
+	///
+	public API::IPlugin, 
+		/// The IPlugin interface is the bare minimum required by
+		/// Spot in order to load a plugin/shared library.
+		///
+	public API::IModuleBase, 
+		/// The IModuleBase interface exposes Spot's base environment.
+		/// It contains only a subset of the full API, but since it is
+		/// ABI agnostic, it enables you the freedom to compile your
+		/// plugin on any compiler.
+		///
+		/// If you intend to use the full API, you would inherit from 
+		/// API::IModule instead.
+		///
+	public API::IMessageProcessor
+		/// The IMessageProcessor captures incoming and outgoing
+		/// messages between Spot and the Anionu server.
+		///
+		/// This plugin specifically utilizes the onPresence method.
+		/// Note that JSON message data is passed in as const char*
+		/// for ABI flexibility, so it must be parsed locally.
+		///
 {
 public:
 	EventPlugin();
@@ -41,8 +59,7 @@ public:
 	bool load();
 	void unload();
 	
-	//void onRecvPresence(void*, Symple::Presence& p);
-	virtual void onPresence(const char* presence);
+	void onPresence(const char* presence);
 
 	const char* className() const { return "EventPlugin"; }
 };

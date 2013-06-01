@@ -52,7 +52,7 @@ class IPlugin
 	///
 	/// See the EventPlugin (included in the Anionu SDK) for an
 	/// example of how IPlugin can be combined with the
-	/// ISympleProcessors to process all incoming and outgoing
+	/// IFormProcessor to process all incoming and outgoing
 	/// Spot client/server messages without compormising ABI
 	/// compatability.
 	///
@@ -68,7 +68,7 @@ public:
 		/// Any runtime or system compatibility checks they should
 		/// be done here. If there is an unrecoverable error, this
 		/// method should return false. A detailed error message may
-		/// be returned to the client via the error() method.
+		/// be returned to the client via the errorMessage() method.
 
 	virtual void unload() = 0;
 		/// This method uninitializes the library when it is unloaded
@@ -76,16 +76,16 @@ public:
 		///
 		/// Any memory allocated by the library should be freed here.
 
-	virtual const char* error() const { return 0; };
-		/// Returns a detailed error message if load() fails.
-		/// Override this method if you want to provide an error message.
-
 	virtual void setPath(const char* path) {};
 		/// The full path to the plugin shared library will be set
 		/// by Spot before the load() method is called.
 		/// Override this method if you want access to the path.
 
-	virtual const char* helpFile() { return 0; };
+	virtual const char* errorMessage() const { return 0; };
+		/// Returns a detailed error message if load() fails.
+		/// Override this method if you want to provide an error message.
+
+	virtual const char* docFile() { return 0; };
 		/// Returns the relative path (from the Spot binary dir)
 		/// to the optional help guide/documentation pertaining
 		/// to the current module.
@@ -112,7 +112,7 @@ POCO_END_MANIFEST										 \
 
 	//virtual void onSessionStart() {};
 	//virtual void onSessionEnd() {};	
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 class IPlugin: public IPlugin
@@ -165,7 +165,7 @@ private:
 };
 
 
-#endif /// ENFORCE_STRICT_ABI_COMPATABILITY
+#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 */
 

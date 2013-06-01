@@ -31,7 +31,7 @@
 
 #include "Anionu/Spot/API/Config.h"
 
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 #include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
 #include "Sourcey/PacketStream.h"
@@ -74,7 +74,7 @@ protected:
 
 // ---------------------------------------------------------------------
 //
-#ifdef ENFORCE_STRICT_ABI_COMPATABILITY
+#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 struct RecordingOptions: public Media::RecordingOptions
@@ -82,12 +82,14 @@ struct RecordingOptions: public Media::RecordingOptions
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The channel we're recording on
 	std::string user;		// The user ID of the initiating peer
-	bool synchronize;		// Weather or not to synchronize the recorded video
 	bool supressEvents;		// Supress events for this recording session
+	bool synchronizeVideo;	// Weather or not to synchronize the recorded video.
+							// The user configured value will be set when creating
+							// options using IMediaManager::getRecordingOptions()
 	RecordingOptions(const std::string& channel = "") : 
-		channel(channel), 
-		synchronize(false),
-		supressEvents(false) {}
+		channel(channel),
+		supressEvents(false), 
+		synchronizeVideo(false) {}
 };
 
 
@@ -160,7 +162,7 @@ public:
 	virtual Media::FormatRegistry& audioStreamingFormats() = 0;
 		/// Media formats for streaming audio over the internet.
 
-	Signal2<const Media::RecordingOptions&, Media::IPacketEncoder*&> CreateEncoder;
+	Signal2<const API::RecordingOptions&, Media::IPacketEncoder*&> InitRecordingEncoder;
 		/// Provides listeners with the ability to instantiate the recording encoder.
 		/// If a valid IPacketEncoder instance is assigned to the second parameter,
 		/// it will be used for encoding.
@@ -173,7 +175,7 @@ protected:
 };
 
 
-#endif // ENFORCE_STRICT_ABI_COMPATABILITY
+#endif // Anionu_Spot_ENABLE_ABI_COMPATABILITY
 
 
 } } } } // namespace Scy::Anionu::Spot::API
