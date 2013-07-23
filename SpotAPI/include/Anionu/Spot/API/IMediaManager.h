@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -31,7 +23,7 @@
 
 #include "Anionu/Spot/API/Config.h"
 
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
 #include "Sourcey/PacketStream.h"
@@ -39,13 +31,13 @@
 #endif
 
 
-namespace Scy {
-namespace Media {
+namespace scy {
+namespace av {
 	struct Format;
 	class FormatRegistry;}
-namespace Anionu {
-namespace Spot { 
-namespace API { 
+namespace anio {
+namespace spot { 
+namespace api { 
 
 
 // ---------------------------------------------------------------------
@@ -74,10 +66,10 @@ protected:
 
 // ---------------------------------------------------------------------
 //
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 
 
-struct RecordingOptions: public Media::RecordingOptions
+struct RecordingOptions: public av::RecordingOptions
 {
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The channel we're recording on
@@ -95,8 +87,8 @@ struct RecordingOptions: public Media::RecordingOptions
 
 struct RecorderStream: public PacketStream
 {
-	API::RecordingOptions options;
-	RecorderStream(const API::RecordingOptions& options) :
+	api::RecordingOptions options;
+	RecorderStream(const api::RecordingOptions& options) :
 		PacketStream(options.token),
 		options(options) {}
 };
@@ -105,7 +97,7 @@ struct RecorderStream: public PacketStream
 class IMediaManager: public IMediaManagerBase
 {
 public:	
-	virtual void startRecording(API::RecordingOptions& options) = 0;
+	virtual void startRecording(api::RecordingOptions& options) = 0;
 		/// Starts a new recorder instance from the given options.
 		/// Calls createRecorder() internally.
 		/// An exception will be thrown on error.
@@ -115,7 +107,7 @@ public:
 		/// Returns true on success, or if whiny is set then an 
 		/// exception will be thrown on error.
 
-	virtual API::RecorderStream* createRecorder(API::RecordingOptions& options) = 0;
+	virtual api::RecorderStream* createRecorder(api::RecordingOptions& options) = 0;
 		/// Creates a new recorder instance from the given options.
 		/// Call RecorderStream::start() to start actual recording.
 		/// Using this method directly, instead of startRecording() 
@@ -124,61 +116,61 @@ public:
 		/// ideally using the getRecordingOptions() method.
 		/// An exception will be thrown on error.
 
-	virtual API::RecordingOptions getRecordingOptions(const std::string& channel) = 0;
+	virtual api::RecordingOptions getRecordingOptions(const std::string& channel) = 0;
 		/// Initializes default recorder and encoder input format options 
 		/// for the given channel, and output format options from the
 		/// current user configuration. 
 		/// An exception will be thrown if the channel does not exist, 
 		/// or if a video device is unavailable.
 
-	virtual Media::Format getRecordingFormat() = 0;
+	virtual av::Format getRecordingFormat() = 0;
 		/// Returns the current user configured recording media format.
 		
-	virtual Media::Format getVideoStreamingFormat() = 0;
+	virtual av::Format getVideoStreamingFormat() = 0;
 		/// Returns the current user configured local network
 		/// streaming media format.
 
-	virtual Media::Format getAudioStreamingFormat() = 0;
+	virtual av::Format getAudioStreamingFormat() = 0;
 		/// The current user configured audio streaming format.
 
-	virtual void setRecordingFormat(const Media::Format& format) = 0;
+	virtual void setRecordingFormat(const av::Format& format) = 0;
 		/// Sets the recording media format for the current user
 		/// and updates configuration.
 		
-	virtual void setVideoStreamingFormat(const Media::Format& format) = 0;
+	virtual void setVideoStreamingFormat(const av::Format& format) = 0;
 		/// Sets the local network streaming media format for the
 		/// current user and updates configuration.
 
-	virtual void setAudioStreamingFormat(const Media::Format& format) = 0;
+	virtual void setAudioStreamingFormat(const av::Format& format) = 0;
 		/// Sets the internet streaming audio format for the current
 		/// user and updates configuration.
 	
-	virtual Media::FormatRegistry& recordingFormats() = 0;
+	virtual av::FormatRegistry& recordingFormats() = 0;
 		/// Media formats for recording media.
 
-	virtual Media::FormatRegistry& videoStreamingFormats() = 0;
+	virtual av::FormatRegistry& videoStreamingFormats() = 0;
 		/// Media formats for streaming video over the internet.
 
-	virtual Media::FormatRegistry& audioStreamingFormats() = 0;
+	virtual av::FormatRegistry& audioStreamingFormats() = 0;
 		/// Media formats for streaming audio over the internet.
 
-	Signal2<const API::RecordingOptions&, Media::IPacketEncoder*&> InitRecordingEncoder;
+	Signal2<const api::RecordingOptions&, av::IPacketEncoder*&> InitRecordingEncoder;
 		/// Provides listeners with the ability to instantiate the recording encoder.
 		/// If a valid IPacketEncoder instance is assigned to the second parameter,
 		/// it will be used for encoding.
 		
-	Signal<API::RecorderStream&> RecordingStarted;
-	Signal<API::RecorderStream&> RecordingStopped;
+	Signal<api::RecorderStream&> RecordingStarted;
+	Signal<api::RecorderStream&> RecordingStopped;
 		
 protected:
 	virtual ~IMediaManager() = 0 {};
 };
 
 
-#endif // Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif // Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_IMediaManager_H

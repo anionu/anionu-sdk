@@ -7,15 +7,15 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Scy::Anionu::Spot::API;
+using namespace scy::anionu::spot::api;
 
 
-DEFINE_SPOT_PLUGIN(Scy::Anionu::Spot::RecordingModePlugin)
+DEFINE_SPOT_PLUGIN(scy::anionu::spot::RecordingModePlugin)
 
 
-namespace Scy {
-namespace Anionu { 
-namespace Spot {
+namespace scy {
+namespace anionu { 
+namespace spot {
 
 
 RecordingModePlugin::RecordingModePlugin()
@@ -60,4 +60,4 @@ const char** RecordingModePlugin::modeNames() const
 }
 
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot

@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -31,57 +23,62 @@
 
 #include "Anionu/Config.h"
 #include "Sourcey/Signal.h"
-#include "Sourcey/HTTP/Request.h"
-#include "Sourcey/HTTP/Response.h"
-#include "Sourcey/HTTP/Transaction.h"
+#include "Sourcey/HTTP/Client.h"
+#include "Sourcey/HTTP/Authenticator.h"
 #include "Sourcey/JSON/JSON.h"
 
 	
-namespace Scy { 
-namespace Anionu {
+namespace scy { 
+namespace anio {
 
 	
 static const char* APIv1 = "["
 "  {"
 "    \"name\" : \"GetAccount\","
 "    \"http\" : \"GET\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/account.:format\""
 "  },"
 "  {"
 "    \"name\" : \"GetEvents\","
 "    \"http\" : \"GET\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/events.:format\""
 "  },"
 "  {"
 "    \"name\" : \"CreateEvent\","
 "    \"http\" : \"POST\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/events.:format\""
 "  },"
 "  {"
 "    \"name\" : \"DeleteEvent\","
 "    \"http\" : \"DELETE\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/events/:id.:format\""
 "  },"
 "  {"
 "    \"name\" : \"GetAssets\","
 "    \"http\" : \"GET\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/assets.:format\""
+"  },"
+"  {"
+"    \"name\" : \"GetAsset\","
+"    \"http\" : \"GET\","
+"    \"auth\" : true,"
+"    \"uri\" : \"/asset/:id.:format\""
 "  },"
 "  {"
 "    \"name\" : \"UploadAsset\","
 "    \"http\" : \"POST\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/assets.:format\""
 "  },"
 "  {"
 "    \"name\" : \"DeleteAsset\","
 "    \"http\" : \"DELETE\","
-"    \"anon\" : false,"
+"    \"auth\" : true,"
 "    \"uri\" : \"/assets/:id.:format\""
 "  }"
 "]";
@@ -105,25 +102,27 @@ public:
 	std::string name;
 	std::string httpMethod; // HTTP method ie. GET, POST, PUT, DELETE
 	std::string contentType;
-	Poco::URI url;
-	bool anonymous;
+	http::URL url;
+	bool authenticatable;
 };
 
 
 // ---------------------------------------------------------------------
 //
 class APIClient;
-class APIMethods: public JSON::Value
+class APIMethods: public json::Value
 	/// Stores the Anionu REST API method descriptions.
-	/// See the top of the file for raw JSON API data.
+	/// See the top of the file for JSON API specification.
 	///
+	/// TODO: Parse methods as necessary, no need to keep the
+	/// JSON object in memory.
 {
 public:
 	APIMethods(APIClient& client);
 	virtual ~APIMethods();
 
 	virtual void load();
-		/// Load the JSON API specification data.
+		/// Load and the JSON API specification template.
 
 	virtual bool loaded() const;
 		/// Returns true methods have been loaded.
@@ -133,7 +132,7 @@ public:
 	void print(std::ostream& os) const;
 
 private:
-	mutable Poco::FastMutex	_mutex;
+	mutable Mutex	_mutex;
 	APIClient& _client;
 };
 
@@ -154,9 +153,10 @@ struct APICredentials
 };
 
 
+/*
 // ---------------------------------------------------------------------
 //
-struct APIRequest: public HTTP::Request
+struct APIRequest: public http::Request
 {
 	APIRequest() {} 	
 	APIRequest(const APIMethod& method, 
@@ -166,40 +166,41 @@ struct APIRequest: public HTTP::Request
 	virtual ~APIRequest() {}
 
 	virtual void prepare();
-		// MUST be called after setting all information and
-		// credentials before sending the request.
+		/// MUST be called after setting all information and
+		/// credentials before sending the request.
 
 	APIMethod method;
 
 	APICredentials credentials;
-		// HTTP authentication credentials.
+		/// HTTP authentication credentials.
 
-private:
-	APIRequest(APIRequest& r) {}
-		// The copy constructor is private (Poco limitation).
+//private:
+	//APIRequest(APIRequest& r) {}
+		/// The copy constructor is private
 };
+*/
 
 
 // ---------------------------------------------------------------------
 //
-class APITransaction: public HTTP::Transaction
+class APITransaction: public http::ClientConnection
 {
 public:
-	APITransaction(APIRequest* request = NULL);
+	APITransaction(APIClient* client, const APIMethod& method); //APIRequest* request = NULL
 	virtual ~APITransaction();
 
-protected:
-	virtual void onComplete();
+//protected:
+	//virtual void onComplete();
 };
 
 	
-typedef AsyncSendable<APITransaction> AsyncTransaction;
+//typedef AsyncSendable<APITransaction> AsyncTransaction;
 typedef std::vector<APITransaction*> APITransactionList;
 
 
 // ---------------------------------------------------------------------
 //
-class APIClient: public IPolymorphic
+class APIClient: public http::Client
 {
 public:
 	APIClient();
@@ -223,38 +224,40 @@ public:
 		// Returns the API HTTP endpoint.
 		// Defaults to Anionu_API_ENDPOINT declaration.
 	
-	virtual APIRequest* createRequest(const APIMethod& method);
-	virtual APIRequest* createRequest(const std::string& method, 
-									  const std::string& format = "json", 
-									  const StringMap& params = StringMap());
+	//virtual APIRequest* createRequest(const APIMethod& method);
+	//virtual APIRequest* createRequest(const std::string& method, 
+	//								  const std::string& format = "json", 
+	//								  const StringMap& params = StringMap());
 
-	virtual APITransaction* call(APIRequest* request);
+	//virtual APITransaction* call(APIRequest* request);
 	virtual APITransaction* call(const APIMethod& method);
 	virtual APITransaction* call(const std::string& method, 
 								 const std::string& format = "json", 
 								 const StringMap& params = StringMap());
 	
+	/*
 	virtual AsyncTransaction* callAsync(APIRequest* request);
 	virtual AsyncTransaction* callAsync(const APIMethod& method);
 	virtual AsyncTransaction* callAsync(const std::string& method, 
 										const std::string& format = "json", 
 										const StringMap& params = StringMap());
+										*/
 
 	virtual const char* className() const { return "APIClient"; }
 
-protected:
-	void cancelTransactions();
-	void onTransactionComplete(void* sender, HTTP::Response& response);
+//protected:
+	//void cancelTransactions();
+	//void onTransactionComplete(void* sender, http::Response& response);
 
 private:
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 	APIMethods			_methods;
 	APICredentials		_credentials;
-	APITransactionList	_transactions;
+	//APITransactionList	_transactions;
 };
 
 
-} } // namespace Anionu
+} } // namespace anionu
 
 
 #endif

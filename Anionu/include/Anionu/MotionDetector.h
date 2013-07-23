@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -31,8 +23,9 @@
 
 #include "Sourcey/Stateful.h"
 #include "Sourcey/Signal.h"
-#include "Sourcey/IStartable.h"
-#include "Sourcey/IPacketProcessor.h"
+#include "Sourcey/Interfaces.h"
+#include "Sourcey/PacketStream.h"
+#include "Sourcey/Timer.h"
 #include "Sourcey/Media/VideoCapture.h"
 
 #include <iostream>
@@ -41,12 +34,14 @@
 #include <opencv/highgui.h>
 
 #include "Poco/Thread.h"
+/*
 #include "Poco/Stopwatch.h"
 #include "Poco/Timestamp.h"
+*/
 
 
-namespace Scy {
-namespace Anionu {
+namespace scy {
+namespace anio {
 
 
 struct MotionDetectorState: public State
@@ -72,7 +67,7 @@ struct MotionDetectorState: public State
 };
 
 
-class MotionDetector: public StatefulSignal<MotionDetectorState>, public IPacketProcessor
+class MotionDetector: public StatefulSignal<MotionDetectorState>, public PacketProcessor
 {
 public:
 	struct Options 
@@ -124,10 +119,10 @@ protected:
 	void computeMotionState();	
 
 private:
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 
 	Options _options;
-	Poco::Stopwatch _stopwatch;	
+	Stopwatch _stopwatch;	
 	bool	_processing;	
 	
 	int		_motionLevel;	// The current motion level (non zero pixel count in MHI)
@@ -143,7 +138,7 @@ private:
 };
 
 
-} } // namespace Scy::Anionu
+} } // namespace scy::Anionu
 
 
 #endif

@@ -13,18 +13,20 @@ macro(define_spot_plugin name)
     source_group("Src" FILES ${lib_srcs})
     source_group("Include" FILES ${lib_hdrs})
     
-    include_dependency(Poco REQUIRED)
-    include_dependency(OpenSSL REQUIRED)
     include_dependency(JsonCpp REQUIRED)
-    #include_dependency(FFmpeg REQUIRED)
+    include_dependency(Poco REQUIRED) # depreciate
+    include_dependency(OpenSSL REQUIRED) # depreciate
+    #include_dependency(FFmpeg REQUIRED) # optional
+    include_dependency(HttpParser REQUIRED) # optional
     include_dependency(OpenCV REQUIRED)
     include_dependency(RtAudio REQUIRED)
+    include_dependency(LibUV REQUIRED)
     
     #message(${LibSourcey_INCLUDE_DIRS})
     include_directories(${LibSourcey_INCLUDE_DIRS})    
     link_directories(${LibSourcey_LIBRARY_DIRS})
     
-    include_sourcey_modules(Base SpotAPI Net JSON Media HTTP Anionu HTTP Symple SocketIO Util ${ARGN})
+    include_sourcey_modules(Base UV SpotAPI Net JSON Media HTTP Anionu HTTP Symple SocketIO Util ${ARGN})
     include_directories(
       "${LibSourcey_INSTALL_DIR}/lib"
       "${CMAKE_SOURCE_DIR}/src/AnionuSDK/SpotAPI/include")

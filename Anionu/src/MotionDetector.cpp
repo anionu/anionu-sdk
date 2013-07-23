@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -31,11 +23,11 @@
 using namespace cv;
 using namespace std;
 using namespace Poco;
-using namespace Scy::Media;
+using namespace scy::av;
 
 
-namespace Scy {
-namespace Anionu {
+namespace scy {
+namespace anio {
 
 
 MotionDetector::MotionDetector(const Options& options) : 
@@ -58,11 +50,11 @@ MotionDetector::~MotionDetector()
 
 void MotionDetector::onStreamStateChange(const PacketStreamState&)
 {
-	LogDebug("MotionDetector", this) << "Reset Stream State" << endl;
+	debugL("MotionDetector", this) << "Reset Stream State" << endl;
 	
 	setState(this, MotionDetectorState::Idle);
 
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	_motionLevel = 0;
 	_motionFrameCount = 0;
 	_motionCanStartAt = 0; 
@@ -73,7 +65,7 @@ void MotionDetector::onStreamStateChange(const PacketStreamState&)
 
 void MotionDetector::process(IPacket& packet)
 {
-	LogTrace("MotionDetector", this) << "Processing" << endl;
+	traceL("MotionDetector", this) << "Processing" << endl;
 
 	MatPacket* mpacket = dynamic_cast<MatPacket*>(&packet);		
 	if (!mpacket) {
@@ -88,14 +80,14 @@ void MotionDetector::process(IPacket& packet)
 	cv::Mat& source = *mpacket->mat;
 	cv::Mat mask(source.size(), CV_8UC1);
 	{
-		FastMutex::ScopedLock lock(_mutex); 	
+		Mutex::ScopedLock lock(_mutex); 	
 		_processing = true;
 		_timestamp = (double)clock() / CLOCKS_PER_SEC; // mpacket->time;
 	}
 	updateMHI(source);
 	computeMotionState();			
 	{
-		FastMutex::ScopedLock lock(_mutex); 
+		Mutex::ScopedLock lock(_mutex); 
 
 		// Create the single channel mask.
 		_mhi.convertTo(mask, CV_8UC1, 255.0 / _options.stableMotionLifetime, 
@@ -116,7 +108,7 @@ void MotionDetector::process(IPacket& packet)
 
 void MotionDetector::updateMHI(cv::Mat& source)
 {
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 
 	cv::Mat grey; //(source.size(), CV_8UC1);
 	cv::cvtColor(source, grey, CV_RGB2GRAY);
@@ -143,9 +135,9 @@ void MotionDetector::updateMHI(cv::Mat& source)
 
 void MotionDetector::computeMotionState() 
 { 
-	//LogDebug("MotionDetector", this) 
+	//debugL("MotionDetector", this) 
 	//	<< "Update Motion State: " << state().toString() << endl;	
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 
 	time_t currentTime = time(0);
 		
@@ -157,7 +149,7 @@ void MotionDetector::computeMotionState()
 			_motionCanStartAt = currentTime + _options.preSurveillanceDelay;
 			setState(this, MotionDetectorState::Waiting);
 			
-			LogDebug("MotionDetector", this) << "Updating State: Set => Waiting" << endl;
+			debugL("MotionDetector", this) << "Updating State: Set => Waiting" << endl;
 		}
 		break;
 	case MotionDetectorState::Waiting: 
@@ -166,7 +158,7 @@ void MotionDetector::computeMotionState()
 			// to Vigilant...
 			if (currentTime > _motionCanStartAt) {				
 				setState(this, MotionDetectorState::Vigilant);			
-				LogDebug("MotionDetector", this) << "Updating State: Set => Vigilant" << endl;
+				debugL("MotionDetector", this) << "Updating State: Set => Vigilant" << endl;
 			}
 		}
 		break;
@@ -175,7 +167,7 @@ void MotionDetector::computeMotionState()
 			// If motion threshold is exceeded then set our state
 			// to Triggered...
 			if (_motionLevel > _options.motionThreshold) {
-				LogDebug("MotionDetector", this) << "Updating State: Motion Detected: " 
+				debugL("MotionDetector", this) << "Updating State: Motion Detected: " 
 					<< _motionLevel << ">" << _options.motionThreshold << endl;
 
 				// We need x number of motion frames before we 
@@ -197,14 +189,14 @@ void MotionDetector::computeMotionState()
 							currentTime + _options.minTriggeredDuration, 				
 							_motionStartedAt + _options.maxTriggeredDuration);
 						setState(this, MotionDetectorState::Triggered);
-						LogDebug("MotionDetector", this) << "Updating State: Vigilant => Triggered" << endl;
+						debugL("MotionDetector", this) << "Updating State: Vigilant => Triggered" << endl;
 					}
 				} else {
 					_stopwatch.stop();
 					_stopwatch.reset();
 					_motionSegmentEndingAt = 0;
 					_motionFrameCount = 0;
-					LogDebug("MotionDetector", this) << "Updating State: Motion Timer Expired" << endl;
+					debugL("MotionDetector", this) << "Updating State: Motion Timer Expired" << endl;
 				}			
 			}
 		}
@@ -216,7 +208,7 @@ void MotionDetector::computeMotionState()
 			if (currentTime > _motionSegmentEndingAt) {				
 				_motionCanStartAt = currentTime + _options.postMotionEndedDelay;
 				setState(this, MotionDetectorState::Waiting);
-				LogDebug("MotionDetector", this) << "Updating State: Triggered => Waiting" << endl;
+				debugL("MotionDetector", this) << "Updating State: Triggered => Waiting" << endl;
 			}
 
 			// If motion threshold is exceeded while triggered
@@ -225,7 +217,7 @@ void MotionDetector::computeMotionState()
 				_motionSegmentEndingAt = min<time_t>(
 					currentTime + _options.minTriggeredDuration, 				
 					_motionStartedAt + _options.maxTriggeredDuration);	
-				LogDebug("MotionDetector", this) << "Updating State: Extend Triggered Duration: " 
+				debugL("MotionDetector", this) << "Updating State: Extend Triggered Duration: " 
 					<< _motionSegmentEndingAt << endl;			
 			}
 		}
@@ -242,30 +234,30 @@ bool MotionDetector::accepts(IPacket& packet)
 
 int MotionDetector::motionLevel() const
 {
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _motionLevel;
 }
 
 
 MotionDetector::Options& MotionDetector::options()
 {
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _options;
 }
 
 
 bool MotionDetector::isProcessing() const 
 { 
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _processing;
 }
 
 
 bool MotionDetector::isActive() const 
 { 
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return !stateEquals(MotionDetectorState::Idle);
 }
 
 
-} } // namespace Scy::Anionu
+} } // namespace scy::Anionu

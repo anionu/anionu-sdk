@@ -1,5 +1,5 @@
-#ifndef ANIONU_SPOT_SurveillanceMode_H
-#define ANIONU_SPOT_SurveillanceMode_H
+#ifndef Anionu_Spot_SurveillanceMode_H
+#define Anionu_Spot_SurveillanceMode_H
 
 
 #include "Anionu/Spot/API/IMode.h"
@@ -10,21 +10,21 @@
 #include "Anionu/Spot/API/IFormProcessor.h"
 #include "Anionu/MotionDetector.h"
 #include "Sourcey/PacketStream.h"
-#include "Sourcey/Token.h"
+#include "Sourcey/Timer.h"
 
 
-namespace Scy {
-namespace Anionu { 
-namespace Spot {
+namespace scy {
+namespace anionu { 
+namespace spot {
 	
 
 class SurveillanceMode: 
-	public API::IMode, 
-	public API::IModule, 
-	public API::IFormProcessor
+	public api::IMode, 
+	public api::IModule, 
+	public api::IFormProcessor
 {
 public:
-	SurveillanceMode(API::IEnvironment& env, const std::string& channel);
+	SurveillanceMode(api::IEnvironment& env, const std::string& channel);
 	~SurveillanceMode();
 	
 	//
@@ -53,37 +53,37 @@ public:
 	void startRecording();
 	void stopRecording();
 	
-	Token* createStreamingToken(long duration = 20000);
-	Token* getStreamingToken(const std::string& token);
+	TimedToken* createStreamingToken(long duration = 20000);
+	TimedToken* getStreamingToken(const std::string& token);
 	bool removeStreamingToken(const std::string& token);
 
 	//
 	/// IFormProcessor methods
-	void buildForm(Symple::Form& form, Symple::FormElement& element);
-	void parseForm(Symple::Form& form, Symple::FormElement& element);
+	void buildForm(symple::Form& form, symple::FormElement& element);
+	void parseForm(symple::Form& form, symple::FormElement& element);
 
 	//
 	/// Callbacks
-	void onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&);
-	void onInitStreamingSession(void*, API::IStreamingSession& session, bool& handled);
-	void onInitStreamingConnection(void*, API::IStreamingSession& session, API::ConnectionStream& connection, bool& handled);
-	void onStreamingSessionStateChange(void*, API::StreamingState& state, const API::StreamingState&);	
+	void onMotionStateChange(void* sender, anionu::MotionDetectorState& state, const anionu::MotionDetectorState&);
+	void onInitStreamingSession(void*, api::IStreamingSession& session, bool& handled);
+	void onInitStreamingConnection(void*, api::IStreamingSession& session, PacketStream& stream, bool& handled);
+	void onStreamingSessionStateChange(void*, api::StreamingState& state, const api::StreamingState&);	
 	
 protected:	
 	mutable Poco::FastMutex _mutex;
-	Anionu::MotionDetector _motionDetector;
-	PacketStream _motionStream;
-	std::string	_error;
-	std::string _channel;
-	std::string	_recordingToken;
-	TokenList _streamingTokens;
 	bool _isActive;
 	bool _isConfiguring;
 	bool _synchronizeVideos;
+	std::string	_error;
+	std::string _channel;
+	std::string	_recordingToken;
+	PacketStream _motionStream;
+	anionu::MotionDetector _motionDetector;
+	std::vector<TimedToken> _streamingTokens;
 };
 
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot
 
 
-#endif // ANIONU_SPOT_SurveillanceMode_H
+#endif // Anionu_Spot_SurveillanceMode_H

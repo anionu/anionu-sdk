@@ -3,13 +3,11 @@
 
 
 #include "Anionu/Config.h"
-
-#include "Poco/DateTimeFormatter.h"
-#include "Poco/DateTimeFormat.h"
+#include "Sourcey/DateTime.h"
 
 
-namespace Scy { 
-namespace Anionu {
+namespace scy { 
+namespace anio {
 
 
 struct Event
@@ -49,8 +47,8 @@ struct Event
 	time_t time;
 		
 	std::string formatTime(
-		const std::string& fmt = Poco::DateTimeFormat::ISO8601_FORMAT,
-		int timeZoneDifferential = Poco::DateTimeFormatter::UTC) const;
+		const std::string& fmt = DateTimeFormat::ISO8601_FORMAT,
+		int timeZoneDifferential = DateTimeFormatter::UTC) const;
 
 	std::string severityStr() const;
 	static std::string severityToStr(Severity id);
@@ -62,7 +60,7 @@ struct Event
 }; 
 
 
-} } // namespace Scy::Anionu
+} } // namespace scy::Anionu
 
 
 #endif // Anionu_Event_H

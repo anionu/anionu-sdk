@@ -1,5 +1,5 @@
 #include "SurveillanceMode.h"
-#include "SurveillanceMultipartPacketizer.h"
+#include "SurveillanceMultipartAdapter.h"
 #include "Anionu/Spot/API/IClient.h"
 #include "Anionu/Spot/API/IChannel.h"
 #include "Anionu/Spot/API/IChannelManager.h"
@@ -14,13 +14,13 @@
 
 using namespace std;
 using namespace Poco;
-using namespace Scy::Anionu::Spot::API;
+using namespace scy::anionu::spot::api;
 
 
-namespace Scy {
-namespace Anionu { 
-namespace Spot {
-	using namespace API;
+namespace scy {
+namespace anionu { 
+namespace spot {
+	using namespace api;
 
 
 SurveillanceMode::SurveillanceMode(IEnvironment& env, const string& channel) :
@@ -48,7 +48,7 @@ bool SurveillanceMode::activate()
 		startMotionDetector();
 	}
 	catch (Exception& exc) {
-		_error = exc.displayText();
+		_error = exc.message();
 		log("Activation failed: " + _error, "error");
 		return false;
 	}
@@ -64,7 +64,7 @@ void SurveillanceMode::deactivate()
 		stopMotionDetector();
 	}
 	catch (Exception& exc) {
-		log("Deactivation failed: " + exc.displayText(), "error");
+		log("Deactivation failed: " + exc.message(), "error");
 	}
 }
 
@@ -97,11 +97,11 @@ void SurveillanceMode::startMotionDetector()
 	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
 	// Get the video capture or throw an exception.
-	Media::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);	
+	av::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);	
 
 	// Setup our packet stream with the video capture
 	// feeding into the motion detector.
-	_motionStream.attach(video, false);	
+	_motionStream.attachSource(video, false);	
 	_motionStream.attach(&_motionDetector, 1, false);
 	_motionStream.start();
 }
@@ -146,9 +146,9 @@ void SurveillanceMode::stopRecording()
 }
 
 
-Token* SurveillanceMode::createStreamingToken(long duration)
+TimedToken* SurveillanceMode::createStreamingToken(long duration)
 {
-	Token token(duration);
+	TimedToken token(duration);
 	FastMutex::ScopedLock lock(_mutex);
 	_streamingTokens.push_back(token);
 	_streamingTokens.back().start(); // start the token timer
@@ -156,12 +156,13 @@ Token* SurveillanceMode::createStreamingToken(long duration)
 }
 
 	
-Token* SurveillanceMode::getStreamingToken(const string& token)
+TimedToken* SurveillanceMode::getStreamingToken(const string& token)
 {
 	FastMutex::ScopedLock lock(_mutex);
-	for (TokenList::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it)
+	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
 		if (*it == token)
-			return &(*it);           
+			return &*it;  
+	}
 	return NULL;
 }
 
@@ -169,7 +170,7 @@ Token* SurveillanceMode::getStreamingToken(const string& token)
 bool SurveillanceMode::removeStreamingToken(const string& token)
 {
 	FastMutex::ScopedLock lock(_mutex);
-	for (TokenList::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
+	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
 		if (*it == token) {
 			_streamingTokens.erase(it);
 			return true;
@@ -179,7 +180,7 @@ bool SurveillanceMode::removeStreamingToken(const string& token)
 }
 
 
-void SurveillanceMode::onMotionStateChange(void* sender, Anionu::MotionDetectorState& state, const Anionu::MotionDetectorState&)
+void SurveillanceMode::onMotionStateChange(void* sender, anionu::MotionDetectorState& state, const anionu::MotionDetectorState&)
 {
 	log("Motion State Changed: " + state.toString());
 	{
@@ -190,24 +191,24 @@ void SurveillanceMode::onMotionStateChange(void* sender, Anionu::MotionDetectorS
 	}
 
 	switch (state.id()) {
-		case Anionu::MotionDetectorState::Idle: 
+		case anionu::MotionDetectorState::Idle: 
 			break;
-		case Anionu::MotionDetectorState::Waiting:
+		case anionu::MotionDetectorState::Waiting:
 			try {	
 				// Stop recording if recording is active
 				if (isRecording())
 					stopRecording();
 			} catch (...) {}
 		break;
-		case Anionu::MotionDetectorState::Vigilant: 
+		case anionu::MotionDetectorState::Vigilant: 
 			break;
-		case Anionu::MotionDetectorState::Triggered:
+		case anionu::MotionDetectorState::Triggered:
 
 			// Create a Motion Detected event via the Anionu API to
 			// notify account users.
-			Anionu::Event event("Motion Detected", 
+			anionu::Event event("Motion Detected", 
 				env()->client().name() + ": Motion detected on channel: " + _channel,
-				Anionu::Event::High, Anionu::Event::SpotLocal);
+				anionu::Event::High, anionu::Event::SpotLocal);
 			env()->client().createEvent(event);
 			
 			try {	
@@ -229,7 +230,7 @@ void SurveillanceMode::onInitStreamingSession(void*, IStreamingSession& session,
 	log("Initialize Media Session: " + session.token());
 	
 	// Check if the session matches any available tokens 
-	Token* token = getStreamingToken(session.token());
+	TimedToken* token = getStreamingToken(session.token());
 	if (token) {
 
 		// Ensure token validity
@@ -238,10 +239,10 @@ void SurveillanceMode::onInitStreamingSession(void*, IStreamingSession& session,
 			FastMutex::ScopedLock lock(_mutex); 
 
 			// Get the video capture or throw an exception.
-			Media::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);	
+			av::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);	
 
 			// Set the input format to GRAY8 for the encoder
-			AllocateOpenCVInputFormat(video, session.options().iformat);
+			av::setVideoCaptureInputFormat(video, session.options().iformat);
 			session.options().iformat.video.pixelFmt = "gray";
 
 			// Attach motion detector to the stream.
@@ -270,7 +271,7 @@ void SurveillanceMode::onInitStreamingSession(void*, IStreamingSession& session,
 }
 
 
-void SurveillanceMode::onInitStreamingConnection(void*, IStreamingSession& session, ConnectionStream& connection, bool& handled)
+void SurveillanceMode::onInitStreamingConnection(void*, IStreamingSession& session, PacketStream& stream, bool& handled)
 {	
 	log("Initialize Media Connection: " + session.token());		
 	
@@ -285,8 +286,18 @@ void SurveillanceMode::onInitStreamingConnection(void*, IStreamingSession& sessi
 		// creation, further encoders and packetizers may be added depending
 		// on streaming configuration.
 		FastMutex::ScopedLock lock(_mutex); 
-		if (session.options().protocol == "HTTP")
-			connection.attach(new SurveillanceMultipartPacketizer(_motionDetector), 12, true);
+		assert(0 && "fixme"); // use proper http headers
+		//if (session.options().protocol == "HTTP")
+		//	connection.attach(new SurveillanceMultipartAdapter(_motionDetector), 12, true);
+		
+		// TODO: Get the multipart adapter from the connection and replace it with out own.
+		// The instance will have the connection object we need!
+		// We will need to include the HTTP module and connection stull which will chanmge in future
+		//
+		// OR: Hook into packet satream output and send single trailer packets to the client
+		// with multipart/x-mixed-replace; text/plain data
+
+		//MultipartAdapter
 	}
 }
 
@@ -346,10 +357,10 @@ const char* SurveillanceMode::docFile() const
 
 // ---------------------------------------------------------------------
 //
-void SurveillanceMode::buildForm(Symple::Form& form, Symple::FormElement& element) //, bool defaultScope
+void SurveillanceMode::buildForm(symple::Form& form, symple::FormElement& element) //, bool defaultScope
 {		
 	log("Building Form");	 
-	Symple::FormField field;
+	symple::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 	// Determine weather we are building the form at channel or
 	// default scope as it will change the way we display the form.
@@ -374,7 +385,7 @@ void SurveillanceMode::buildForm(Symple::Form& form, Symple::FormElement& elemen
 			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results."
 		);
 
-		Token* token = this->createStreamingToken();
+		TimedToken* token = this->createStreamingToken();
 		field = element.addField("media", config.getScopedKey("Preview", defaultScope), "Live Motion Preview");
 		field.setHint(
 			"Keep an eye on the motion levels and motion state in the top left hand corner of the video. "
@@ -470,10 +481,10 @@ void SurveillanceMode::buildForm(Symple::Form& form, Symple::FormElement& elemen
 }
 
 
-void SurveillanceMode::parseForm(Symple::Form& form, Symple::FormElement& element)
+void SurveillanceMode::parseForm(symple::Form& form, symple::FormElement& element)
 {
 	log("Parsing Form");	 
-	Symple::FormField field;
+	symple::FormField field;
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);
 	if (field.valid()) {
@@ -520,7 +531,7 @@ void SurveillanceMode::parseForm(Symple::Form& form, Symple::FormElement& elemen
 }
 
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot
 
 
 
@@ -532,7 +543,7 @@ bool SurveillanceMode::isConfigurable() const
 }
 
 
-bool SurveillanceMode::hasParsableFields(Symple::Form& form) const
+bool SurveillanceMode::hasParsableFields(symple::Form& form) const
 {
 	return form.hasField(".Surveillance Mode.", true);
 }

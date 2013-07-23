@@ -1,0 +1,1 @@
+define_libsourcey_test(AnionuAPIConsole Base UV Anionu Media Net HTTP JSON)

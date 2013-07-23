@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -31,15 +23,15 @@
 
 #include "Anionu/Spot/API/Config.h"
 
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Signal.h"
 #endif
 
 
-namespace Scy {
-namespace Anionu {
-namespace Spot { 
-namespace API { 
+namespace scy {
+namespace anio {
+namespace spot { 
+namespace api { 
 
 
 class IMode
@@ -92,7 +84,7 @@ public:
 };
 
 
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 
 // ---------------------------------------------------------------------
 //
@@ -104,7 +96,7 @@ public:
 	void setData(const std::string& name, const std::string& value)
 	{
 		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
+			Mutex::ScopedLock lock(_mutex);	
 			_data[name] = value;
 		}
 		DataChanged.emit(this, _data);
@@ -113,7 +105,7 @@ public:
 	void removeData(const std::string& name)
 	{
 		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
+			Mutex::ScopedLock lock(_mutex);	
 			StringMap::iterator it = _data.find(name);
 			if (it != _data.end()) {
 				_data.erase(it);
@@ -125,7 +117,7 @@ public:
 	void clearData()
 	{
 		{
-			Poco::FastMutex::ScopedLock lock(_mutex);	
+			Mutex::ScopedLock lock(_mutex);	
 			_data.clear();
 		}
 		DataChanged.emit(this, data());
@@ -133,7 +125,7 @@ public:
 
 	StringMap data() const
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _data; 
 	}
 	
@@ -142,14 +134,14 @@ public:
 		/// internal mode data changes.
 
 protected:		
-	mutable Poco::FastMutex	_mutex;	
+	mutable Mutex	_mutex;	
 	StringMap _data;
 }; 
 
-#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif /// Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_IMode_H
@@ -164,13 +156,13 @@ protected:
 	//virtual bool initialize() = 0;
 	//virtual void uninitialize() = 0;
 		/// Initialization logic should be implemented here.
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
 #include "Sourcey/IConfiguration.h"
 #include "Anionu/Spot/API/IEnvironment.h"
 #include "Anionu/Spot/API/IChannel.h"
-#include "Poco/Net/NameValueCollection.h"
+//#include "Poco/Net/NVCollection.h"
 #include "Poco/Format.h"
 #endif
 */
@@ -178,7 +170,7 @@ protected:
 
 /*const char* channel
 		/// See IMode for implementation specifics.
-//namespace Symple {
+//namespace smpl {
 	//class IFormProcessor;
 	/// The symple form processor can be optionally included
 	/// for integrating your plugin with the Anionu dashboard
@@ -208,11 +200,11 @@ struct ModeState: public State
 		return "undefined"; 
 	};
 };	
-typedef Poco::Net::NameValueCollection ModeOptions;
+typedef NVCollection ModeOptions;
 */
 	
 /*
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 
 
 class IMode: public IMode//, public StatefulSignal<ModeState>
@@ -222,7 +214,7 @@ class IMode: public IMode//, public StatefulSignal<ModeState>
 	/// implementation ideas.
 {	
 public:
-	IMode(API::IEnvironment& env, API::IChannel& channel, const std::string& name) : 
+	IMode(api::IEnvironment& env, api::IChannel& channel, const std::string& name) : 
 		_env(env), 
 		_channel(channel), 
 		_name(name), 
@@ -271,31 +263,31 @@ public:
 
 	const char* name() const
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _name.data(); 
 	}
 	
-	API::IEnvironment& env() const
+	api::IEnvironment& env() const
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _env; 
 	}
 
-	API::IChannel& channel() const
+	api::IChannel& channel() const
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _channel; 
 	}
 	
 	ScopedConfiguration& config()
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _config;
 	}
 
 	ModeOptions& options()
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);	
+		Mutex::ScopedLock lock(_mutex);	
 		return _options; 
 	}
 	
@@ -315,9 +307,9 @@ public:
 	virtual const char* className() const { return "Mode"; }
 
 protected:		
-	mutable Poco::FastMutex	_mutex;	
-	API::IEnvironment&	_env;
-	API::IChannel&		_channel;
+	mutable Mutex	_mutex;	
+	api::IEnvironment&	_env;
+	api::IChannel&		_channel;
 	//ScopedConfiguration	_config;
 	//ModeOptions			_options;
 	std::string			_name;
@@ -325,7 +317,7 @@ protected:
 }; 
 
 
-#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif /// Anionu_Spot_USING_CORE_API
 
 	*/
 
@@ -337,21 +329,21 @@ protected:
 		/// Information files should contain configuration assistance, 
 		/// and are in Markdown format.
 
-	API::IFormProcessor* proc() const
+	api::IFormProcessor* proc() const
 		/// Returns the optional Symple Form processor pointer.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return _proc; 
 	}
 
-	void setFormProcessor(API::IFormProcessor* proc)
+	void setFormProcessor(api::IFormProcessor* proc)
 		/// The should be set during initialize() in the mode
 		/// is designed to intergrate with the online dashboard
 		/// for remote configuration. 
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_proc = proc; 
 	}
-		_proc(NULL),
-	API::IFormProcessor* _proc;
+		_proc(nullptr),
+	api::IFormProcessor* _proc;
 	*/

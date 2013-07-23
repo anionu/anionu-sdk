@@ -2,48 +2,42 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
 #include "Anionu/APIClient.h"
 #include "Sourcey/Logger.h"
 
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPBasicCredentials.h"
+/*
+//#include "Poco/Net/HTTPClientSession.h"
+//#include "Poco/Net/HTTPBasicAuthenticator.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/Format.h"
+*/
 
 #include <assert.h>
 
 
 using namespace std;
-using namespace Poco;
-using namespace Poco::Net;
-using namespace Scy;
+//using namespace Poco;
+//
+//using namespace scy;
 
 
-namespace Scy {
-namespace Anionu {
+namespace scy {
+namespace anio {
 
 
 APIClient::APIClient() :
@@ -57,34 +51,24 @@ APIClient::APIClient() :
 APIClient::~APIClient()
 {
 	log("trace") << "Destroying" << endl;
-	cancelTransactions();
+	//cancelTransactions();
 }
 
 
 void APIClient::setCredentials(const string& username, const string& password, const string& endpoint) 
 { 
-	FastMutex::ScopedLock lock(_mutex);
+	log("trace") << "Set credentials for " << endpoint << endl;
+	Mutex::ScopedLock lock(_mutex);
 	_credentials.username = username;
 	_credentials.password = password;
 	_credentials.endpoint = endpoint;
 }
 
 
-void APIClient::cancelTransactions()
-{
-	log("trace") << "Canceling Transactions" << endl;	
-	FastMutex::ScopedLock lock(_mutex);
-	for (vector<APITransaction*>::const_iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
-		(*it)->Complete -= delegate(this, &APIClient::onTransactionComplete);
-		(*it)->cancel();
-	}
-	_transactions.clear();
-}
-
-
+/*
 APIRequest* APIClient::createRequest(const APIMethod& method)
 {
-	FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 	return new APIRequest(method, _credentials);
 }
 
@@ -95,30 +79,59 @@ APIRequest* APIClient::createRequest(const string& method,
 {
 	return createRequest(methods().get(method, format, params));
 }
+*/
 
 
 APITransaction* APIClient::call(const string& method, 
 								const string& format, 
 								const StringMap& params)
 {
-	return call(createRequest(method, format, params));
+	//return call(createRequest(method, format, params));
+	return call(methods().get(method, format, params));
 }
 
 
 APITransaction* APIClient::call(const APIMethod& method)
 {
-	return call(createRequest(method));
+	APITransaction* transaction = new APITransaction(this, method);
+
+	transaction->request().setMethod(method.httpMethod);
+	transaction->request().setURI(method.url.str());
+
+	if (method.authenticatable) {		
+		http::BasicAuthenticator auth(
+			_credentials.username,
+			_credentials.password);
+		auth.authenticate(transaction->request());
+	}
+
+	return transaction;
 }
 
+		//assert(0);
+	//return call(createRequest(method));
+		
+	//http::Request::prepare();
+		/* // createConnectionT<APITransaction>();
+		// Using basic auth over SSL
+		http::BasicAuthenticator cred(
+			_credentials.username,
+			_credentials.password);
+		cred.authenticate(transaction->request()); 
+		*/
 
+/*
 APITransaction* APIClient::call(APIRequest* request)
 {
 	log("trace") << "Calling: " << request->method.name << endl;
-	APITransaction* transaction = new APITransaction(request);
-	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	FastMutex::ScopedLock lock(_mutex);
-	_transactions.push_back(transaction);
+	APITransaction* transaction = createConnectionT<APITransaction>();
 	return transaction;
+
+	//APITransaction* transaction = new APITransaction(request);
+	//transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
+	//Mutex::ScopedLock lock(_mutex);
+	//_transactions.push_back(transaction);
+	//return transaction;
 }
 
 
@@ -142,17 +155,27 @@ AsyncTransaction* APIClient::callAsync(APIRequest* request)
 	AsyncTransaction* transaction = new AsyncTransaction();
 	transaction->setRequest(request);
 	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 	_transactions.push_back(transaction);
 	return transaction;
 }
 
+void APIClient::cancelTransactions()
+{
+	log("trace") << "Canceling Transactions" << endl;	
+	Mutex::ScopedLock lock(_mutex);
+	for (APITransactionList::const_iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
+		(*it)->Complete -= delegate(this, &APIClient::onTransactionComplete);
+		(*it)->cancel();
+	}
+	_transactions.clear();
+}
 
-void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
+void APIClient::onTransactionComplete(void* sender, http::Response&)
 {
 	log("trace") << "Transaction Complete" << endl;
-	FastMutex::ScopedLock lock(_mutex);	
-	for (vector<APITransaction*>::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
+	Mutex::ScopedLock lock(_mutex);	
+	for (APITransactionList::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
 		if (*it == sender) {
 			log("trace") << "Removing Transaction: " << sender << endl;
 			_transactions.erase(it);
@@ -161,25 +184,26 @@ void APIClient::onTransactionComplete(void* sender, HTTP::Response&)
 		}
 	}
 }
+*/
 
 
 bool APIClient::loaded()
 {
-	FastMutex::ScopedLock lock(_mutex);	
+	Mutex::ScopedLock lock(_mutex);	
 	return _methods.loaded();
 }
 
 
 APIMethods& APIClient::methods()
 {
-	FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 	return _methods;
 }
 
 
 string APIClient::endpoint()
 {
-	FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 	return _credentials.endpoint;
 }
 
@@ -207,15 +231,15 @@ bool APIMethods::loaded() const
 void APIMethods::load()
 {
 	try {			
-		FastMutex::ScopedLock lock(_mutex); 					
-		JSON::Reader reader;
+		Mutex::ScopedLock lock(_mutex); 					
+		json::Reader reader;
 		if (!reader.parse(APIv1, *this))
 			throw Exception(reader.getFormatedErrorMessages());
-		LogTrace() << "Loaded API Methods: " << JSON::stringify(*this, true) << endl;
+		traceL() << "Loaded API Methods: " << json::stringify(*this, true) << endl;
 	} 
 	catch (Exception& exc) 
 	{
-		LogError() << "API Load Error: " << exc.displayText() << endl;
+		errorL() << "API Load Error: " << exc.message() << endl;
 		exc.rethrow();
 	}  
 }
@@ -229,18 +253,18 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 	APIMethod method;
 	try
 	{			
-		FastMutex::ScopedLock lock(_mutex); 	
-		LogTrace("APIMethods") << "Get: " << name << endl;	
-		for (JSON::ValueIterator it = this->begin(); it != this->end(); it++) {	
-			JSON::Value& meth = (*it);		
-			LogTrace() << "Get API Method: " << JSON::stringify(meth, true) << endl;
+		Mutex::ScopedLock lock(_mutex); 	
+		traceL("APIMethods") << "Get: " << name << endl;	
+		for (json::ValueIterator it = this->begin(); it != this->end(); it++) {	
+			json::Value& meth = (*it);		
+			traceL() << "Get API Method: " << json::stringify(meth, true) << endl;
 			if (meth.isObject() &&
 				meth["name"] == name) {
-				LogTrace() << "Get API Method name: " << meth["name"].asString() << endl;
+				traceL() << "Get API Method name: " << meth["name"].asString() << endl;
 				method.name = meth["name"].asString();
 				method.httpMethod = meth["http"].asString();
 				method.url = _client.endpoint() + meth["uri"].asString();
-				method.anonymous = meth["anon"].asBool();
+				method.authenticatable = meth["auth"].asBool();
 				break;
 			}
 		}
@@ -254,7 +278,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 	}
 	catch (Exception& exc)
 	{
-		LogError("APIMethods") << "Get Error: " << exc.displayText() << endl;
+		errorL("APIMethods") << "Get Error: " << exc.message() << endl;
 		exc.rethrow();
 	}
 	
@@ -264,7 +288,7 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 
 void APIMethods::print(ostream& os) const
 {
-	JSON::StyledWriter writer;
+	json::StyledWriter writer;
 	os << writer.write(*this);
 }
 
@@ -272,74 +296,82 @@ void APIMethods::print(ostream& os) const
 // ---------------------------------------------------------------------
 // API Method Description
 //
-APIMethod::APIMethod() 
+APIMethod::APIMethod() : 
+	httpMethod("GET"),
+	authenticatable(true)
 {
 }
 
 
 void APIMethod::interpolate(const StringMap& params) 
 {
-	string path = url.getPath();
+	string path = url.path();
 	for (StringMap::const_iterator it = params.begin(); it != params.end(); ++it) {	
-		replaceInPlace(path, (*it).first, (*it).second);
+		Poco::replaceInPlace(path, (*it).first, (*it).second);
 	}
-	url.setPath(path);
+	url = http::URL(url.scheme(), url.authority(), path);
+	//url.updatePath(path);
 }
 
 
 void APIMethod::format(const string& format) 
 {
-	string path = url.getPath();
-	replaceInPlace(path, ":format", format.data());
-	url.setPath(path);
+	string path = url.path();
+	Poco::replaceInPlace(path, ":format", format.data());
+	url = http::URL(url.scheme(), url.authority(), path);
+	//url.updatePath(path);
 }
 
 
+/*
 // ---------------------------------------------------------------------
 // API Request
 //
 void APIRequest::prepare()
 {	
 	setMethod(method.httpMethod);
-	setURI(method.url.toString());
-	HTTP::Request::prepare();
+	setURI(method.url.str());
+	http::Request::prepare();
 
-	if (!method.anonymous) {
+	if (!method.authenticatable) {
 		
 		// Using basic auth over SSL
-		Poco::Net::HTTPBasicCredentials cred(
+		http::BasicAuthenticator cred(
 			credentials.username,
 			credentials.password);
 		cred.authenticate(*this); 
 	}
 }
+*/
 
 
 // ---------------------------------------------------------------------
 // API Transaction
 //
-APITransaction::APITransaction(APIRequest* request) : 
-	HTTP::Transaction(request)
+APITransaction::APITransaction(APIClient* client, const APIMethod& method) : //APIRequest* request
+	http::ClientConnection(client, method.url) //.getHost(), method.url.getPort()
 {
-	LogTrace("APITransaction") << "Creating" << endl;
+	traceL("APITransaction") << "Creating" << endl;
 }
 
 
 APITransaction::~APITransaction()
 {
-	LogTrace("APITransaction") << "Destroying" << endl;
+	traceL("APITransaction") << "Destroying" << endl;
 }
 
 
+/*
 void APITransaction::onComplete()
 {	
-	LogTrace("APITransaction") << "Callbacks: " << !cancelled() << endl;
+	//traceL("APITransaction") << "Callbacks: " << !cancelled() << endl;
 
-	assert(!cancelled());
+	//assert(!cancelled());
 	// Send from the current instance, so the
 	// sender can be cast as an APITransaction.
-	HTTP::Transaction::Complete.emit(this, _response);
+	http::ClientConnection::Complete.emit(this, _response);
 }
+*/
 
 
-} } // namespace Scy::Anionu
+} } // namespace scy::Anionu

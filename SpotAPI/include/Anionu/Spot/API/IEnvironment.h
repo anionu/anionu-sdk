@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -33,12 +25,12 @@
 #include <string>
 
 
-namespace Scy {
+namespace scy {
 	class Logger;
 	class IConfiguration;
-namespace Anionu {		
-namespace Spot { 
-namespace API { 
+namespace anio {		
+namespace spot { 
+namespace api { 
 
 
 // Forward declare base API interfaces 
@@ -63,9 +55,9 @@ class IEnvironmentBase
 	/// Use IModuleBase to include the base API in your plugins.
 {
 public:
-	virtual API::IClientBase& clientBase() = 0;
-	virtual API::IMediaManagerBase& mediaBase() = 0;
-	virtual API::ISynchronizerBase& synchronizerBase() = 0;
+	virtual api::IClientBase& clientBase() = 0;
+	virtual api::IMediaManagerBase& mediaBase() = 0;
+	virtual api::ISynchronizerBase& synchronizerBase() = 0;
 	
 	virtual void log(const char* message, const char* level = "trace", const char* realm = "") const = 0;
 		/// Log a message to the Spot application logger.
@@ -85,7 +77,7 @@ protected:
 
 // ---------------------------------------------------------------------
 //
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 //
 // Forward declare core API interfaces.
 class IStreamingManager;
@@ -119,27 +111,27 @@ public:
 	virtual IConfiguration& appConfig() = 0;
 		/// Configuration for the entire application.
 
-	virtual API::IClient& client() = 0;	
+	virtual api::IClient& client() = 0;	
 		/// The Anionu client interface implements remote messaging and 
 		/// surveillance event creation.
 
-	virtual API::IMediaManager& media() = 0;
+	virtual api::IMediaManager& media() = 0;
 		/// The media manager implements recording, and stored media format
 		/// configuration for the current user session.
 
-	virtual API::IChannelManager& channels() = 0;
+	virtual api::IChannelManager& channels() = 0;
 		/// The channel manager provides access to surveillance channels,
 		/// and their configured video and audio capture streams. 
 
-	virtual API::IModeManager& modes() = 0;
+	virtual api::IModeManager& modes() = 0;
 		/// The mode manager provides for registration and activation of
 		/// channel modes.
 
-	virtual API::IStreamingManager& streaming() = 0;
+	virtual api::IStreamingManager& streaming() = 0;
 		/// The streaming manager implements streaming session creation 
 		/// and management.
 
-	virtual API::ISynchronizer& synchronizer() = 0;
+	virtual api::ISynchronizer& synchronizer() = 0;
 		/// The synchronizer uploads files to the current user's 
 		/// online account.
 
@@ -153,10 +145,10 @@ protected:
 	virtual ~IEnvironment() = 0 {};
 };
 
-#endif // Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif // Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace Anionu::Spot::API
+} } } } // namespace anio::spot::api
 
 
 #endif // Anionu_Spot_API_IEnvironment_H

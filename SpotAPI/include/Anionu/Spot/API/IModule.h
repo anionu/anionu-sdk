@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -32,15 +24,15 @@
 #include "Anionu/Spot/API/Config.h"
 #include "Anionu/Spot/API/IEnvironment.h"
 
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Logger.h"
 #endif
 
 
-namespace Scy {
-namespace Anionu {
-namespace Spot { 
-namespace API { 
+namespace scy {
+namespace anio {
+namespace spot { 
+namespace api { 
 
 
 template <class IEnvType>
@@ -103,27 +95,27 @@ protected:
 
 // ---------------------------------------------------------------------
 //	
-typedef IModuleTmpl<API::IEnvironmentBase> IModuleBase;
+typedef IModuleTmpl<api::IEnvironmentBase> IModuleBase;
 	/// IModuleBase exposes Spot's base API environment instance to plugins
 	/// and modes that extend for here. 
 	///
 	/// See IEnvironmentBase for more information.
 
 
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 
 // ---------------------------------------------------------------------
 //		
-typedef IModuleTmpl<API::IEnvironment> IModule;
+typedef IModuleTmpl<api::IEnvironment> IModule;
 	/// IModuleBase exposes Spot's core API environment instance to plugins 
 	/// and modes that extend for here.
 	///
     /// See IEnvironment for more information.
 
-#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif /// Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace scy::anio::spot::api
 
 
 #endif /// Anionu_Spot_API_IModule_H
@@ -135,8 +127,8 @@ typedef IModuleTmpl<API::IEnvironment> IModule;
 		/// If the environment instance is not passed in via the constructor, 
 		/// then the instance is guaranteed to be set by Spot directly 
 		/// after instantiation. Such is the case when extending IPlugin.
-		Poco::FastMutex::ScopedLock lock(_mutex);
-	mutable Poco::FastMutex	_mutex;	
+		Mutex::ScopedLock lock(_mutex);
+	mutable Mutex	_mutex;	
 
 
 class IModuleTmpl
@@ -147,18 +139,18 @@ class IModuleTmpl
 	/// binary compatability with Spot.
 {
 public:
-	IModuleTmpl(API::IEnvironmentBase* env = NULL) : _env(env) {};
+	IModuleTmpl(api::IEnvironmentBase* env = NULL) : _env(env) {};
 
-	API::IEnvironmentBase& env() const
+	api::IEnvironmentBase& env() const
 		/// Returns the Spot API interface pointer.
 		/// Do not attempt to call inside constructor.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		assert(_env);
 		return *_env; 
 	}
 
-	API::IEnvironmentBase* _env;
+	api::IEnvironmentBase* _env;
 		/// The Spot API base ABI agnostic interface pointer.
 		///
 		/// Note that the IEnvironmentBase pointer might be
@@ -180,7 +172,7 @@ public:
 	
 protected:
 	virtual ~IModuleTmpl() = 0 {};
-	mutable Poco::FastMutex	_mutex;	
+	mutable Mutex	_mutex;	
 };
 */
 
@@ -195,15 +187,15 @@ protected:
 class IModule: public IModuleTmpl
 {
 public:
-	IModule(API::IEnvironment* env = NULL) : env(env) {};
+	IModule(api::IEnvironment* env = NULL) : env(env) {};
 	virtual ~IModule() = 0 {};
 
-	API::IEnvironment* env;
+	api::IEnvironment* env;
 		/// The Spot API interface pointer.
 };
 */
 /*
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 #include "Poco/Mutex.h"
 #endif
 */
@@ -211,8 +203,8 @@ public:
 	/*
 	
 //protected:
-	//API::IEnvironment* _env;
-	//mutable Poco::FastMutex _mutex;
+	//api::IEnvironment* _env;
+	//mutable Mutex _mutex;
 	*/
 	
 	/*
@@ -221,20 +213,20 @@ public:
 	/// have an IEnvironment reference and Logger access.
 
 
-#define Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#define Anionu_Spot_USING_CORE_API
 	/// This is to specify that we are creating an ABI compatible library.
 	/// The current compiler must match the compiler used to create the original Spot binary.
 	/// If the version and dependency check fail the build will fail with an error.
 
 	static const bool isABICompatible =
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 		false;
 #else
 		false;
 #endif
 		*/
 	
-	/*, _proc(NULL)
+	/*, _proc(nullptr)
 	
 
 	//
@@ -245,32 +237,32 @@ public:
 protected:
 
 private:
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 
-	IModule::IModule() : _env(NULL) {};
+	IModule::IModule() : _env(nullptr) {};
 
 	virtual const char* className() const { return "Plugin"; }
 		/// Override this method for named logging.
 	
-	API::IEnvironment& env() const
+	api::IEnvironment& env() const
 		/// Returns the Spot API interface pointer.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return *_env; 
 	}
 
 	std::string path() const
 		/// Returns the full path to the library library.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return _path;
 	}
 	
-	void setEnvironment(API::IEnvironment* env)
+	void setEnvironment(api::IEnvironment* env)
 		/// The IEnvironment instance will be set by
 		/// Spot before library initialization.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_env = env; 
 
 		// Also set the default logger instance, otherwise
@@ -283,25 +275,25 @@ private:
 		/// The full path of the library will be set by
 		/// Spot before library initialization.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_path = path; 
 	}
 
-	API::IFormProcessor* proc() const
+	api::IFormProcessor* proc() const
 		/// Returns the optional Symple Form processor pointer.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return _proc; 
 	}
 	*/
 	/*
-	void setFormProcessor(API::IFormProcessor* proc)
+	void setFormProcessor(api::IFormProcessor* proc)
 		/// The should be set during initialize() in the library
 		/// is designed to intergrate with the online dashboard
 		/// for remote configuration. 
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_proc = proc; 
 	}
-	//API::IFormProcessor* _proc;
+	//api::IFormProcessor* _proc;
 	*/

@@ -1,5 +1,5 @@
-#ifndef ANIONU_SPOT_SurveillanceModePlugin_H
-#define ANIONU_SPOT_SurveillanceModePlugin_H
+#ifndef Anionu_Spot_SurveillanceModePlugin_H
+#define Anionu_Spot_SurveillanceModePlugin_H
 
 
 #include "Anionu/Spot/API/IPlugin.h"
@@ -7,15 +7,15 @@
 #include "Anionu/Spot/API/IMode.h"
 
 
-namespace Scy {
-namespace Anionu { 
-namespace Spot {
+namespace scy {
+namespace anionu { 
+namespace spot {
 
 
 class SurveillanceModePlugin: 
-	public API::IPlugin, 
-	public API::IModule, 
-	public API::IModeFactory
+	public api::IPlugin, 
+	public api::IModule, 
+	public api::IModeFactory
 {
 public:
 	SurveillanceModePlugin();
@@ -28,7 +28,7 @@ public:
 
 	//
 	/// IModeFactory
-	API::IMode* createModeInstance(const char* modeName, const char* channelName);
+	api::IMode* createModeInstance(const char* modeName, const char* channelName);
 	const char** modeNames() const;
 		
 	//
@@ -37,7 +37,7 @@ public:
 };
 
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot
 
 
-#endif // ANIONU_SPOT_SurveillanceModePlugin_H
+#endif // Anionu_Spot_SurveillanceModePlugin_H

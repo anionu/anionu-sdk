@@ -7,12 +7,12 @@
 using namespace std;
 
 
-DEFINE_SPOT_PLUGIN(Scy::Anionu::Spot::SurveillanceModePlugin)
+DEFINE_SPOT_PLUGIN(scy::anionu::spot::SurveillanceModePlugin)
 
 
-namespace Scy {
-namespace Anionu { 
-namespace Spot {
+namespace scy {
+namespace anionu { 
+namespace spot {
 
 
 SurveillanceModePlugin::SurveillanceModePlugin()
@@ -38,7 +38,7 @@ void SurveillanceModePlugin::unload()
 }
 
 
-API::IMode* SurveillanceModePlugin::createModeInstance(const char* modeName, const char* channelName)
+api::IMode* SurveillanceModePlugin::createModeInstance(const char* modeName, const char* channelName)
 {
 	assert(strcmp(modeName, "Surveillance Mode") == 0);
 	return new SurveillanceMode(*env(), channelName);
@@ -51,4 +51,4 @@ const char** SurveillanceModePlugin::modeNames() const
 	return modeNames;
 }
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot

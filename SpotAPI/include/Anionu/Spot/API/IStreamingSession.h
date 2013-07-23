@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -40,13 +32,13 @@
 #include <map>
 
 
-namespace Scy { 
-namespace Anionu {
-namespace Spot { 
-namespace API { 
+namespace scy { 
+namespace anio {
+namespace spot { 
+namespace api { 
 
 
-struct StreamingOptions: public Media::EncoderOptions
+struct StreamingOptions: public av::EncoderOptions
 {	
 	std::string peer;		// Peer ID of the initiating party
 	std::string channel;	// The channel we are streaming from
@@ -102,11 +94,11 @@ struct Candidate
 		/// Candidate type is implementation defined.
 		/// Currently used are lan, host and relay.
 
-	Net::Address address;
+	net::Address address;
 	std::string uri; 
 
 	Candidate(const std::string& type = "", 
-			  const Net::Address& address = Net::Address(), 
+			  const net::Address& address = net::Address(), 
 			  const std::string& uri = "") :
 		type(type), address(address), uri(uri) {};	
 	
@@ -118,8 +110,6 @@ struct Candidate
 };
 
 	
-typedef PacketStream ConnectionStream;
-typedef std::vector<ConnectionStream*> ConnectionStreamList;
 typedef std::vector<Candidate> CandidateList;
 
 
@@ -153,22 +143,22 @@ struct StreamingState: public State
 };
 
 
-class IStreamingSession: public StatefulSignal<API::StreamingState>
+class IStreamingSession: public StatefulSignal<api::StreamingState>
 {
 public:
 	virtual void addCandidate(const std::string& type, 
-							  const Net::Address& address, 
+							  const net::Address& address, 
 							  const std::string& uri = "") = 0;
 		/// Adds a streaming candidate.
 
 	virtual bool removeCandidate(const std::string& type, 
-							     const Net::Address& address) = 0;
+							     const net::Address& address) = 0;
 		/// Removes a streaming candidate.
 
 	virtual std::string token() const = 0;
 	virtual StreamingOptions& options() = 0;
 	virtual PacketStream& stream() = 0;
-	virtual ConnectionStreamList connections() const = 0;
+	virtual PacketStreamList connections() const = 0;
 	virtual CandidateList candidates() const = 0;
 
 protected:
@@ -177,7 +167,7 @@ protected:
 };
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_IStreamingSession_H

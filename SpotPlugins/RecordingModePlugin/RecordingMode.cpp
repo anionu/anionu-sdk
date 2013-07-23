@@ -14,11 +14,11 @@ using namespace std;
 using Poco::FastMutex;
 
 
-namespace Scy {
-	using namespace Media;
-namespace Anionu { 
-namespace Spot {
-	using namespace API;
+namespace scy {
+	using namespace av;
+namespace anionu { 
+namespace spot {
+	using namespace api;
 
 
 RecordingMode::RecordingMode(IEnvironment& env, const std::string& channel) : 
@@ -44,7 +44,7 @@ bool RecordingMode::activate()
 		_isActive = true;
 	}
 	catch (Exception& exc) {
-		_error = exc.displayText();
+		_error = exc.message();
 		log("Activation failed: " + _error, "error");
 		return false;
 	}
@@ -62,7 +62,7 @@ void RecordingMode::deactivate()
 		_isActive = false;
 	}
 	catch (Exception& exc) {
-		log("Deactivation failed: " + exc.displayText(), "error");
+		log("Deactivation failed: " + exc.message(), "error");
 	}
 }
 
@@ -74,7 +74,7 @@ void RecordingMode::loadConfig()
 	_segmentDuration = config.getInt("SegmentDuration", 5 * 60);
 	_synchronizeVideos = config.getBool("SynchronizeVideos", false);
 
-	API::log(this) << "Loading Config: " << _channel 
+	api::log(this) << "Loading Config: " << _channel 
 		<< "\r\tSegmentDuration: " << _segmentDuration 
 		<< "\r\tSynchronizeVideos: " << _synchronizeVideos 
 		<< endl;
@@ -182,10 +182,10 @@ const char* RecordingMode::docFile() const
 
 // ---------------------------------------------------------------------
 //
-void RecordingMode::buildForm(Symple::Form&, Symple::FormElement& element)
+void RecordingMode::buildForm(symple::Form&, symple::FormElement& element)
 {
 	log("Building Form");	
-	Symple::FormField field;
+	symple::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
 	// Determine weather we are building the form at channel or
@@ -220,10 +220,10 @@ void RecordingMode::buildForm(Symple::Form&, Symple::FormElement& element)
 }
 
 
-void RecordingMode::parseForm(Symple::Form&, Symple::FormElement& element)
+void RecordingMode::parseForm(symple::Form&, symple::FormElement& element)
 {
 	log("Parsing Form");
-	Symple::FormField field;	
+	symple::FormField field;	
 
 	field = element.getField("Recording Mode.SegmentDuration", true);
 	if (field.valid()) {
@@ -247,7 +247,7 @@ void RecordingMode::parseForm(Symple::Form&, Symple::FormElement& element)
 }
 
 
-} } } // namespace Scy::Anionu::Spot
+} } } // namespace scy::anionu::Spot
 
 
 
@@ -262,7 +262,7 @@ bool RecordingMode::isConfigurable() const
 }
 
 
-bool RecordingMode::hasParsableFields(Symple::Form& form) const
+bool RecordingMode::hasParsableFields(symple::Form& form) const
 {
 	return form.hasField(".Recording Mode.", true);
 }
@@ -318,7 +318,7 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 			// Synchronize video's if required
 			if (_synchronizeVideos) {
 				RecordingOptions& options = static_cast<RecordingOptions&>(encoder->options());
-				Spot::Job job; 
+				spot::Job job; 
 				job.type = "Video";
 				job.path = options.ofile;
 				_env()->synchronizer() >> job;

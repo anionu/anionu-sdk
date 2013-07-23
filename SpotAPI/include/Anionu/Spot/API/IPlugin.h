@@ -2,26 +2,18 @@
 // LibSourcey
 // Copyright (C) 2005, Sourcey <http://sourcey.com>
 //
-// LibSourcey is is distributed under a dual license that allows free, 
-// open source use and closed source use under a standard commercial
-// license.
+// LibSourcey is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// Non-Commercial Use:
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
+// LibSourcey is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-// 
-// Commercial Use:
-// Please contact mail@sourcey.com
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
 //
 
 
@@ -33,10 +25,10 @@
 #include "Poco/ClassLibrary.h"
 
 
-namespace Scy {
-namespace Anionu {
-namespace Spot { 
-namespace API { 
+namespace scy {
+namespace anio {
+namespace spot { 
+namespace api { 
 	
 	
 class IPlugin
@@ -44,13 +36,13 @@ class IPlugin
 	/// that Spot uses to load shared libraries and plugins.
 	///
 	/// This class should only be used if you want to build
-	/// Spot plugins using ABI incompatable compilers and
+	/// Spot plugins using ABI incompatible compilers and
 	/// dependencies to build your plugins, and still maintain
 	/// compatability. If you want to utilize the full Spot API
 	/// environment, then your libraries should implement the 
 	/// IPlugin interface instead.
 	///
-	/// See the EventPlugin (included in the Anionu SDK) for an
+	/// See the MongoPlugin (included in the Anionu SDK) for an
 	/// example of how IPlugin can be combined with the
 	/// IFormProcessor to process all incoming and outgoing
 	/// Spot client/server messages without compormising ABI
@@ -93,11 +85,11 @@ public:
 };
 
 
-} } } } // namespace Scy::Anionu::Spot::API
+} } } } // namespace scy::anio::spot::api
 
 
 #define DEFINE_SPOT_PLUGIN(ClassName)					 \
-POCO_BEGIN_MANIFEST(Scy::Anionu::Spot::API::IPlugin) \
+POCO_BEGIN_MANIFEST(scy::anio::spot::api::IPlugin) \
 	POCO_EXPORT_CLASS(ClassName)						 \
 POCO_END_MANIFEST										 \
 
@@ -112,7 +104,7 @@ POCO_END_MANIFEST										 \
 
 	//virtual void onSessionStart() {};
 	//virtual void onSessionEnd() {};	
-#ifdef Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#ifdef Anionu_Spot_USING_CORE_API
 
 
 class IPlugin: public IPlugin
@@ -125,7 +117,7 @@ class IPlugin: public IPlugin
 	/// plugin examples.
 {
 public:
-	//IPlugin::IPlugin() : _env(NULL) {};
+	//IPlugin::IPlugin() : _env(nullptr) {};
 	virtual ~IPlugin() = 0 {};	
 
 	std::string path() const
@@ -133,7 +125,7 @@ public:
 		/// Do not attempt to call inside constructor.
 		/// Available only inside and after load() has been called.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		assert(!_path.empty());
 		return _path;
 	}	
@@ -142,7 +134,7 @@ public:
 		/// Overrides the IPlugin base to return a descriptive
 		/// error message on plugin load failure.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return _error.empty() ? 0 : _error.data();
 	}
 	
@@ -155,7 +147,7 @@ public:
 		/// The full path of the plugin will be set by 
 		/// Spot before the load() method is called.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_path = path; 
 	}
 
@@ -165,7 +157,7 @@ private:
 };
 
 
-#endif /// Anionu_Spot_ENABLE_ABI_COMPATABILITY
+#endif /// Anionu_Spot_USING_CORE_API
 
 */
 
@@ -193,13 +185,13 @@ private:
 /*
 
 #define DEFINE_SPOT_PLUGIN(ClassName)			     \
-POCO_BEGIN_MANIFEST(Scy::Anionu::Spot::API::IPlugin) \
+POCO_BEGIN_MANIFEST(scy::anio::spot::api::IPlugin) \
 	POCO_EXPORT_CLASS(ClassName)				     \
 POCO_END_MANIFEST								     \
 */
 	
 	
-	/*, _proc(NULL)
+	/*, _proc(nullptr)
 	
 
 	//
@@ -210,21 +202,21 @@ POCO_END_MANIFEST								     \
 protected:
 
 
-	API::IFormProcessor* proc() const
+	api::IFormProcessor* proc() const
 		/// Returns the optional Symple Form processor pointer.
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		return _proc; 
 	}
 	*/
 	/*
-	void setFormProcessor(API::IFormProcessor* proc)
+	void setFormProcessor(api::IFormProcessor* proc)
 		/// The should be set during initialize() in the plugin
 		/// is designed to intergrate with the online dashboard
 		/// for remote configuration. 
 	{ 
-		Poco::FastMutex::ScopedLock lock(_mutex);
+		Mutex::ScopedLock lock(_mutex);
 		_proc = proc; 
 	}
-	//API::IFormProcessor* _proc;
+	//api::IFormProcessor* _proc;
 	*/

@@ -5,8 +5,8 @@
 using namespace std;
 
 
-namespace Scy { 
-namespace Anionu {
+namespace scy { 
+namespace anio {
 
 
 Event::Event(const string& name, const string& message) :
@@ -23,8 +23,8 @@ Event::Event(const string& name, const string& message, Severity severity, Realm
 
 string Event::formatTime(const string& fmt, int timeZoneDifferential) const
 {
-	return Poco::DateTimeFormatter::format(
-		Poco::Timestamp::fromEpochTime(time),
+	return DateTimeFormatter::format(
+		Timestamp::fromEpochTime(time),
 			fmt, timeZoneDifferential);
 }
 
@@ -97,4 +97,4 @@ Event::Realm Event::strToRealm(const string& id)
 }
 
 
-} } // namespace Scy::Anionu
+} } // namespace scy::Anionu
