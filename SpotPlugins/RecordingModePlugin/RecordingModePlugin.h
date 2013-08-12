@@ -8,7 +8,7 @@
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
@@ -18,7 +18,7 @@ class RecordingModePlugin:
 	public api::IModeFactory
 {
 public:
-	RecordingModePlugin();
+	RecordingModePlugin(api::Environment& env);
 	virtual ~RecordingModePlugin();
 	
 	//
@@ -37,7 +37,7 @@ public:
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_RecordingModePlugin_H

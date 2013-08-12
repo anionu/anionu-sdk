@@ -22,7 +22,6 @@
 
 using namespace cv;
 using namespace std;
-using namespace Poco;
 using namespace scy::av;
 
 
@@ -31,6 +30,7 @@ namespace anio {
 
 
 MotionDetector::MotionDetector(const Options& options) : 
+	PacketProcessor(Emitter),
 	_options(options),
 	_processing(false),
 	_motionLevel(0),
@@ -67,14 +67,15 @@ void MotionDetector::process(IPacket& packet)
 {
 	traceL("MotionDetector", this) << "Processing" << endl;
 
-	MatPacket* mpacket = dynamic_cast<MatPacket*>(&packet);		
+	MatrixPacket* mpacket = dynamic_cast<MatrixPacket*>(&packet);		
 	if (!mpacket) {
-		emit(this, packet);
+		assert(0 && "unknown packet");
+		emit(packet);
 		return;
 	}
 	
 	if (mpacket->mat == NULL)
-		throw Poco::Exception("Video packets must contain an OpenCV image.");
+		throw Exception("Video packets must contain an OpenCV image.");
 
 	VideoPacket opacket;
 	cv::Mat& source = *mpacket->mat;
@@ -93,16 +94,16 @@ void MotionDetector::process(IPacket& packet)
 		_mhi.convertTo(mask, CV_8UC1, 255.0 / _options.stableMotionLifetime, 
 			(_options.stableMotionLifetime - _timestamp) * (255.0 / _options.stableMotionLifetime));
 
-		opacket = MatPacket(&mask);
+		opacket = MatrixPacket(&mask);
 		_processing = false;	
-		//cv::imshow("Motion Image", mask);
-		//cv::imshow("Mask Image", _mhi);
+		//cv::imshow("Mask", mask);
+		//cv::imshow("MHI", _mhi);
 		//cv::waitKey(10);
 	}
 
 	// NOTE: Dispatched images are GRAY8 so encoders will
 	// need to adjust the input pixel format accordingly.
-	emit(this, opacket);
+	emit(opacket);
 }
 
 
@@ -228,7 +229,7 @@ void MotionDetector::computeMotionState()
 
 bool MotionDetector::accepts(IPacket& packet) 
 { 
-	return dynamic_cast<const MatPacket*>(&packet) != 0;
+	return dynamic_cast<const MatrixPacket*>(&packet) != 0;
 }
 
 
@@ -260,4 +261,4 @@ bool MotionDetector::isActive() const
 }
 
 
-} } // namespace scy::Anionu
+} } // namespace scy::anio

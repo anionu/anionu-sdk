@@ -7,8 +7,11 @@
 #include "Anionu/Spot/API/IMode.h"
 
 
+#include "Anionu/Spot/API/StreamingSession.h"
+
+
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
@@ -18,7 +21,7 @@ class SurveillanceModePlugin:
 	public api::IModeFactory
 {
 public:
-	SurveillanceModePlugin();
+	SurveillanceModePlugin(api::Environment& env);
 	virtual ~SurveillanceModePlugin();
 	
 	//
@@ -37,7 +40,7 @@ public:
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_SurveillanceModePlugin_H

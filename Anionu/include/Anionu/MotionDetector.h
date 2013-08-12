@@ -28,16 +28,8 @@
 #include "Sourcey/Timer.h"
 #include "Sourcey/Media/VideoCapture.h"
 
-#include <iostream>
-
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-
-#include "Poco/Thread.h"
-/*
-#include "Poco/Stopwatch.h"
-#include "Poco/Timestamp.h"
-*/
 
 
 namespace scy {
@@ -67,7 +59,7 @@ struct MotionDetectorState: public State
 };
 
 
-class MotionDetector: public StatefulSignal<MotionDetectorState>, public PacketProcessor
+class MotionDetector: public Stateful<MotionDetectorState>, public PacketProcessor
 {
 public:
 	struct Options 
@@ -100,23 +92,26 @@ public:
 	MotionDetector(const MotionDetector::Options& options = MotionDetector::Options());
 	virtual ~MotionDetector();
 	
-public:	
-	virtual bool accepts(IPacket& packet);
-	virtual void process(IPacket& packet);
-
-	virtual void onStreamStateChange(const PacketStreamState&);
-	
 	virtual int motionLevel() const;
 	virtual Options& options();	
 	
 	virtual bool isActive() const;
 	virtual bool isProcessing() const;
+
+	virtual bool accepts(IPacket& packet);
+	virtual void process(IPacket& packet);
+			
+	PacketSignal Emitter;
 	
 	const char* className() const { return "MotionDetector"; }
 
 protected:
 	void updateMHI(cv::Mat& source);
 	void computeMotionState();	
+
+	virtual void onStreamStateChange(const PacketStreamState&);	
+
+	//virtual void* self() { return this;	}
 
 private:
 	mutable Mutex _mutex;
@@ -138,7 +133,7 @@ private:
 };
 
 
-} } // namespace scy::Anionu
+} } // namespace scy::anio
 
 
 #endif

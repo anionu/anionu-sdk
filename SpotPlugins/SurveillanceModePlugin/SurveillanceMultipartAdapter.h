@@ -4,39 +4,106 @@
 
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Signal.h"
-#include "Sourcey/HTTP/Packetizers.h"
 #include "Anionu/MotionDetector.h"
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
+
+
+class SurveillanceMultipartAdapter: public PacketProcessor
+	/// Our own HTTP multipart adaptor for Surveillance Mode 
+	/// live configuration. This enables us to share packet information
+	/// with the client without having to create a separate messaging 
+	/// connection.
+	/// Notice that we haven't included any files from HTTP module so
+	/// as to better maintain cross-version compatibility.
+{
+public:
+	std::string contentType;
+	anio::MotionDetector& detector;
+
+	SurveillanceMultipartAdapter(anio::MotionDetector& detector) : 
+		PacketProcessor(Emitter), contentType("image/jpeg"), detector(detector)
+	{
+		traceL("SurveillanceMultipartAdapter", this) << "Creating" << std::endl;
+	}
+	
+	virtual ~SurveillanceMultipartAdapter() 
+	{
+		traceL("SurveillanceMultipartAdapter", this) << "Destroying" << std::endl;
+	}
+	
+	virtual void writeChunkHeader(std::ostringstream& ost)
+	{
+		ost << "--end\r\n"
+			<< "Content-Type: " << contentType << "\r\n"
+			<< "X-Motion-Level: " << detector.motionLevel() << "\r\n"
+			<< "X-Motion-Threshold: " << detector.options().motionThreshold << "\r\n"
+			<< "X-Motion-State: " << detector.state().toString() << "\r\n"
+			<< "\r\n";
+	}
+	
+	virtual void process(IPacket& packet)
+	{
+		traceL("SurveillanceMultipartAdapter", this) << "Processing: " << packet.className() << std::endl;
+					
+		// Write the chunk header
+		std::ostringstream header;
+		writeChunkHeader(header);
+
+		// Broadcast the HTTP header separately 
+		// so we don't need to copy any data.
+		emit(header.str());			
+
+		// Proxy the input packet
+		emit(packet);
+	}
+
+	PacketSignal Emitter;
+};
+
+
+} } } // namespace scy::anio::spot
+
+
+#endif // Anionu_Spot_SurveillanceMultipartAdapter_H
+
+
 
 	
 /*
+
+		if (!packet.hasArray())
+			throw Exception("Incompatible packet type");
+
+		try {
+			RawPacket& raw = dynamic_cast<RawPacket&>(packet);
+		}
+		catch(const std::bad_cast&) {
+			// Must be a RawPacket type
+			throw Exception("Incompatible packet type");
+		}
 class SurveillanceMultipartAdapter: public scy::http::MultipartAdapter
 {
 public:
-	SurveillanceMultipartAdapter(anionu::MotionDetector& detector) :
-		http::MultipartAdapter("image/jpeg"), _motionDetector(detector)
+	SurveillanceMultipartAdapter(anio::MotionDetector& detector) :
+		http::MultipartAdapter("image/jpeg"), detector(detector)
 	{
-		assert(0 && "fixme"); // use proper http headers
+
+		//assert(0 && "fixme"); // use proper http headers
 	}
 	
 	virtual void writeChunkHTTPHeaders(std::ostringstream& ost)
 	{
 		http::MultipartAdapter::writeChunkHTTPHeaders(ost);
-		ost << "X-Motion-Level: " << _motionDetector.motionLevel() << "\r\n"
-			<< "X-Motion-Threshold: " << _motionDetector.options().motionThreshold << "\r\n"
-			<< "X-Motion-State: " << _motionDetector.state().toString() << "\r\n";
+		ost << "X-Motion-Level: " << detector.motionLevel() << "\r\n"
+			<< "X-Motion-Threshold: " << detector.options().motionThreshold << "\r\n"
+			<< "X-Motion-State: " << detector.state().toString() << "\r\n";
 	}
 
-	anionu::MotionDetector& _motionDetector;
+	anio::MotionDetector& detector;
 };
 */
 
-
-} } } // namespace scy::anionu::Spot
-
-
-#endif // Anionu_Spot_SurveillanceMultipartAdapter_H

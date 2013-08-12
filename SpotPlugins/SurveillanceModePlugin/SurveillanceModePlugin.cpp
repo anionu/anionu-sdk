@@ -1,27 +1,32 @@
 #include "SurveillanceModePlugin.h"
 #include "SurveillanceMode.h"
 
-#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/Environment.h"
 
+
+#include "Anionu/Spot/API/StreamingManager.h"
 
 using namespace std;
 
 
-DEFINE_SPOT_PLUGIN(scy::anionu::spot::SurveillanceModePlugin)
-
-
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
-SurveillanceModePlugin::SurveillanceModePlugin()
+SPOT_CORE_PLUGIN(SurveillanceModePlugin, "Surveillance Mode Plugin", "0.9.3")
+
+
+SurveillanceModePlugin::SurveillanceModePlugin(api::Environment& env) :
+	api::IModule(env)
 {
+	//Logger::setInstance(&env.logger());
 }
 
 
 SurveillanceModePlugin::~SurveillanceModePlugin()
 {
+	//Logger::setInstance(NULL);
 }
 
 
@@ -41,7 +46,7 @@ void SurveillanceModePlugin::unload()
 api::IMode* SurveillanceModePlugin::createModeInstance(const char* modeName, const char* channelName)
 {
 	assert(strcmp(modeName, "Surveillance Mode") == 0);
-	return new SurveillanceMode(*env(), channelName);
+	return new SurveillanceMode(env(), channelName);
 }
 
 
@@ -51,4 +56,5 @@ const char** SurveillanceModePlugin::modeNames() const
 	return modeNames;
 }
 
-} } } // namespace scy::anionu::Spot
+
+} } } // namespace scy::anio::spot

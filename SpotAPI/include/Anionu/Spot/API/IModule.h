@@ -22,7 +22,7 @@
 
 
 #include "Anionu/Spot/API/Config.h"
-#include "Anionu/Spot/API/IEnvironment.h"
+#include "Anionu/Spot/API/Environment.h"
 
 #ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Logger.h"
@@ -37,80 +37,62 @@ namespace api {
 
 template <class IEnvType>
 class IModuleTmpl
-	/// This module template lets you link your compiled plugins and modes  
-	/// with different levels of the Spot API environment.
+	/// This template exposes a reference to Spot's API 
+	/// environment for integrating with plugins and modes.
 	///
-	/// See IModuleBase and IModule for the two different implementations.
+	/// IEnvType may be a EnvironmentBase or a Environment
+	/// depending on which API level you're linking with.
+	/// See Module Types below for both IModuleBase and IModule
+	/// implementations.
 {
 public:
-	IModuleTmpl(IEnvType* env = NULL) : _env(env) {};
+	IModuleTmpl(api::EnvironmentBase& env) : 
+		_env(dynamic_cast<IEnvType&>(env))
+	{
+	}
 
-	virtual IEnvType* env() const
-		/// Returns a pointer to the Spot API environment instance.
-		///
-		/// Do not attempt to access the environment pointer from inside
-		/// the constructor for IPlugin implementations. See setEnvironment() 
-		/// below for details. This is not an issue for IMode implementations
-		/// as the pointer should be passed in via the consatructor.
-		///
-		/// Override this method if you require mutex synchronization.
+	virtual IEnvType& env() const
+		// Returns a reference to the Spot API environment instance.
 	{ 
 		return _env; 
 	}
 
 	virtual void log(const std::string& message, const char* level = "debug") 
-		/// Sends log messages the Spot application logger.
-		///
-		/// Note that no STL types are shared with the client so we
-		/// don't hace to break binary compatability between versions.
+		// Sends a log message Spot's application logger.
 	{
-		env()->log(message.data(), level, className());
+		// No STL types are shared with the client so we
+		// can retain binary compatibility across compilers.
+		env().log(message.c_str(), level, className());
 	}	
 
 	virtual const char* className() const { return "IModule"; }
-		/// Override for named logging.
-	
-
-	//
-	/// Private Methods
-	//
-
-	void setEnvironment(IEnvType* env)
-		/// Provides Spot with the means to set the environment instance
-		/// for IPlugin implementations.
-		///
-		/// Spot will set the environment instance directly after plugin
-		/// instantiation, so IPlugin implementations must not attempt
-		/// to access the environment pointer inside the constructor.
-		/// Once the instance is set Spot will not touch the pointer again.
-	{ 
-		_env = env; 
-	}
+		// Override for named logging.
 	
 protected:
 	virtual ~IModuleTmpl() = 0 {};	
-	IEnvType* _env;
+	IEnvType& _env;
 };
 
 
-// ---------------------------------------------------------------------
-//	
-typedef IModuleTmpl<api::IEnvironmentBase> IModuleBase;
-	/// IModuleBase exposes Spot's base API environment instance to plugins
-	/// and modes that extend for here. 
+//
+// Module Types
+//
+
+
+typedef IModuleTmpl<api::EnvironmentBase> IModuleBase;
+	/// IModuleBase exposes Spot's base API environment instance
+	/// to plugins and modes extending this interface. 
 	///
-	/// See IEnvironmentBase for more information.
+	/// See EnvironmentBase for more information.
 
 
 #ifdef Anionu_Spot_USING_CORE_API
 
-// ---------------------------------------------------------------------
-//		
-typedef IModuleTmpl<api::IEnvironment> IModule;
-	/// IModuleBase exposes Spot's core API environment instance to plugins 
-	/// and modes that extend for here.
+typedef IModuleTmpl<api::Environment> IModule;
+	/// IModuleBase exposes Spot's core API environment instance
+	/// to plugins and modes extending this interface. 
 	///
-    /// See IEnvironment for more information.
+    /// See Environment for more information.
 
 #endif /// Anionu_Spot_USING_CORE_API
 
@@ -120,13 +102,31 @@ typedef IModuleTmpl<api::IEnvironment> IModule;
 
 #endif /// Anionu_Spot_API_IModule_H
 
+	
+	/*
+	//
+	/// Private Methods
+	//
+
+	void setEnvironment(IEnvType* env)
+		// Provides Spot with the means to set the environment instance
+		// for IPlugin implementations.
+		//
+		// Spot will set the environment instance directly after plugin
+		// instantiation, so IPlugin implementations must not attempt
+		// to access the environment pointer inside the constructor.
+		// Once the instance is set Spot will not touch the pointer again.
+	{ 
+		_env = env; 
+	}
+	*/
 
 /*
 	
 
-		/// If the environment instance is not passed in via the constructor, 
-		/// then the instance is guaranteed to be set by Spot directly 
-		/// after instantiation. Such is the case when extending IPlugin.
+		// If the environment instance is not passed in via the constructor, 
+		// then the instance is guaranteed to be set by Spot directly 
+		// after instantiation. Such is the case when extending IPlugin.
 		Mutex::ScopedLock lock(_mutex);
 	mutable Mutex	_mutex;	
 
@@ -135,40 +135,40 @@ class IModuleTmpl
 	/// ABI agnostic API
 	///
 	/// Spot's base API is ABI agnostic, so it *should* be
-	/// safe to still use your favoirate compiler and maintain
-	/// binary compatability with Spot.
+	/// safe to still use your favorite compiler and maintain
+	/// binary compatibility with Spot.
 {
 public:
-	IModuleTmpl(api::IEnvironmentBase* env = NULL) : _env(env) {};
+	IModuleTmpl(api::EnvironmentBase* env = NULL) : _env(env) {};
 
-	api::IEnvironmentBase& env() const
-		/// Returns the Spot API interface pointer.
-		/// Do not attempt to call inside constructor.
+	api::EnvironmentBase& env() const
+		// Returns the Spot API interface pointer.
+		// Do not attempt to call inside constructor.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		assert(_env);
 		return *_env; 
 	}
 
-	api::IEnvironmentBase* _env;
-		/// The Spot API base ABI agnostic interface pointer.
-		///
-		/// Note that the IEnvironmentBase pointer might be
-		/// initialized as NULL. If the pointer is not passed
-		/// into the constructor, it is guaranteed to be set
-		/// by Spot directly after instantiation.
+	api::EnvironmentBase* _env;
+		// The Spot API base ABI agnostic interface pointer.
+		//
+		// Note that the EnvironmentBase pointer might be
+		// initialized as NULL. If the pointer is not passed
+		// into the constructor, it is guaranteed to be set
+		// by Spot directly after instantiation.
 
 	virtual void log(const std::string& message, const char* level = "debug") 
-		/// Sends log messages the Spot application logger.
+		// Sends log messages the Spot application logger.
 	{
 		if (_env == NULL) 
 			return;
-		_env->log(message.data(), level, className());
+		_env->log(message.c_str(), level, className());
 	}
 	
 
 	virtual const char* className() const { return "IModule"; }
-		/// Override for named logging.
+		// Override for named logging.
 	
 protected:
 	virtual ~IModuleTmpl() = 0 {};
@@ -187,11 +187,11 @@ protected:
 class IModule: public IModuleTmpl
 {
 public:
-	IModule(api::IEnvironment* env = NULL) : env(env) {};
+	IModule(api::Environment* env = NULL) : env(env) {};
 	virtual ~IModule() = 0 {};
 
-	api::IEnvironment* env;
-		/// The Spot API interface pointer.
+	api::Environment* env;
+		// The Spot API interface pointer.
 };
 */
 /*
@@ -203,14 +203,14 @@ public:
 	/*
 	
 //protected:
-	//api::IEnvironment* _env;
+	//api::Environment* _env;
 	//mutable Mutex _mutex;
 	*/
 	
 	/*
 	/// This class is the unified interface from which all
 	/// Spot classes inherit from. It ensures all classes
-	/// have an IEnvironment reference and Logger access.
+	/// have an Environment reference and Logger access.
 
 
 #define Anionu_Spot_USING_CORE_API
@@ -226,7 +226,7 @@ public:
 #endif
 		*/
 	
-	/*, _proc(nullptr)
+	/*, _proc(null)
 	
 
 	//
@@ -239,28 +239,28 @@ protected:
 private:
 	mutable Mutex _mutex;
 
-	IModule::IModule() : _env(nullptr) {};
+	IModule::IModule() : _env(null) {};
 
 	virtual const char* className() const { return "Plugin"; }
-		/// Override this method for named logging.
+		// Override this method for named logging.
 	
-	api::IEnvironment& env() const
-		/// Returns the Spot API interface pointer.
+	api::Environment& env() const
+		// Returns the Spot API interface pointer.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		return *_env; 
 	}
 
 	std::string path() const
-		/// Returns the full path to the library library.
+		// Returns the full path to the library library.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		return _path;
 	}
 	
-	void setEnvironment(api::IEnvironment* env)
-		/// The IEnvironment instance will be set by
-		/// Spot before library initialization.
+	void setEnvironment(api::Environment* env)
+		// The Environment instance will be set by
+		// Spot before library initialization.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		_env = env; 
@@ -272,15 +272,15 @@ private:
 	}
 
 	void setPath(const char* path)
-		/// The full path of the library will be set by
-		/// Spot before library initialization.
+		// The full path of the library will be set by
+		// Spot before library initialization.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		_path = path; 
 	}
 
 	api::IFormProcessor* proc() const
-		/// Returns the optional Symple Form processor pointer.
+		// Returns the optional Symple Form processor pointer.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		return _proc; 
@@ -288,9 +288,9 @@ private:
 	*/
 	/*
 	void setFormProcessor(api::IFormProcessor* proc)
-		/// The should be set during initialize() in the library
-		/// is designed to intergrate with the online dashboard
-		/// for remote configuration. 
+		// The should be set during initialize() in the library
+		// is designed to intergrate with the online dashboard
+		// for remote configuration. 
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		_proc = proc; 

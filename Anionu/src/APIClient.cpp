@@ -31,7 +31,7 @@
 
 
 using namespace std;
-//using namespace Poco;
+
 //
 //using namespace scy;
 
@@ -129,7 +129,7 @@ APITransaction* APIClient::call(APIRequest* request)
 
 	//APITransaction* transaction = new APITransaction(request);
 	//transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	//Mutex::ScopedLock lock(_mutex);
+	//ScopedLock lock(_mutex);
 	//_transactions.push_back(transaction);
 	//return transaction;
 }
@@ -254,13 +254,13 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 	try
 	{			
 		Mutex::ScopedLock lock(_mutex); 	
-		traceL("APIMethods") << "Get: " << name << endl;	
+		//traceL("APIMethods") << "Get: " << name << endl;	
 		for (json::ValueIterator it = this->begin(); it != this->end(); it++) {	
 			json::Value& meth = (*it);		
-			traceL() << "Get API Method: " << json::stringify(meth, true) << endl;
+			//traceL() << "Get API Method: " << json::stringify(meth, true) << endl;
 			if (meth.isObject() &&
 				meth["name"] == name) {
-				traceL() << "Get API Method name: " << meth["name"].asString() << endl;
+				//traceL() << "Get API Method name: " << meth["name"].asString() << endl;
 				method.name = meth["name"].asString();
 				method.httpMethod = meth["http"].asString();
 				method.url = _client.endpoint() + meth["uri"].asString();
@@ -307,7 +307,7 @@ void APIMethod::interpolate(const StringMap& params)
 {
 	string path = url.path();
 	for (StringMap::const_iterator it = params.begin(); it != params.end(); ++it) {	
-		Poco::replaceInPlace(path, (*it).first, (*it).second);
+		util::replaceInPlace(path, (*it).first, (*it).second);
 	}
 	url = http::URL(url.scheme(), url.authority(), path);
 	//url.updatePath(path);
@@ -317,7 +317,7 @@ void APIMethod::interpolate(const StringMap& params)
 void APIMethod::format(const string& format) 
 {
 	string path = url.path();
-	Poco::replaceInPlace(path, ":format", format.data());
+	util::replaceInPlace(path, ":format", format.c_str());
 	url = http::URL(url.scheme(), url.authority(), path);
 	//url.updatePath(path);
 }
@@ -374,4 +374,4 @@ void APITransaction::onComplete()
 */
 
 
-} } // namespace scy::Anionu
+} } // namespace scy::anio

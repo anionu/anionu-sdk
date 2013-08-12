@@ -59,22 +59,22 @@ namespace spot {
 namespace api { 
 
 	
-/// Current Spot SDK version number.
-/// This version is be bumped whenever the API or
-/// dependencies change, breaking binary compatability.
-/// Spot plugins must be built with the same compiler,
-/// dependencies, and SDK version as the target Spot client.
-/// See Compatability.txt for more information.
-///
+// Current Spot SDK version number.
+// This version is be bumped whenever the API or
+// dependencies change, breaking binary compatibility.
+// Spot plugins must be built with the same compiler,
+// dependencies, and SDK version as the target Spot client.
+// See Compatibility.txt for more information.
+//
 static const char* SDKVersion = "0.5.1";
 
 
-/// Date Format
-///
+// Date Format
+//
 static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
 
 
-} } } } // namespace Sc  yanio::spot::api
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_Config_H

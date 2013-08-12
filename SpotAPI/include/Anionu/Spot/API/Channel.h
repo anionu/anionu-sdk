@@ -17,8 +17,8 @@
 //
 
 
-#ifndef Anionu_Spot_API_IChannel_H
-#define Anionu_Spot_API_IChannel_H
+#ifndef Anionu_Spot_API_Channel_H
+#define Anionu_Spot_API_Channel_H
 
 
 #include "Sourcey/Base.h"
@@ -35,7 +35,7 @@ namespace spot {
 namespace api { 
 
 
-class IChannel
+class Channel
 {
 public:
 	virtual std::string name() const = 0;
@@ -54,24 +54,24 @@ public:
 	virtual bool isModeActive(const std::string& name) const = 0;
 
 	virtual bool valid() const = 0;
-		/// The channel is considered valid when both
-		/// a name and video device have been set.
+		// The channel is considered valid when both
+		// a name and video device have been set.
 	
 	Signal<std::string&> ChannelChanged;
-		/// Signals change to the internal channel data, namely
-		/// devices and name. In the case of a name change the
-		/// signal will broadcast the old name, and the new name
-		/// will be accessible via the name() method.
+		// Signals change to the internal channel data, namely
+		// devices and name. In the case of a name change the
+		// signal will broadcast the old name, and the new name
+		// will be accessible via the name() method.
 		
 protected:
-	virtual ~IChannel() = 0 {};
+	virtual ~Channel() = 0 {};
 };
 
 
-typedef std::vector<IChannel*> IChannelList;
+typedef std::vector<Channel*> ChannelList;
 
 
 } } } } // namespace scy::anio::spot::api
 
 
-#endif // Anionu_Spot_API_IChannel_H
+#endif // Anionu_Spot_API_Channel_H

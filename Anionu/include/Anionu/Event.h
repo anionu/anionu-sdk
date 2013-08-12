@@ -11,10 +11,10 @@ namespace anio {
 
 
 struct Event
-	/// This class defines a surveillance event that takes place 
-	/// on the Anionu system.
+	/// This class describes an Anionu surveillance event.
+	///
 	/// NOTE: Anionu notifications will be triggered based on
-	/// the event name (see Special Events on the dashboard).
+	/// the event name (see 'Custom Events' on the dashboard).
 {	
 	enum Severity
 	{
@@ -27,18 +27,13 @@ struct Event
 
 	enum Realm
 	{
-		SpotLocal = 0,	// Triggered by a command from the local interface
+		SpotLocal = 0,	// Triggered by a command from the local user
 		SpotRemote,		// Triggered by a command from a remote peer
 		Dashboard		// Triggered from the Anionu dashboard
 	};
 
-	Event(const std::string& name, 
-		const std::string& message);
-
-	Event(const std::string& name = "", 
-		const std::string& message = "", 	
-		Severity severity = Default,
-		Realm realm = SpotLocal);
+	Event(const std::string& name = "", const std::string& message = "", 	
+		Severity severity = Default, Realm realm = SpotLocal);
 	
 	std::string name;
 	std::string message;
@@ -60,7 +55,7 @@ struct Event
 }; 
 
 
-} } // namespace scy::Anionu
+} } // namespace scy::anio
 
 
 #endif // Anionu_Event_H

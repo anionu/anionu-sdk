@@ -17,8 +17,8 @@
 //
 
 
-#ifndef Anionu_Spot_API_IClient_H
-#define Anionu_Spot_API_IClient_H
+#ifndef Anionu_Spot_API_Client_H
+#define Anionu_Spot_API_Client_H
 
 
 #include "Anionu/Spot/API/Config.h"
@@ -40,32 +40,32 @@ namespace spot {
 namespace api { 
 
 
-class IClientBase
+class ClientBase
 {
 public:		
 	virtual bool sendMessage(const char* message, bool respond = false) = 0;
-		/// Send a smpl::Message to a peer, or over the network.
-		/// If the "respond" flag is true, the 'to' and 'from' fields
-		/// will be swapped, so the message is returned to sender.
-		/// An exception will be thrown if the Symple client is offline,
-		/// or the session is invalid.
+		// Send a smpl::Message to a peer, or over the network.
+		// If the "respond" flag is true, the 'to' and 'from' fields
+		// will be swapped, so the message is returned to sender.
+		// An exception will be thrown if the Symple client is offline,
+		// or the session is invalid.
 
 	virtual bool createEvent(const char* name, const char* message, int severity = 0) = 0;
 
 	virtual bool broadcastEvent(const char* name, const char* message, int severity = 0) = 0;
 		
 	virtual bool isActive() const = 0;
-		/// True when the current user session is authenticated.
+		// True when the current user session is authenticated.
 
 	virtual bool isOnline() const = 0;
-		/// True when the current user session is authenticated,
-		/// and the Symple client is online.
+		// True when the current user session is authenticated,
+		// and the Symple client is online.
 	
 	virtual const char* cName() const = 0;
-		/// Spot client name on the network.
+		// Spot client name on the network.
 
 	virtual const char* cUsername() const = 0;
-		/// Currently authenticated username.
+		// Currently authenticated username.
 };
 
 
@@ -104,62 +104,62 @@ struct ClientState: public State
 };
 
 
-class IClient: public IClientBase, public StatefulSignal<ClientState>
+class Client: public ClientBase, public Stateful<ClientState>
 {
 public:
 	virtual void sendMessage(smpl::Message& message, bool respond = false) = 0;
-		/// Send a smpl::Message to a peer, or over the network.
-		/// An exception will be thrown on error, or if the Symple
-		/// client is offline.
+		// Send a smpl::Message to a peer, or over the network.
+		// An exception will be thrown on error, or if the Symple
+		// client is offline.
 	
 	virtual void createEvent(const anio::Event& event) = 0;
 	virtual void createEvent(
 			const std::string& name,
 			const std::string& message,
 			anio::Event::Severity severity) = 0;
-		/// Creates a surveillance event via the Anionu REST API.
-		/// Once created the event will be broadcasted over the network 
-		/// to online peers.
-		/// This method should be used for important events which need
-		/// to be stored in the database.
-		/// An exception will be thrown on error, or if the REST API is
-		/// unavailable.
+		// Creates a surveillance event via the Anionu REST API.
+		// Once created the event will be broadcasted over the network 
+		// to online peers.
+		// This method should be used for important events which need
+		// to be stored in the database.
+		// An exception will be thrown on error, or if the REST API is
+		// unavailable.
 	
 	virtual void broadcastEvent(const anio::Event& event) = 0;
 	virtual void broadcastEvent(
 		    const std::string& name, 
 		    const std::string& message,
 			anio::Event::Severity severity) = 0;
-		/// Broadcasts a surveillance event over the network to online peers.
-		/// This method should be used for notifications or trivial events
-		/// which don't need to be stored in the database.
-		/// An exception will be thrown on error, or if the Symple
-		/// client is offline.
+		// Broadcasts a surveillance event over the network to online peers.
+		// This method should be used for notifications or trivial events
+		// which don't need to be stored in the database.
+		// An exception will be thrown on error, or if the Symple
+		// client is offline.
 
 	virtual std::string name() const = 0;
 	virtual std::string username() const = 0;
 	
 	PacketSignal MessageReceived;
-		/// Signal for incoming Symple messages, including presence and
-		/// commands from remote peers.
-		/// 
-		/// If the message is responded to by the callback handler, a
-		/// StopPropagation exception should be thrown to break out of
-		/// the callback scope.
-		///
-		/// See plugin implementations for usage of the packetDelegate type
-		/// for polymorphic message class filtering.
+		// Signal for incoming Symple messages, including presence and
+		// commands from remote peers.
+		// 
+		// If the message is responded to by the callback handler, a
+		// StopPropagation exception should be thrown to break out of
+		// the callback scope.
+		//
+		// See plugin implementations for usage of the packetDelegate type
+		// for polymorphic message class filtering.
 
-	Signal<const anio::Event&> EventTriggered;
-		/// Signals when a local surveillance event is triggered.
-		/// Called internally by create/broadcastEvent() functions
-		/// to dispatch the event to the internal modules.
+	Signal<const anio::Event&> AnionuEvent;
+		// Signals when a local surveillance event is triggered.
+		// Called internally by create/broadcastEvent() functions
+		// to dispatch the event to the internal modules.
 		
 	NullSignal SessionStart;
-		/// Signals when the new session is created.
+		// Signals when the new session is created.
 
 	NullSignal SessionEnd;
-		/// Signals when the session ends.
+		// Signals when the session ends.
 };
 
 #endif /// Anionu_Spot_USING_CORE_API
@@ -168,7 +168,7 @@ public:
 } } } } // namespace scy::anio::spot::api
 
 
-#endif /// Anionu_Spot_API_IClient_H
+#endif /// Anionu_Spot_API_Client_H
 
 
 
@@ -178,14 +178,14 @@ public:
 /*
 
 	virtual void attachListener(const smpl::MessageDelegate& delegate) = 0;
-		/// Attach a delegate to listen for Symple presence, messages,
-		/// and/or commands from remote peers.
-		/// If the message is responded to inside this callback,
-		/// a StopPropagation exception should be thrown to break
-		/// out of the callback scope.
+		// Attach a delegate to listen for Symple presence, messages,
+		// and/or commands from remote peers.
+		// If the message is responded to inside this callback,
+		// a StopPropagation exception should be thrown to break
+		// out of the callback scope.
 
 	virtual void detachListener(const smpl::MessageDelegate& delegate) = 0;
-		/// Detach any previously attached message delegates.
+		// Detach any previously attached message delegates.
 enum ClientState 
 {
 	None = 0,

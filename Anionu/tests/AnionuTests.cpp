@@ -1,14 +1,10 @@
 #include "Sourcey/Base.h"
 #include "Sourcey/Application.h"
-#include "Sourcey/Logger.h"
 #include "Anionu/APIClient.h"
+#include "Anionu/Event.h"
 #include "Sourcey/HTTP/Form.h"
 #include "Sourcey/HTTP/Packetizers.h"
 #include "Sourcey/Util.h"
-
-#include "Poco/Format.h"
-#include "Poco/Path.h"
-#include "Poco/File.h"
 
 #include "assert.h"
 
@@ -38,6 +34,7 @@ class Tests
 {
 public:
 	Application app; 
+	APIClient client;
 
 	Tests()
 	{	
@@ -47,28 +44,37 @@ public:
 		{			
 
 #if TEST_SSL
-			// Init SSL Context 
+			// Initialize SSL Context 
 			SSLContext::Ptr ptrContext = new SSLContext(
 				SSLContext::CLIENT_USE, "", "", "", 
 				SSLContext::VERIFY_NONE, 9, false, 
 				"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");		
 			SSLManager::instance().initializeClient(ptrContext);
 #endif
+		
+			// Initialize client credentials
+			client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
 			
-			//runTransactionTest();
-			//runAuthenticationTest();
-			runAssetUploadTransactionTest();
-			//runAssetDownloadTransactionTest();
+			// Run tests
+			//runCreateEventTest();
 			
-		// dome in base ytets + authenticate uri for Anionu tests
+			for (int i = 0; i < 10; i++) {
+				runCreateEventTest();
+				runAssetUploadTest();
+				//runAssetDownloadTest();
+			}
+			runLoop();
 
 #if TEST_SSL
 			// Shutdown SSL
 			SSLManager::instance().shutdown();
 #endif
 
-			// Shutdown the garbage collector so we can free memory.
-			GarbageCollector::instance().shutdown();
+			// Shutdown the API client
+			//client.shutdown();
+
+			// Shutdown the garbage collector to free all memory
+			//GarbageCollector::instance().shutdown();
 		
 			// Run the final cleanup
 			runCleanup();
@@ -76,141 +82,99 @@ public:
 	}
 	
 	// ============================================================================
-	// Transaction Test
+	// Create Event Test
 	//
-	void runTransactionTest(const string& service = "GetAccount") 
+	void runCreateEventTest() 
 	{
-		traceL("TransactionTest") << "Starting" << endl;
+		traceL("CreateEventTest") << "Starting" << endl;
+		
+		// Create the event
+		Event event("Random Event", "Umm ... something happened");
 
-		APIClient client;
-		client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
-		APITransaction* transaction = client.call(service);
+		// Create the transaction
+		APITransaction* trans = client.call("CreateEvent");
+		trans->Complete += delegate(this, &Tests::onCreateEventComplete);
 
-		transaction->Complete += delegate(this, &Tests::onTransactionComplete);
-		transaction->send();
+		// Attach a HTML form writer for event fields
+		// TODO: Add a helper method for filling event form from Event object
+		http::FormWriter* form = http::FormWriter::create(*trans);
+		form->set("event[name]", event.name);
+		form->set("event[message]", event.message);
+		form->set("event[severity]", event.severityStr());
+		form->set("event[realm]", event.realmStr());
+		form->set("event[timestamp]", event.formatTime());
 
-		runLoop();
+		trans->send();
+
+		//runLoop();
+		
+		traceL("CreateEventTest") << "Ended" << endl;
 	}
 
-	void onTransactionComplete(void* sender, const http::Response& response)
+	void onCreateEventComplete(void* sender, const http::Response& response)
 	{
-		APITransaction* transaction = reinterpret_cast<APITransaction*>(sender);
-
-		debugL() << "Anionu API Response:" 
-			<< "\n\tHeaders: " << response
+		auto trans = reinterpret_cast<APITransaction*>(sender);
+		
+		debugL("CreateEventTest") << "Transaction Complete:" 
+			<< "\n\tRequest Head: " << trans->request()
+			<< "\n\tResponse Head: " << response
+			<< "\n\tResponse Body: " << trans->incomingBuffer()
 			<< endl;
 
-		//assert(transaction->incomingBuffer().position() == 0);
-		assert(transaction->incomingBuffer().available() == response.getContentLength());
+		assert(response.success());
 	}
-		
-	
-	// ============================================================================
-	// Authentication Test
-	//
-	void runAuthenticationTest() 
-	{
-		traceL("TransactionTest") << "Starting" << endl;
-		http::ClientConnection* conn = new http::ClientConnection("http://localhost:3000");
-		conn->Complete += delegate(this, &Tests::onAuthenticationResponse);
-		conn->request().setMethod("GET");
-		conn->request().setKeepAlive(false);
-		conn->request().setURI("http://localhost:3000/authenticate.json");
-
-		http::BasicAuthenticator cred(Anionu_API_USERNAME, Anionu_API_PASSWORD);
-		cred.authenticate(conn->request());
-
-		conn->send();
-
-		runLoop();
-	}
-
-	void onAuthenticationResponse(void* sender, const http::Response& response)
-	{	
-		http::ClientConnection* conn = reinterpret_cast<http::ClientConnection*>(sender);
-
-		traceL("TransactionTest") << "API Authenticate Response:\n" 
-			<< response.getStatus() << endl;	
-
-		// Handle authentication success response.
-		if (response.getStatus() == 200) {	
-		}
-	}
-	
+			
 	// ============================================================================
 	// Transaction Asset Upload
 	//
 	bool gotUploadProgress;
 	bool gotUploadComplete;
 
-	void runAssetUploadTransactionTest()
+	void runAssetUploadTest()
 	{
-		traceL("TransactionTest") << "Starting" << endl;
-			
-		// Create the API client
-		APIClient client;
-		client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
+		traceL("Test") << "Starting" << endl;
 
 		// Create the transaction
-		APITransaction* conn = client.call("UploadAsset");	
-		/*
-		http::ClientConnection* conn = new http::ClientConnection("http://localhost:8000");
-		conn->request().setMethod("POST");
-		//conn->request().setKeepAlive(false);
-		conn->request().setURI("/upload");
-		*/
-
-		conn->OutgoingProgress += delegate(this, &Tests::onAssetUploadProgress);
-		conn->Complete += delegate(this, &Tests::onAssetUploadComplete);
-		
-		//Poco::File f("D:/somefile.jpg");
-		//assert(f.exists());
-		//conn->request().setContentLength(f.getSize());
-		//conn->request().setContentLength(1);
+		APITransaction* trans = client.call("UploadAsset");	
+		trans->OutgoingProgress += delegate(this, &Tests::onAssetUploadProgress);
+		trans->Complete += delegate(this, &Tests::onAssetUploadComplete);
 
 		// Attach a HTML form writer for uploading files
-		http::FormWriter* form = new http::FormWriter(*conn, http::FormWriter::ENCODING_MULTIPART);
+		http::FormWriter* form = http::FormWriter::create(*trans, http::FormWriter::ENCODING_MULTIPART);
 		form->set("asset[type]", "Image");
-		form->addPart("asset[file]", new http::FilePart("D:\\somefile.png"));
-		conn->Outgoing.attachSource(form, true, true);
-		conn->Outgoing.attach(new http::ChunkedAdapter(*conn), 0, true);
+		form->addFile("asset[file]", new http::FilePart("D:/test.jpg"));
 		
-			//Poco::File f
 		// Send the request
-		conn->send();
+		trans->send();
 
-		runLoop();
+		//runLoop();
 
-		assert(gotUploadProgress);
-		assert(gotUploadComplete);
+		//assert(gotUploadProgress);
+		//assert(gotUploadComplete);
 		
-		traceL("TransactionTest") << "Ended" << endl;
+		traceL("Test") << "Ended" << endl;
 	}
 
-	void onAssetUploadProgress(void* sender, const http::TransferProgress& transfer)
+	void onAssetUploadProgress(void* sender, const double& progress)
 	{
-		APITransaction* transaction = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotUploadProgress = true;
 
-		debugL("UploadAssetTest") << "Upload Progress:" 
-			<< "\n\tCurrent: " << transfer.current
-			<< "\n\tTotal: " << transfer.current
-			<< "\n\tProgress: " << transfer.progress()
-			<< endl;
+		debugL("UploadAssetTest") << "Upload Progress:" << progress << endl;
 	}
 
 	void onAssetUploadComplete(void* sender, const http::Response& response)
 	{
-		APITransaction* transaction = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotUploadComplete = true;
 
-		assert(response.success());
-
 		debugL("UploadAssetTest") << "Transaction Complete:" 
-			<< "\n\tRequest: " << transaction->request()
-			<< "\n\tResponse: " << response
-			<< "\n\tResponse Body: " << transaction->incomingBuffer()
+			<< "\n\tRequest Head: " << trans->request()
+			<< "\n\tResponse Head: " << response
+			<< "\n\tResponse Body: " << trans->incomingBuffer()
 			<< endl;
+
+		assert(response.success());
 	}
 
 
@@ -220,46 +184,39 @@ public:
 	bool gotProgress;
 	bool gotComplete;
 
-	void runAssetDownloadTransactionTest()
+	void runAssetDownloadTest()
 	{
-		traceL("TransactionTest") << "Starting" << endl;
-
-		APIClient client;
-		client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
+		traceL("Test") << "Starting" << endl;
 
 		APIMethod method;
 		method.url = "http://localhost:3000/assets/streaming/1645/Administrator_hapyyy_1370318967.jpg";
-		APITransaction* transaction = client.call(method);
+		APITransaction* trans = client.call(method);
 
-		transaction->setRecvStream(new std::ofstream("somefile.jpg", std::ios_base::out | std::ios_base::binary));
-		transaction->IncomingProgress += delegate(this, &Tests::onAssetTransactionIncomingProgress);
-		transaction->Complete += delegate(this, &Tests::onAssetTransactionComplete);
-		transaction->send();	
+		trans->setReadStream(new std::ofstream("somefile.jpg", std::ios_base::out | std::ios_base::binary));
+		trans->IncomingProgress += delegate(this, &Tests::onAssetTransactionIncomingProgress);
+		trans->Complete += delegate(this, &Tests::onAssetTransactionComplete);
+		trans->send();	
 
-		runLoop();
+		//runLoop();
 		
-		assert(gotProgress);
-		assert(gotComplete);
+		//assert(gotProgress);
+		//assert(gotComplete);
 	}
 
-	void onAssetTransactionIncomingProgress(void* sender, const http::TransferProgress& transfer)
+	void onAssetTransactionIncomingProgress(void* sender, const double& progress)
 	{
-		APITransaction* transaction = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotProgress = true;
 
-		debugL() << "Anionu API Incoming Progress:" 
-			<< "\n\tCurrent: " << transfer.current
-			<< "\n\tTotal: " << transfer.current
-			<< "\n\tProgress: " << transfer.progress()
-			<< endl;
+		debugL() << "Anionu API Incoming Progress:" << progress << endl;
 	}
 
 	void onAssetTransactionComplete(void* sender, const http::Response& response) //APIMethod& service, 
 	{
-		APITransaction* transaction = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotComplete = true;
-		//assert(transaction->incomingBuffer().position() == 0);
-		//assert(transaction->incomingBuffer().available() == response.getContentLength());
+		//assert(trans->incomingBuffer().position() == 0);
+		//assert(trans->incomingBuffer().available() == response.getContentLength());
 
 		// TODO: Check file veracity
 
@@ -267,6 +224,8 @@ public:
 			<< "\n\tHeaders: " << response
 			<< "\n\tPayload Size: " << response.getContentLength()
 			<< endl;
+
+		assert(response.success());
 	}
 
 	// ============================================================================
@@ -294,6 +253,6 @@ int main(int argc, char** argv)
 	{
 		anio::Tests run;
 	}
-	Logger::uninitialize();
+	Logger::shutdown();
 	return 0;
 }

@@ -1,31 +1,38 @@
 #include "MediaPlugin.h"
 #include "CaptureMode.h"
 
-#include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/ISynchronizer.h"
-#include "Anionu/Spot/API/IClient.h"
+#include "Anionu/Spot/API/Environment.h"
+#include "Anionu/Spot/API/Synchronizer.h"
+#include "Anionu/Spot/API/Client.h"
 #include "Sourcey/Media/FormatRegistry.h"
 
 
-using namespace std;
-
-
-DEFINE_SPOT_PLUGIN(scy::anionu::spot::MediaPlugin)
-
-
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
-MediaPlugin::MediaPlugin()
+SPOT_CORE_PLUGIN(
+	MediaPlugin, 
+	"Media Plugin", 
+	"0.9.0"
+)
+
+
+MediaPlugin::MediaPlugin(api::Environment& env) :
+	api::IModule(env)
 {
+	// Set the Spot client's default logger instance for debugging,
+	// otherwise a new default logger singleton will be created for the
+	// plugin process. You could also register a file logger if you want
+	// to keep the plugin logs separate from Spot.
+	//Logger::setInstance(&env.logger());
 }
 
 
 MediaPlugin::~MediaPlugin()
 {	
-	// :)
+	//Logger::setInstance(NULL);
 }
 
 
@@ -33,24 +40,18 @@ bool MediaPlugin::load()
 {
 	try 
 	{
-		// Set the Spot client's default logger instance for debugging,
-		// otherwise a new default logger singleton will be created for the
-		// plugin process. You could also register a file logger if you want
-		// to keep the plugin logs separate from Spot.
-		Logger::setInstance(&env()->logger());
-
 		// Load all your classes and run any system checks here. 
 		//	
 		// The load() method should never be empty because we want to know as soon
-		// as possible if the plugin is not binary compatable with the Spot client. 
+		// as possible if the plugin is not binary compatible with the Spot client. 
 		// This is we always call the logger (at minimum), so if everything blows
 		// up at this point, we know what we are dealing with.
 		//
 		log("Loading");
 
 		// Override encoder creation with custom media sources for streaming and recording, 
-		env()->streaming().InitStreamingSession += delegate(this, &MediaPlugin::onInitStreamingSession);
-		env()->media().InitRecordingEncoder += delegate(this, &MediaPlugin::onInitRecordingEncoder);
+		env().streaming().InitStreamingSession += delegate(this, &MediaPlugin::onInitStreamingSession);
+		env().media().InitRecordingEncoder += delegate(this, &MediaPlugin::onInitRecordingEncoder);
 	
 		// To test the events system we create a custom "Media Plugin Activated"  
 		// event which will notify all peers that the plugin loaded successfully.
@@ -62,19 +63,19 @@ bool MediaPlugin::load()
 		// If you are logged into the dashboard, you will see this event displayed in
 		// real-time in the sidebar notifications panel, and also on the Events page.
 		//		
-		string message = "The Media Plugin has been activated!";						
+		std::string message = "The Media Plugin has been activated!";						
 #ifdef Anionu_Spot_USING_CORE_API
 		// If the core API is being used, we create the event like so:
-		env()->client().createEvent("Media Plugin Activated", message, anionu::Event::Safe);
+		env().client().createEvent("Media Plugin Activated", message, anio::Event::Safe);
 #else
 		// For base API implementations we create the string first and pass the
 		// char pointer to Spot so as to avoid sharing STL containers.
-		env()->clientBase().createEvent("Media Plugin Activated", message.data(), 3);
+		env().clientBase().createEvent("Media Plugin Activated", message.c_str(), 3);
 #endif			
 	}
 	catch (Exception& exc) 
 	{
-		// Swallow exceptions for ABI compatability reasons.
+		// Swallow exceptions for ABI compatibility reasons.
 		// Set the error message to display to the user.
 		_error = exc.message();
 		log("Load failed: " + _error, "error");
@@ -94,8 +95,10 @@ void MediaPlugin::unload()
 
 	// All allocated memory, pointers and signals 
 	// should be freed here.
-	env()->streaming().InitStreamingSession.detach(this);
-	env()->media().InitRecordingEncoder.detach(this);
+	env().streaming().InitStreamingSession.detach(this);
+	//env().streaming().InitStreamingSession.cleanup();
+	env().media().InitRecordingEncoder.detach(this);
+	//env().media().InitRecordingEncoder.cleanup();
 }
 
 
@@ -103,7 +106,7 @@ api::IMode* MediaPlugin::createModeInstance(const char* modeName, const char* ch
 {
 	// Instantiate our Capture Mode for testing.
 	assert(strcmp(modeName, "Capture Mode") == 0);
-	return new CaptureMode(*env(), channelName);
+	return new CaptureMode(env(), channelName);
 }
 
 
@@ -120,14 +123,14 @@ void MediaPlugin::synchronizeTestVideo()
 	// This method shows how to synchronize a file with online storage.
 	// Be sure to change the video file path for testing.
 	log("Synchronizing test video");	
-	env()->synchronizer().sync("/path/to/video.mp4", "Video");
+	env().synchronizer().sync("/path/to/video.mp4", "Video");
 }
 
 
 bool MediaPlugin::onMessage(const char* message)
 {
 	// Parse the Message and do something with it:
-	// symple::Message m;
+	// smpl::Message m;
 	// m.read(message);
 	// log("Recv Message: " + m.toStyledString());
 	//
@@ -140,7 +143,7 @@ bool MediaPlugin::onMessage(const char* message)
 bool MediaPlugin::onCommand(const char* command)
 {
 	// Parse the Command and do something with it:
-	// symple::Command c;
+	// smpl::Command c;
 	// c.read(command);
 	// log("Recv Command: " + c.toStyledString());	
 	//
@@ -153,7 +156,7 @@ bool MediaPlugin::onCommand(const char* command)
 void MediaPlugin::onEvent(const char* event)
 {
 	// Parse the Event and do something with it:
-	// symple::Event e;
+	// smpl::Event e;
 	// e.read(event);
 	// log("Recv Event: " + e.toStyledString());
 }
@@ -162,7 +165,7 @@ void MediaPlugin::onEvent(const char* event)
 void MediaPlugin::onPresence(const char* presence) 
 {
 	// Parse the Presence and do something with it:
-	// symple::Message p;
+	// smpl::Message p;
 	// p.read(presence);	
 	// log("Recv Presence: " + p.toStyledString());
 }
@@ -170,10 +173,10 @@ void MediaPlugin::onPresence(const char* presence)
 
 const char* MediaPlugin::errorMessage() const 
 { 
-	Poco::FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 
 	// Return a pointer to the error char buffer.
-	return _error.empty() ? 0 : _error.data();
+	return _error.empty() ? 0 : _error.c_str();
 }
 
 
@@ -229,7 +232,7 @@ void MediaPlugin::registerMediaFormats()
 	av::Format flvMonoMP3("MP: Flash Mono MP3", "flv", 
 		av::AudioCodec("MP3", "libmp3lame", 1, 8000, 64000), 100);
 
-	api::IMediaManager& media = env()->media();
+	api::MediaManager& media = env().media();
 
 	//
 	/// Register Recording Formats
@@ -251,15 +254,15 @@ void MediaPlugin::registerMediaFormats()
 }
 
 
-av::IPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& options)
+av::AVPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& options)
 {
 	log("Initializing AV Encoder");	
 	
 	// Create the encoder and return the instance pointer.	 
 	// the returned pointer must extend from IPacketEncoder.
-	av::IPacketEncoder* encoder = NULL;
+	av::AVPacketEncoder* encoder = NULL;
 	try {
-		encoder = new av::AVEncoder(options);
+		encoder = new av::AVPacketEncoder(options);
 		encoder->initialize();
 	}
 	catch (Exception& exc) {
@@ -272,19 +275,20 @@ av::IPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& optio
 }
 
 
-void MediaPlugin::onInitRecordingEncoder(void*, const api::RecordingOptions& options, av::IPacketEncoder*& encoder)
+void MediaPlugin::onInitRecordingEncoder(void*, const api::RecordingOptions& options, api::Recorder*& encoder)
 {
 	log("Initialize Recording Encoder");
 
 	// Create the encoder unless recording raw video.
 	if (options.oformat.id != "rawvideo" &&
 		encoder == NULL) {
-		encoder = createEncoder(options);
+		encoder = createEncoder(options); //reinterpret_cast<api::Recorder*>();
+		log("Initializing Recording Encoder: OK");
 	}
 }
 
 
-void MediaPlugin::onInitStreamingSession(void*, api::IStreamingSession& session, bool&)
+void MediaPlugin::onInitStreamingSession(void*, api::StreamingSession& session, bool&)
 {
 	log("Initialize Streaming Session");
 		
@@ -295,7 +299,7 @@ void MediaPlugin::onInitStreamingSession(void*, api::IStreamingSession& session,
 		av::RecordingOptions options(
 			session.options().iformat, 
 			session.options().oformat);
-		av::IPacketEncoder* encoder = createEncoder(options);
+		av::AVPacketEncoder* encoder = createEncoder(options);
 		
 		// Attach the encoder to the packet stream.
 		if (encoder)
@@ -306,4 +310,4 @@ void MediaPlugin::onInitStreamingSession(void*, api::IStreamingSession& session,
 #endif
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot

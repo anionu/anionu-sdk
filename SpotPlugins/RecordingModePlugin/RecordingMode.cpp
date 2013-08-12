@@ -1,28 +1,27 @@
 #include "RecordingMode.h"
-#include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/IChannel.h"
-#include "Anionu/Spot/API/ISynchronizer.h"
+#include "Anionu/Spot/API/Environment.h"
+#include "Anionu/Spot/API/Channel.h"
+#include "Anionu/Spot/API/Synchronizer.h"
 #include "Anionu/Spot/API/Util.h"
+
 #include "Sourcey/Symple/Client.h"
-#include "Sourcey/IConfiguration.h"
+#include "Sourcey/Configuration.h"
 #include "Sourcey/Logger.h"
 
-#include "Poco/File.h"
 
 
 using namespace std;
-using Poco::FastMutex;
 
 
 namespace scy {
 	using namespace av;
-namespace anionu { 
+namespace anio { 
 namespace spot {
 	using namespace api;
 
 
-RecordingMode::RecordingMode(IEnvironment& env, const std::string& channel) : 
-	IModule(&env), _channel(channel), _isActive(false)
+RecordingMode::RecordingMode(Environment& env, const std::string& channel) : 
+	api::IModule(env), _channel(channel), _isActive(false)
 {
 	log("Creating");
 	loadConfig();
@@ -39,7 +38,7 @@ bool RecordingMode::activate()
 {
 	log("Activating");	
 	try {
-		env()->media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
+		env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
 		startRecording();
 		_isActive = true;
 	}
@@ -56,7 +55,8 @@ void RecordingMode::deactivate()
 {
 	log("Deactivating");	
 	try {
-		env()->media().RecordingStopped.detach(this);
+		env().media().RecordingStopped.detach(this);
+		//env().media().RecordingStopped.cleanup();
 		if (isRecording())
 			stopRecording();
 		_isActive = false;
@@ -69,15 +69,20 @@ void RecordingMode::deactivate()
 
 void RecordingMode::loadConfig()
 {
-	FastMutex::ScopedLock lock(_mutex); 	
+	log("Loading Config");
+
+	Mutex::ScopedLock lock(_mutex); 	
 	ScopedConfiguration config = getModeConfiguration(this);
 	_segmentDuration = config.getInt("SegmentDuration", 5 * 60);
 	_synchronizeVideos = config.getBool("SynchronizeVideos", false);
+	
+	log("Loading Config: OK");
 
-	api::log(this) << "Loading Config: " << _channel 
-		<< "\r\tSegmentDuration: " << _segmentDuration 
-		<< "\r\tSynchronizeVideos: " << _synchronizeVideos 
-		<< endl;
+
+	//api::log(this) << "Loading Config: " << _channel 
+	//	<< "\r\tSegmentDuration: " << _segmentDuration 
+	//	<< "\r\tSynchronizeVideos: " << _synchronizeVideos 
+	//	<< endl;
 }
 
 	
@@ -87,11 +92,11 @@ void RecordingMode::startRecording()
 	if (isRecording())
 		throw Exception("Start recording failed: Recorder already active.");
 	
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 
 	// Get the recording encoder options for the current session
 	// configuration and override some defaults before we start recording.
-	RecordingOptions options = env()->media().getRecordingOptions(_channel);
+	RecordingOptions options = env().media().getRecordingOptions(_channel);
 	options.synchronizeVideo  = _synchronizeVideos;
 	options.duration = _segmentDuration * 1000;
 
@@ -100,7 +105,7 @@ void RecordingMode::startRecording()
 	options.supressEvents = true;
 
 	// Start recording, or throw an exception.
-	env()->media().startRecording(options);
+	env().media().startRecording(options);
 	log("Recording Started: " + options.token);
 	_recordingToken = options.token;
 }
@@ -112,8 +117,8 @@ void RecordingMode::stopRecording()
 	if (!isRecording())		
 		throw Exception("Stop recording failed: Recorder not active.");
 	
-	FastMutex::ScopedLock lock(_mutex); 
-	env()->media().stopRecording(_recordingToken, true);
+	Mutex::ScopedLock lock(_mutex); 
+	env().media().stopRecording(_recordingToken, true);
 	log("Recording Stopped: " + _recordingToken);
 	_recordingToken = "";
 }
@@ -141,35 +146,35 @@ void RecordingMode::onRecordingStopped(void* sender, RecorderStream& stream)
 
 bool RecordingMode::isRecording() const
 {
-	FastMutex::ScopedLock lock(_mutex);
+	Mutex::ScopedLock lock(_mutex);
 	return !_recordingToken.empty();
 }
 
 
 string RecordingMode::recordingToken()
 {	
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _recordingToken;
 }
 
 
 const char* RecordingMode::errorMessage() const 
 { 
-	FastMutex::ScopedLock lock(_mutex);
-	return _error.empty() ? 0 : _error.data();
+	Mutex::ScopedLock lock(_mutex);
+	return _error.empty() ? 0 : _error.c_str();
 }
 
 
 const char* RecordingMode::channelName() const
 {
-	FastMutex::ScopedLock lock(_mutex); 
-	return _channel.data();
+	Mutex::ScopedLock lock(_mutex); 
+	return _channel.c_str();
 }
 
 
 bool RecordingMode::isActive() const
 {
-	FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _isActive;
 }
 
@@ -182,10 +187,10 @@ const char* RecordingMode::docFile() const
 
 // ---------------------------------------------------------------------
 //
-void RecordingMode::buildForm(symple::Form&, symple::FormElement& element)
+void RecordingMode::buildForm(smpl::Form&, smpl::FormElement& element)
 {
 	log("Building Form");	
-	symple::FormField field;
+	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
 	// Determine weather we are building the form at channel or
@@ -220,10 +225,10 @@ void RecordingMode::buildForm(symple::Form&, symple::FormElement& element)
 }
 
 
-void RecordingMode::parseForm(symple::Form&, symple::FormElement& element)
+void RecordingMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
 	log("Parsing Form");
-	symple::FormField field;	
+	smpl::FormField field;	
 
 	field = element.getField("Recording Mode.SegmentDuration", true);
 	if (field.valid()) {
@@ -235,19 +240,19 @@ void RecordingMode::parseForm(symple::Form&, symple::FormElement& element)
 			field.setError("The segment duration must be between 10 seconds and 15 minutes.");
 		}
 		else {
-			env()->config().setInt(field.id(), value);
+			env().config().setInt(field.id(), value);
 		}
 	}
 
 	field = element.getField("Recording Mode.SynchronizeVideos", true);
 	if (field.valid())
-		env()->config().setBool(field.id(), field.boolValue());
+		env().config().setBool(field.id(), field.boolValue());
 
 	loadConfig();
 }
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 
@@ -262,15 +267,15 @@ bool RecordingMode::isConfigurable() const
 }
 
 
-bool RecordingMode::hasParsableFields(symple::Form& form) const
+bool RecordingMode::hasParsableFields(smpl::Form& form) const
 {
 	return form.hasField(".Recording Mode.", true);
 }
 	
 	//Signal2<const RecordingOptions&, RecordingStream*&> RecordingStarted;
 	//Signal2<const RecordingOptions&, RecordingStream*&> RecordingStopped;
-	//env()->media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
-	//env()->media().RecordingStarted.detach(this);
+	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
+	//env().media().RecordingStarted.detach(this);
 		//_recordingToken.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
 	//_recordingToken.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
 void RecordingMode::onRecordingStarted(void* sender, RecorderStream& stream)
@@ -321,6 +326,6 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 				spot::Job job; 
 				job.type = "Video";
 				job.path = options.ofile;
-				_env()->synchronizer() >> job;
+				_env().synchronizer() >> job;
 			}
 			*/

@@ -17,8 +17,8 @@
 //
 
 
-#ifndef Anionu_Spot_API_IModeManager_H
-#define Anionu_Spot_API_IModeManager_H
+#ifndef Anionu_Spot_API_ModeManager_H
+#define Anionu_Spot_API_ModeManager_H
 
 
 #include "Anionu/Spot/API/Config.h"
@@ -39,7 +39,7 @@ namespace api {
 typedef std::vector<IMode*> IModeList;
 
 
-class IModeManager
+class ModeManager
 {
 public:
 	virtual void activate(const std::string& mode, const std::string& channel) = 0;
@@ -56,11 +56,11 @@ public:
 	Signal<api::IMode&> ModeError;
 
 protected:
-	virtual ~IModeManager() = 0 {};
+	virtual ~ModeManager() = 0 {};
 };
 
 
 } } } } // namespace scy::anio::spot::api
 
 
-#endif // Anionu_Spot_API_IModeManager_H
+#endif // Anionu_Spot_API_ModeManager_H

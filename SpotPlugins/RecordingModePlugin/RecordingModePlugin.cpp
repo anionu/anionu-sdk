@@ -1,40 +1,39 @@
 #include "RecordingModePlugin.h"
 #include "RecordingMode.h"
 
-#include "Anionu/Spot/API/IEnvironment.h"
-
-
-
-using namespace std;
-using namespace Poco;
-using namespace scy::anionu::spot::api;
-
-
-DEFINE_SPOT_PLUGIN(scy::anionu::spot::RecordingModePlugin)
+#include "Anionu/Spot/API/Environment.h"
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
-RecordingModePlugin::RecordingModePlugin()
+SPOT_CORE_PLUGIN(
+	RecordingModePlugin, 
+	"Recording Mode Plugin", 
+	"0.9.2"
+)
+
+
+RecordingModePlugin::RecordingModePlugin(api::Environment& env) :
+	api::IModule(env)
 {
+	// Set the default logger instance, otherwise
+	// a new logger singleton instance will be
+	// created for the plugin process.
+	//Logger::setInstance(&env.logger());
 }
 
 
 RecordingModePlugin::~RecordingModePlugin()
 {
+	//Logger::setInstance(NULL);
 }
 
 
 bool RecordingModePlugin::load() 
 {
-	// Set the default logger instance, otherwise
-	// a new default logger instance will be
-	// created for the plugin process.
-	Logger::setInstance(&env()->logger());
-
 	log("Loading");	
 	return true;
 }
@@ -46,10 +45,10 @@ void RecordingModePlugin::unload()
 }
 
 
-IMode* RecordingModePlugin::createModeInstance(const char* modeName, const char* channelName)
+api::IMode* RecordingModePlugin::createModeInstance(const char* modeName, const char* channelName)
 {
 	assert(strcmp(modeName, "Recording Mode") == 0);
-	return new RecordingMode(*env(), channelName);
+	return new RecordingMode(env(), channelName);
 }
 
 
@@ -60,4 +59,4 @@ const char** RecordingModePlugin::modeNames() const
 }
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot

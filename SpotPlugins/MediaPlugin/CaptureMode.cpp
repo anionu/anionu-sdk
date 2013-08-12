@@ -1,6 +1,6 @@
 #include "CaptureMode.h"
-#include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/IChannelManager.h"
+#include "Anionu/Spot/API/Environment.h"
+#include "Anionu/Spot/API/ChannelManager.h"
 #include "Anionu/Spot/API/Util.h"
 #include "Sourcey/Symple/Form.h"
 
@@ -9,12 +9,12 @@ using namespace std;
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
-CaptureMode::CaptureMode(api::IEnvironment& env, const string& channel) : 
-	api::IModule(&env), _channel(channel), _isActive(false)
+CaptureMode::CaptureMode(api::Environment& env, const string& channel) : 
+	api::IModule(env), _channel(channel), _isActive(false)
 {
 	log("Creating");
 	loadConfig();
@@ -34,8 +34,8 @@ bool CaptureMode::activate()
 	{
 		// Get the video capture and attach a listener, 
 		// or throw an exception.
-		av::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);	
-		video->attach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
+		video->Emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = true;
 	}
 	catch (Exception& exc)
@@ -60,8 +60,8 @@ void CaptureMode::deactivate()
 	{
 		// Get the video capture and detach the listener,
 		// or throw an exception which we log and swallow.
-		av::VideoCapture* video = env()->channels().getChannel(_channel)->videoCapture(true);
-		video->detach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);
+		video->Emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = false;
 	}
 	catch (Exception& exc) 
@@ -78,7 +78,7 @@ void CaptureMode::loadConfig()
 	// NOTE: IFormProcessor configuration is only
 	// available when using the core API.
 #ifdef Anionu_Spot_USING_CORE_API
-	Poco::FastMutex::ScopedLock lock(_mutex); 	
+	Mutex::ScopedLock lock(_mutex); 	
 	ScopedConfiguration config = getModeConfiguration(this);
 	testConfig.intValue = config.getInt("IntValue", 60);
 	testConfig.boolValue = config.getBool("BoolValue", false);
@@ -96,7 +96,7 @@ void CaptureMode::loadConfig()
 void CaptureMode::onVideoCapture(void*, av::VideoPacket& packet)
 {
 	// Capture and display the current channel video image.
-	av::MatPacket* mpacket = dynamic_cast<av::MatPacket*>(&packet);		
+	av::MatrixPacket* mpacket = dynamic_cast<av::MatrixPacket*>(&packet);		
 	if (mpacket) {
 		cv::Mat& image = *mpacket->mat;
 
@@ -109,21 +109,21 @@ void CaptureMode::onVideoCapture(void*, av::VideoPacket& packet)
 
 const char* CaptureMode::errorMessage() const 
 { 
-	Poco::FastMutex::ScopedLock lock(_mutex);
-	return _error.empty() ? 0 : _error.data();
+	Mutex::ScopedLock lock(_mutex);
+	return _error.empty() ? 0 : _error.c_str();
 }
 
 
 const char* CaptureMode::channelName() const
 {
-	Poco::FastMutex::ScopedLock lock(_mutex); 
-	return _channel.data();
+	Mutex::ScopedLock lock(_mutex); 
+	return _channel.c_str();
 }
 
 
 bool CaptureMode::isActive() const
 {
-	Poco::FastMutex::ScopedLock lock(_mutex); 
+	Mutex::ScopedLock lock(_mutex); 
 	return _isActive;
 }
 
@@ -139,10 +139,10 @@ const char* CaptureMode::docFile() const
 //
 /// IFormProcessor methods
 //
-void CaptureMode::buildForm(symple::Form& form, symple::FormElement& element)
+void CaptureMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 {	
 	log("Building form: " + form.root().toStyledString());
-	symple::FormField field;
+	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
 	// Determine weather we are building the form at channel or
@@ -176,10 +176,10 @@ void CaptureMode::buildForm(symple::Form& form, symple::FormElement& element)
 }
 
 
-void CaptureMode::parseForm(symple::Form& form, symple::FormElement& element)
+void CaptureMode::parseForm(smpl::Form& form, smpl::FormElement& element)
 {
 	log("Building form: " + form.root().toStyledString());
-	symple::FormField field;	
+	smpl::FormField field;	
 	
 	// Some Integer Value
 	field = element.getField("Capture Mode.IntValue", true);
@@ -190,19 +190,19 @@ void CaptureMode::parseForm(symple::Form& form, symple::FormElement& element)
 			field.setError("The integer must be between 0 and 10.");
 		}
 		else {
-			env()->config().setInt(field.id(), value);
+			env().config().setInt(field.id(), value);
 		}
 	}
 	
 	// Some Boolean Value
 	field = element.getField("Capture Mode.BoolValue", true);
 	if (field.valid())
-		env()->config().setBool(field.id(), field.boolValue());
+		env().config().setBool(field.id(), field.boolValue());
 	
 	// Some String Value
 	field = element.getField("Capture Mode.StringValue", true);
 	if (field.valid())
-		env()->config().setString(field.id(), field.value());
+		env().config().setString(field.id(), field.value());
 
 	loadConfig();
 }
@@ -210,4 +210,4 @@ void CaptureMode::parseForm(symple::Form& form, symple::FormElement& element)
 #endif
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot

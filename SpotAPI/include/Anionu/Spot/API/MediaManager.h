@@ -17,8 +17,8 @@
 //
 
 
-#ifndef Anionu_Spot_API_IMediaManager_H
-#define Anionu_Spot_API_IMediaManager_H
+#ifndef Anionu_Spot_API_MediaManager_H
+#define Anionu_Spot_API_MediaManager_H
 
 
 #include "Anionu/Spot/API/Config.h"
@@ -40,32 +40,28 @@ namespace spot {
 namespace api { 
 
 
-// ---------------------------------------------------------------------
-//
-class IMediaManagerBase
+class MediaManagerBase
 	/// ABI agnostic API
 {
 public:
 	virtual void startRecording(const char* channel, const char* ofile = NULL, bool synchronize = false) = 0;
-		/// Starts recording the video input of the given
-		/// surveillance channel.
+		// Starts recording the video input of the given
+		// surveillance channel.
 		
-		/// A medium severity "Recording Failed" event will
-		/// be ceated and propagated on the system which 
-		/// contains the full error message.
+		// A medium severity "Recording Failed" event will
+		// be created and propagated on the system which 
+		// contains the full error message.
 
 	virtual bool stopRecording(const char* token) = 0;
-		/// Stops the recorder instance matching the given token.
-		/// Returns true on success, or if whiny is set then an 
-		/// exception will be thrown on error.
+		// Stops the recorder instance matching the given token.
+		// Returns true on success, or if whiny is set then an 
+		// exception will be thrown on error.
 		
 protected:
-	virtual ~IMediaManagerBase() = 0 {};
+	virtual ~MediaManagerBase() = 0 {};
 };
 
 
-// ---------------------------------------------------------------------
-//
 #ifdef Anionu_Spot_USING_CORE_API
 
 
@@ -74,10 +70,10 @@ struct RecordingOptions: public av::RecordingOptions
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The channel we're recording on
 	std::string user;		// The user ID of the initiating peer
-	bool supressEvents;		// Supress events for this recording session
+	bool supressEvents;		// Suppress events for this recording session
 	bool synchronizeVideo;	// Weather or not to synchronize the recorded video.
 							// The user configured value will be set when creating
-							// options using IMediaManager::getRecordingOptions()
+							// options using MediaManager::getRecordingOptions()
 	RecordingOptions(const std::string& channel = "") : 
 		channel(channel),
 		supressEvents(false), 
@@ -94,76 +90,81 @@ struct RecorderStream: public PacketStream
 };
 
 
-class IMediaManager: public IMediaManagerBase
+typedef PacketProcessor Recorder; 
+	/// The recorder type, generally an av::IEncoder instance.
+	/// May become a full type in the future.
+
+
+class MediaManager: public MediaManagerBase
 {
 public:	
 	virtual void startRecording(api::RecordingOptions& options) = 0;
-		/// Starts a new recorder instance from the given options.
-		/// Calls createRecorder() internally.
-		/// An exception will be thrown on error.
+		// Starts a new recorder instance from the given options.
+		// Calls createRecorder() internally.
+		// An exception will be thrown on error.
 
 	virtual bool stopRecording(const std::string& token, bool whiny = true) = 0;
-		/// Stops the recorder instance matching the given token.
-		/// Returns true on success, or if whiny is set then an 
-		/// exception will be thrown on error.
+		// Stops the recorder instance matching the given token.
+		// Returns true on success, or if whiny is set then an 
+		// exception will be thrown on error.
 
 	virtual api::RecorderStream* createRecorder(api::RecordingOptions& options) = 0;
-		/// Creates a new recorder instance from the given options.
-		/// Call RecorderStream::start() to start actual recording.
-		/// Using this method directly, instead of startRecording() 
-		/// enables custom manipulation of the PacketStream adapters.
-		/// The RecordingOptions must be correctly populated, 
-		/// ideally using the getRecordingOptions() method.
-		/// An exception will be thrown on error.
+		// Creates a new recorder instance from the given options.
+		// Call RecorderStream::start() to start actual recording.
+		// Using this method directly, instead of startRecording() 
+		// enables custom manipulation of the PacketStream adapters.
+		// The RecordingOptions must be correctly populated, 
+		// ideally using the getRecordingOptions() method.
+		// An exception will be thrown on error.
 
 	virtual api::RecordingOptions getRecordingOptions(const std::string& channel) = 0;
-		/// Initializes default recorder and encoder input format options 
-		/// for the given channel, and output format options from the
-		/// current user configuration. 
-		/// An exception will be thrown if the channel does not exist, 
-		/// or if a video device is unavailable.
+		// Initializes default recorder and encoder input format options 
+		// for the given channel, and output format options from the
+		// current user configuration. 
+		// An exception will be thrown if the channel does not exist, 
+		// or if a video device is unavailable.
 
 	virtual av::Format getRecordingFormat() = 0;
-		/// Returns the current user configured recording media format.
+		// Returns the current user configured recording media format.
 		
 	virtual av::Format getVideoStreamingFormat() = 0;
-		/// Returns the current user configured local network
-		/// streaming media format.
+		// Returns the current user configured local network
+		// streaming media format.
 
 	virtual av::Format getAudioStreamingFormat() = 0;
-		/// The current user configured audio streaming format.
+		// The current user configured audio streaming format.
 
 	virtual void setRecordingFormat(const av::Format& format) = 0;
-		/// Sets the recording media format for the current user
-		/// and updates configuration.
+		// Sets the recording media format for the current user
+		// and updates configuration.
 		
 	virtual void setVideoStreamingFormat(const av::Format& format) = 0;
-		/// Sets the local network streaming media format for the
-		/// current user and updates configuration.
+		// Sets the local network streaming media format for the
+		// current user and updates configuration.
 
 	virtual void setAudioStreamingFormat(const av::Format& format) = 0;
-		/// Sets the internet streaming audio format for the current
-		/// user and updates configuration.
+		// Sets the internet streaming audio format for the current
+		// user and updates configuration.
 	
 	virtual av::FormatRegistry& recordingFormats() = 0;
-		/// Media formats for recording media.
+		// Media formats for recording media.
 
 	virtual av::FormatRegistry& videoStreamingFormats() = 0;
-		/// Media formats for streaming video over the internet.
+		// Media formats for streaming video over the internet.
 
 	virtual av::FormatRegistry& audioStreamingFormats() = 0;
-		/// Media formats for streaming audio over the internet.
+		// Media formats for streaming audio over the internet.
 
-	Signal2<const api::RecordingOptions&, av::IPacketEncoder*&> InitRecordingEncoder;
-		/// Provides listeners with the ability to instantiate the recording encoder.
-		/// If a valid IPacketEncoder instance is assigned to the second parameter,
-		/// it will be used for encoding.
+	Signal2<const api::RecordingOptions&, api::Recorder*&> InitRecordingEncoder;
+		// Provides listeners with the ability to instantiate the recording encoder.
+		// If a valid Recorder instance is assigned to the second parameter,
+		// it will be used for encoding.
 		
 	Signal<api::RecorderStream&> RecordingStarted;
 	Signal<api::RecorderStream&> RecordingStopped;
 		
 protected:
-	virtual ~IMediaManager() = 0 {};
+	virtual ~MediaManager() = 0 {};
 };
 
 
@@ -173,4 +174,4 @@ protected:
 } } } } // namespace scy::anio::spot::api
 
 
-#endif // Anionu_Spot_API_IMediaManager_H
+#endif // Anionu_Spot_API_MediaManager_H

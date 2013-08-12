@@ -39,17 +39,17 @@ namespace api {
 	
 class IMessageProcessor
 	/// The message processor provides an ABI agnostic
-	/// interface for procession all incoming, outgoing
+	/// interface for processing all incoming, outgoing
 	/// and local messages passing through the Spot client.
 {
 public:		
 	virtual bool onMessage(const char* message) { return false; };
-		/// Handle incoming messages.
-		/// Return true if the message has been responded to.
+		// Handle incoming messages.
+		// Return true if the message has been responded to.
 
 	virtual bool onCommand(const char* command) { return false; };
-		/// Handle incoming commands.
-		/// Return true if the command has been handled.
+		// Handle incoming commands.
+		// Return true if the command has been handled.
 
 	virtual void onPresence(const char* presence) {};
 	virtual void onEvent(const char* event) {};

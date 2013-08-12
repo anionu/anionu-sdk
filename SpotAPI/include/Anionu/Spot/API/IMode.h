@@ -43,28 +43,28 @@ public:
 	
 	virtual bool activate() = 0;
 	virtual void deactivate() = 0;
-		/// Activation logic should be implemented here.
-		/// If there was an error, activate() hould return false.
+		// Activation logic should be implemented here.
+		// If there was an error, activate() hould return false.
 
 	virtual bool isActive() const = 0;
-		/// Returns true if the mode is currently active.
+		// Returns true if the mode is currently active.
 	
 	virtual const char* modeName() const = 0;
-		/// Returns the name of this mode.
-		/// Alpha numerics and spaces allowed.
+		// Returns the name of this mode.
+		// Alpha numerics and spaces allowed.
 	
 	virtual const char* channelName() const = 0;
-		/// Returns the channel name this mode is activated on.
+		// Returns the channel name this mode is activated on.
 
 	virtual const char* errorMessage() const { return 0; };
-		/// Returns a detailed error message if initialize() or 
-		/// activate() fails.
+		// Returns a detailed error message if initialize() or 
+		// activate() fails.
 	
 	virtual const char* docFile() { return 0; };
-		/// Returns the relative path (from the Spot binary dir)
-		/// to the optional help guide/documentation pertaining
-		/// to the current module.
-		/// Information files should be in Markdown format.
+		// Returns the relative path (from the Spot binary dir)
+		// to the optional help guide/documentation pertaining
+		// to the current module.
+		// Information files should be in Markdown format.
 };
 
 
@@ -74,13 +74,13 @@ class IModeFactory
 {
 public:
 	virtual IMode* createModeInstance(const char* modeName, const char* channelName) = 0;
-		/// Instantiates the given mode for the given channel.
-		/// The channel name should be passed to the IMode instance
-		/// via the constructor.
+		// Instantiates the given mode for the given channel.
+		// The channel name should be passed to the IMode instance
+		// via the constructor.
 
 	virtual const char** modeNames() const = 0;
-		/// Returns a NULL terminated array of modes names 
-		/// implemented by this plugin.
+		// Returns a NULL terminated array of modes names 
+		// implemented by this plugin.
 };
 
 
@@ -130,8 +130,8 @@ public:
 	}
 	
 	Signal<const StringMap&> DataChanged;
-		/// Signals the outside application when
-		/// internal mode data changes.
+		// Signals the outside application when
+		// internal mode data changes.
 
 protected:		
 	mutable Mutex	_mutex;	
@@ -155,21 +155,21 @@ protected:
 	
 	//virtual bool initialize() = 0;
 	//virtual void uninitialize() = 0;
-		/// Initialization logic should be implemented here.
+		// Initialization logic should be implemented here.
 #ifdef Anionu_Spot_USING_CORE_API
 #include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
-#include "Sourcey/IConfiguration.h"
-#include "Anionu/Spot/API/IEnvironment.h"
-#include "Anionu/Spot/API/IChannel.h"
-//#include "Poco/Net/NVCollection.h"
+#include "Sourcey/Configuration.h"
+#include "Anionu/Spot/API/Environment.h"
+#include "Anionu/Spot/API/Channel.h"
+//#include "Poco/Net/NVHash.h"
 #include "Poco/Format.h"
 #endif
 */
 
 
 /*const char* channel
-		/// See IMode for implementation specifics.
+		// See IMode for implementation specifics.
 //namespace smpl {
 	//class IFormProcessor;
 	/// The symple form processor can be optionally included
@@ -200,30 +200,30 @@ struct ModeState: public State
 		return "undefined"; 
 	};
 };	
-typedef NVCollection ModeOptions;
+typedef NVHash ModeOptions;
 */
 	
 /*
 #ifdef Anionu_Spot_USING_CORE_API
 
 
-class IMode: public IMode//, public StatefulSignal<ModeState>
+class IMode: public IMode//, public Stateful<ModeState>
 	/// The IMode interface defines a specific operational mode
 	/// for a Spot channel that can be activated and deactivated.
 	/// See the Surveillance Mode and Recording Mode plugins for
 	/// implementation ideas.
 {	
 public:
-	IMode(api::IEnvironment& env, api::IChannel& channel, const std::string& name) : 
+	IMode(api::Environment& env, api::Channel& channel, const std::string& name) : 
 		_env(env), 
 		_channel(channel), 
 		_name(name), 
 		_config(env.config(), 
 			//
-			/// Channel Scope: channels.[name].modes.[name].[value]
+			// Channel Scope: channels.[name].modes.[name].[value]
 			Poco::format("channels.%s.modes.%s.", channel.name(), name),
 			//
-			/// Base Scope: modes.[name].[value]
+			// Base Scope: modes.[name].[value]
 			Poco::format("modes.%s.", name))
 	{
 		assert(!_name.empty());
@@ -240,20 +240,20 @@ public:
 	
 	virtual void initialize() {}
 	virtual void uninitialize() {}
-		/// If unrecoverable errors are encountered during
-		/// the the initialization process, the mode state
-		/// should be set to Error and an Exception thrown.
+		// If unrecoverable errors are encountered during
+		// the the initialization process, the mode state
+		// should be set to Error and an Exception thrown.
 
 	virtual void activate()
 	{
 		// override me, calling base method
-		//setState(this, ModeState::Active);
+		//setState(/this, /ModeState::Active);
 	}
 
 	virtual void deactivate()
 	{
 		// override me, calling base method
-		//setState(this, ModeState::Inactive);
+		//setState(/this, /ModeState::Inactive);
 	}
 	
 
@@ -264,16 +264,16 @@ public:
 	const char* name() const
 	{ 
 		Mutex::ScopedLock lock(_mutex);	
-		return _name.data(); 
+		return _name.c_str(); 
 	}
 	
-	api::IEnvironment& env() const
+	api::Environment& env() const
 	{ 
 		Mutex::ScopedLock lock(_mutex);	
 		return _env; 
 	}
 
-	api::IChannel& channel() const
+	api::Channel& channel() const
 	{ 
 		Mutex::ScopedLock lock(_mutex);	
 		return _channel; 
@@ -298,8 +298,8 @@ public:
 	/// Logging and help
 	//
 
-	LogStream log(const char* level = "debug") const
-		/// This method sends log messages the Spot application logger.
+	LogStream& log(const char* level = "debug") const
+		// This method sends log messages the Spot application logger.
 	{ 
 		return env().logger().send(level, this, className()); 
 	}
@@ -308,8 +308,8 @@ public:
 
 protected:		
 	mutable Mutex	_mutex;	
-	api::IEnvironment&	_env;
-	api::IChannel&		_channel;
+	api::Environment&	_env;
+	api::Channel&		_channel;
 	//ScopedConfiguration	_config;
 	//ModeOptions			_options;
 	std::string			_name;
@@ -324,26 +324,26 @@ protected:
 	
 	/*
 	virtual std::string docFile() const { return ""; }
-		/// Returns the relative path (from the Spot directory) to the optional
-		/// information file pertaining to this configurable module. 
-		/// Information files should contain configuration assistance, 
-		/// and are in Markdown format.
+		// Returns the relative path (from the Spot directory) to the optional
+		// information file pertaining to this configurable module. 
+		// Information files should contain configuration assistance, 
+		// and are in Markdown format.
 
 	api::IFormProcessor* proc() const
-		/// Returns the optional Symple Form processor pointer.
+		// Returns the optional Symple Form processor pointer.
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		return _proc; 
 	}
 
 	void setFormProcessor(api::IFormProcessor* proc)
-		/// The should be set during initialize() in the mode
-		/// is designed to intergrate with the online dashboard
-		/// for remote configuration. 
+		// The should be set during initialize() in the mode
+		// is designed to intergrate with the online dashboard
+		// for remote configuration. 
 	{ 
 		Mutex::ScopedLock lock(_mutex);
 		_proc = proc; 
 	}
-		_proc(nullptr),
+		_proc(null),
 	api::IFormProcessor* _proc;
 	*/

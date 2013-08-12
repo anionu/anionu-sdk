@@ -4,13 +4,13 @@
 
 #include "Anionu/Spot/API/IMode.h"
 #include "Anionu/Spot/API/IModule.h"
-#include "Anionu/Spot/API/IChannel.h"
-#include "Anionu/Spot/API/IMediaManager.h"
+#include "Anionu/Spot/API/Channel.h"
+#include "Anionu/Spot/API/MediaManager.h"
 #include "Anionu/Spot/API/IFormProcessor.h"
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
@@ -20,11 +20,11 @@ class RecordingMode:
 	public api::IFormProcessor
 {
 public:
-	RecordingMode(api::IEnvironment& env, const std::string& channel);
-	~RecordingMode();
+	RecordingMode(api::Environment& env, const std::string& channel);
+	virtual ~RecordingMode();
 	
-	bool activate();
-	void deactivate();
+	virtual bool activate();
+	virtual void deactivate();
 		
 	void startRecording();
 	void stopRecording();
@@ -34,16 +34,16 @@ public:
 	bool isRecording() const;
 	std::string recordingToken();
 		
-	void buildForm(symple::Form& form, symple::FormElement& element);
-	void parseForm(symple::Form& form, symple::FormElement& element);
+	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
+	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
 		
 	void onRecordingStopped(void* sender, api::RecorderStream& stream);
 	
-	const char* docFile() const;	
-	const char* errorMessage() const;
-	const char* channelName() const;
-	const char* modeName() const { return "Recording Mode"; }
-	const char* className() const { return "RecordingMode"; }
+	virtual const char* docFile() const;	
+	virtual const char* errorMessage() const;
+	virtual const char* channelName() const;
+	virtual const char* modeName() const { return "Recording Mode"; }
+	virtual const char* className() const { return "RecordingMode"; }
 
 private: 
 	int	_segmentDuration;
@@ -52,11 +52,11 @@ private:
 	std::string _error;
 	std::string _channel;
 	std::string	_recordingToken;
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_RecordingMode_H
@@ -65,18 +65,18 @@ private:
 
 	/*
 	//
-	/// symple::IFormProcessor methods
+	/// smpl::IFormProcessor methods
 	//bool isConfigurable() const;
-	//bool hasParsableFields(symple::Form& form) const;
+	//bool hasParsableFields(smpl::Form& form) const;
 	
 	//void initialize();
 	//void uninitialize();
 	bool isConfigurable() const;
-	bool hasParsableFields(symple::Form& form) const;	
+	bool hasParsableFields(smpl::Form& form) const;	
 	std::string docFile();
 
-	void buildForm(symple::Form& form, symple::FormElement& element, bool defaultScope = false);
-	void parseForm(symple::Form& form, symple::FormElement& element);
+	void buildForm(smpl::Form& form, smpl::FormElement& element, bool defaultScope = false);
+	void parseForm(smpl::Form& form, smpl::FormElement& element);
 	*/
 	
 	//void onRecordingStarted(void* sender, api::RecorderStream& stream);

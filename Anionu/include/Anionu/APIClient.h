@@ -93,10 +93,10 @@ public:
 	APIMethod();
 
 	virtual void format(const std::string& format);
-		/// Sets the return format as .json, .xml, .api
+		// Sets the return format as .json, .xml, .api
 
 	virtual void interpolate(const StringMap& params);
-		/// Interpolates a URI parameter eg. :key => value
+		// Interpolates a URI parameter eg. :key => value
 
 public:
 	std::string name;
@@ -122,10 +122,10 @@ public:
 	virtual ~APIMethods();
 
 	virtual void load();
-		/// Load and the JSON API specification template.
+		// Load and the JSON API specification template.
 
 	virtual bool loaded() const;
-		/// Returns true methods have been loaded.
+		// Returns true methods have been loaded.
 	
 	virtual APIMethod get(const std::string& name, const std::string& format = "json", const StringMap& params = StringMap());
 
@@ -166,17 +166,17 @@ struct APIRequest: public http::Request
 	virtual ~APIRequest() {}
 
 	virtual void prepare();
-		/// MUST be called after setting all information and
-		/// credentials before sending the request.
+		// MUST be called after setting all information and
+		// credentials before sending the request.
 
 	APIMethod method;
 
 	APICredentials credentials;
-		/// HTTP authentication credentials.
+		// HTTP authentication credentials.
 
 //private:
 	//APIRequest(APIRequest& r) {}
-		/// The copy constructor is private
+		// The copy constructor is private
 };
 */
 
@@ -257,7 +257,7 @@ private:
 };
 
 
-} } // namespace anionu
+} } // namespace anio
 
 
 #endif

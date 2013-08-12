@@ -5,8 +5,8 @@
 #include "Anionu/Spot/API/IMode.h"
 #include "Anionu/Spot/API/IModule.h"
 #include "Anionu/Spot/API/IModule.h"
-#include "Anionu/Spot/API/IMediaManager.h"
-#include "Anionu/Spot/API/IStreamingSession.h"
+#include "Anionu/Spot/API/MediaManager.h"
+#include "Anionu/Spot/API/StreamingSession.h"
 #include "Anionu/Spot/API/IFormProcessor.h"
 #include "Anionu/MotionDetector.h"
 #include "Sourcey/PacketStream.h"
@@ -14,7 +14,7 @@
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 	
 
@@ -24,24 +24,24 @@ class SurveillanceMode:
 	public api::IFormProcessor
 {
 public:
-	SurveillanceMode(api::IEnvironment& env, const std::string& channel);
-	~SurveillanceMode();
+	SurveillanceMode(api::Environment& env, const std::string& channel);
+	virtual ~SurveillanceMode();
 	
 	//
 	/// IMode interface
-	bool activate();
-	void deactivate();
+	virtual bool activate();
+	virtual void deactivate();
 	
 	bool isActive() const;
 	bool isRecording() const;
-	const char* docFile() const;	
-	const char* errorMessage() const;
-	const char* channelName() const;
-	const char* modeName() const { return "Surveillance Mode"; }
+	virtual const char* docFile() const;	
+	virtual const char* errorMessage() const;
+	virtual const char* channelName() const;
+	virtual const char* modeName() const { return "Surveillance Mode"; }
 	
 	//
 	/// IModule methods	
-	const char* className() const { return "SurveillanceMode"; }
+	virtual const char* className() const { return "SurveillanceMode"; }
 	
 	//
 	/// Local methods
@@ -59,31 +59,31 @@ public:
 
 	//
 	/// IFormProcessor methods
-	void buildForm(symple::Form& form, symple::FormElement& element);
-	void parseForm(symple::Form& form, symple::FormElement& element);
+	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
+	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
 
 	//
 	/// Callbacks
-	void onMotionStateChange(void* sender, anionu::MotionDetectorState& state, const anionu::MotionDetectorState&);
-	void onInitStreamingSession(void*, api::IStreamingSession& session, bool& handled);
-	void onInitStreamingConnection(void*, api::IStreamingSession& session, PacketStream& stream, bool& handled);
-	void onStreamingSessionStateChange(void*, api::StreamingState& state, const api::StreamingState&);	
+	void onMotionStateChange(void* sender, anio::MotionDetectorState& state, const anio::MotionDetectorState&);
+	void onInitStreamingSession(void*, api::StreamingSession& session, bool& handled);
+	void onInitStreamingConnection(void*, api::StreamingSession& session, PacketStream& stream, bool& handled);
+	void onStreamingSessionStateChange(void*, api::StreamingState& state, const api::StreamingState&);
 	
 protected:	
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 	bool _isActive;
 	bool _isConfiguring;
 	bool _synchronizeVideos;
 	std::string	_error;
 	std::string _channel;
 	std::string	_recordingToken;
-	PacketStream _motionStream;
-	anionu::MotionDetector _motionDetector;
 	std::vector<TimedToken> _streamingTokens;
+	anio::MotionDetector _motionDetector;
+	PacketStream _motionStream;
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_SurveillanceMode_H

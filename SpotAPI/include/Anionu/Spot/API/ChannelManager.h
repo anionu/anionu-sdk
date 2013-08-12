@@ -17,11 +17,11 @@
 //
 
 
-#ifndef Anionu_Spot_API_IChannelManager_H
-#define Anionu_Spot_API_IChannelManager_H
+#ifndef Anionu_Spot_API_ChannelManager_H
+#define Anionu_Spot_API_ChannelManager_H
 
 
-#include "Anionu/Spot/API/IChannel.h"
+#include "Anionu/Spot/API/Channel.h"
 
 
 namespace scy {
@@ -30,32 +30,32 @@ namespace spot {
 namespace api {
 	
 
-class IChannelManager
+class ChannelManager
 {
 public:
-	virtual api::IChannel* getChannel(const std::string& name) const = 0;
-		// Returns the api::IChannel instance or
+	virtual api::Channel* getChannel(const std::string& name) const = 0;
+		// Returns the api::Channel instance or
 		// throws a NotFoundException exception.
 
-    virtual api::IChannel* getDefaultChannel() const = 0;
+    virtual api::Channel* getDefaultChannel() const = 0;
 		// Returns the first channel in the list.
 
-	virtual IChannel* at(int index) const = 0;
+	virtual Channel* at(int index) const = 0;
 		// Returns the channel at the given 0 based 
 		// index position, or NULL.
 
-	virtual IChannelList list() const = 0;
+	virtual ChannelList list() const = 0;
 		// Returns the list of channels.
 		
-	Signal<api::IChannel&> ChannelAdded;
-	Signal<api::IChannel&> ChannelRemoved;
+	Signal<api::Channel&> ChannelAdded;
+	Signal<api::Channel&> ChannelRemoved;
 		
 protected:
-	virtual ~IChannelManager() = 0 {};
+	virtual ~ChannelManager() = 0 {};
 };
 
 
 } } } } // namespace scy::anio::spot::api
 
 
-#endif // Anionu_Spot_API_IChannelManager_H
+#endif // Anionu_Spot_API_ChannelManager_H

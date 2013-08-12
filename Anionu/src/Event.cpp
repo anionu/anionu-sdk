@@ -9,12 +9,6 @@ namespace scy {
 namespace anio {
 
 
-Event::Event(const string& name, const string& message) :
-	name(name), message(message), severity(Event::Default), realm(Event::SpotLocal), time(::time(0)) 
-{
-}
-
-
 Event::Event(const string& name, const string& message, Severity severity, Realm realm) :
 	name(name), message(message), severity(severity), realm(realm), time(::time(0)) 
 {
@@ -97,4 +91,4 @@ Event::Realm Event::strToRealm(const string& id)
 }
 
 
-} } // namespace scy::Anionu
+} } // namespace scy::anio

@@ -24,9 +24,8 @@
 #include "Anionu/Spot/API/Config.h"
 #include "Anionu/Spot/API/IMode.h"
 #include "Anionu/Spot/API/IModule.h"
-#include "Sourcey/IConfiguration.h"
-#include "Sourcey/Util/ScopedConfiguration.h"
-#include "Poco/Format.h"
+#include "Sourcey/Configuration.h"
+#include "Sourcey/Util.h"
 
 
 namespace scy {
@@ -39,18 +38,15 @@ inline ScopedConfiguration getModeConfiguration(IMode* mode)
 {
 	api::IModule* module = dynamic_cast<api::IModule*>(mode);
 	if (!module)
-		throw Poco::Exception("Mode must implement IModule");
+		throw Exception("Mode must implement IModule");
 
-	return ScopedConfiguration(module->env()->config(), 
+	return ScopedConfiguration(module->env().config(), 
 			//
-			/// Channel Scope: channels.[name].modes.[name].[value]
-			Poco::format("channels.%s.modes.%s.", 
-				std::string(mode->channelName()), 
-				std::string(mode->modeName())),
+			// Channel Scope: channels.[name].modes.[name].[value]
+			util::format("channels.%s.modes.%s.", mode->channelName(), mode->modeName()),
 			//
-			/// Default Scope: modes.[name].[value]
-			Poco::format("modes.%s.", 
-				std::string(mode->modeName())));
+			// Default Scope: modes.[name].[value]
+			util::format("modes.%s.", mode->modeName()));
 }
 
 	
@@ -58,9 +54,9 @@ LogStream log(api::IModule* module, const char* level = "debug")
 	/// This method created a log stream which sends  
 	/// messages the Spot application logger.
 { 
-	if (module->env() == NULL) 
-		return LogStream();
-	return module->env()->logger().send(level, module->className(), module); 
+	//if (module->env() == NULL) 
+	//	return LogStream();
+	return module->env().logger().send(level, module->className(), module); 
 }
 
 
@@ -68,21 +64,3 @@ LogStream log(api::IModule* module, const char* level = "debug")
 
 
 #endif // Anionu_Spot_API_Util_H
-
-
-
-
-/*
-
-//ifdef Anionu_Spot_USING_CORE_API
-//#include "Sourcey/Signal.h"
-//#endif
-class ModeConfiguration: public ScopedConfiguration
-{
-public:
-	ModeConfiguration(IMode* mode);
-
-	//, const std::string& currentScope, const std::string& defaultScope
-
-}
-*/

@@ -4,14 +4,14 @@
 
 #include "Anionu/Spot/API/IMode.h"
 #include "Anionu/Spot/API/IModule.h"
-#include "Anionu/Spot/API/IChannel.h"
-#include "Anionu/Spot/API/IMediaManager.h"
+#include "Anionu/Spot/API/Channel.h"
+#include "Anionu/Spot/API/MediaManager.h"
 #include "Anionu/Spot/API/IFormProcessor.h"
 #include "Sourcey/Media/VideoCapture.h"
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
@@ -39,8 +39,8 @@ class CaptureMode:
 #endif
 {
 public:
-	CaptureMode(api::IEnvironment& env, const std::string& channel);
-	~CaptureMode();
+	CaptureMode(api::Environment& env, const std::string& channel);
+	virtual ~CaptureMode();
 	
 	bool activate();
 	void deactivate();
@@ -59,8 +59,8 @@ public:
 #ifdef Anionu_Spot_USING_CORE_API
 	//
 	/// IFormProcessor
-	void buildForm(symple::Form& form, symple::FormElement& element);
-	void parseForm(symple::Form& form, symple::FormElement& element);
+	void buildForm(smpl::Form& form, smpl::FormElement& element);
+	void parseForm(smpl::Form& form, smpl::FormElement& element);
 	
 	struct ConfigTest
 	{
@@ -74,11 +74,11 @@ private:
 	bool _isActive;
 	std::string _error;
 	std::string _channel;
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_CaptureMode_H

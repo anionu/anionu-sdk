@@ -8,14 +8,14 @@
 #include "Anionu/Spot/API/IModule.h"
 #include "Anionu/Spot/API/IFormProcessor.h"
 #include "Anionu/Spot/API/IMessageProcessor.h"
-#include "Anionu/Spot/API/IStreamingManager.h"
-#include "Anionu/Spot/API/IMediaManager.h"
-#include "Sourcey/Media/AVEncoder.h"
+#include "Anionu/Spot/API/StreamingManager.h"
+#include "Anionu/Spot/API/MediaManager.h"
+#include "Sourcey/Media/AVPacketEncoder.h"
 #include "Sourcey/Symple/Client.h"
 
 
 namespace scy {
-namespace anionu { 
+namespace anio { 
 namespace spot {
 
 
@@ -41,6 +41,15 @@ class MediaPlugin:
 		/// interface for procession all incoming, outgoing
 		/// and local messages passing through the Spot client.
 		///
+		/*
+	public api::IModule
+        /// IModule exposes the full core API environment.
+        /// The core API shares complex data types such as STL and
+        /// cv::VideoCapture with the application, so strict binary compatibility
+        /// between your plugin and the target Spot client is required.
+        /// This is the recommended API to use, especially for beginners.
+        ///
+		*/
 #ifdef Anionu_Spot_USING_CORE_API		
 		///
         /// The IModule interface exposes Spot's internal class structure
@@ -49,7 +58,7 @@ class MediaPlugin:
 	public api::IModule
         /// IModule exposes the full core API environment.
         /// The core API shares complex data types such as STL and
-        /// cv::VideoCapture with the application, so strict binary compatability
+        /// cv::VideoCapture with the application, so strict binary compatibility
         /// between your plugin and the target Spot client is required.
         /// This is the recommended API to use, especially for beginners.
         ///
@@ -59,11 +68,11 @@ class MediaPlugin:
 		/// The base contains only a subset of the core API features, but
 		/// since no complex types are used, only plain-old-data, you have
 		/// greater freedom to compile your plugin with any compiler and
-        /// maintain compatability between SDK versions.
+        /// maintain compatibility between SDK versions.
 #endif
 {
 public:
-	MediaPlugin();
+	MediaPlugin(api::Environment& env);
 	virtual ~MediaPlugin();
 
 	bool load();
@@ -82,29 +91,29 @@ public:
 	const char** modeNames() const;
 	
 	//
-	/// ISynchronizer
+	/// Synchronizer
 	void synchronizeTestVideo();	
 	
 	//
 	/// Core API media methods and callbacks
 #ifdef Anionu_Spot_USING_CORE_API
-	av::IPacketEncoder* createEncoder(const av::RecordingOptions& options);	
+	av::AVPacketEncoder* createEncoder(const av::RecordingOptions& options);	
 	void registerMediaFormats();
 	
-	void onInitStreamingSession(void*, api::IStreamingSession& session, bool& handled);
-	void onInitRecordingEncoder(void*, const api::RecordingOptions& options, av::IPacketEncoder*& encoder);
+	void onInitStreamingSession(void*, api::StreamingSession& session, bool& handled);
+	void onInitRecordingEncoder(void*, const api::RecordingOptions& options, api::Recorder*& encoder);
 #endif
 
 	const char* errorMessage() const;
 	const char* className() const { return "MediaPlugin"; }
 	
 protected:	
-	mutable Poco::FastMutex _mutex;
+	mutable Mutex _mutex;
 	std::string	_error;
 };
 
 
-} } } // namespace scy::anionu::Spot
+} } } // namespace scy::anio::spot
 
 
 #endif // Anionu_Spot_MediaPlugin_H

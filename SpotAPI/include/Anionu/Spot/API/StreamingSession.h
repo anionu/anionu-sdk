@@ -17,8 +17,8 @@
 //
 
 
-#ifndef Anionu_Spot_API_IStreamingSession_H
-#define Anionu_Spot_API_IStreamingSession_H
+#ifndef Anionu_Spot_API_StreamingSession_H
+#define Anionu_Spot_API_StreamingSession_H
 
 
 #include "Sourcey/Base.h"
@@ -86,13 +86,21 @@ struct StreamingOptions: public av::EncoderOptions
 };
 
 
-// ---------------------------------------------------------------------
+typedef PacketProcessor StreamEncoder; 
+	/// The stream encoder type, generally an av::IEncoder instance.
+	/// May become a full type in the future.
+
+
 //
+// Candidate
+//
+
+
 struct Candidate
 {
 	std::string type; 
-		/// Candidate type is implementation defined.
-		/// Currently used are lan, host and relay.
+		// Candidate type is implementation defined.
+		// Currently used are lan, host and relay.
 
 	net::Address address;
 	std::string uri; 
@@ -113,8 +121,11 @@ struct Candidate
 typedef std::vector<Candidate> CandidateList;
 
 
-// ---------------------------------------------------------------------
 //
+// Streaming State
+//
+
+
 struct StreamingState: public State 
 {
 	enum Type 
@@ -143,31 +154,36 @@ struct StreamingState: public State
 };
 
 
-class IStreamingSession: public StatefulSignal<api::StreamingState>
+//
+// Streaming Session
+//
+
+
+class StreamingSession: public Stateful<api::StreamingState>
 {
 public:
 	virtual void addCandidate(const std::string& type, 
 							  const net::Address& address, 
 							  const std::string& uri = "") = 0;
-		/// Adds a streaming candidate.
+		// Adds a streaming candidate.
 
 	virtual bool removeCandidate(const std::string& type, 
 							     const net::Address& address) = 0;
-		/// Removes a streaming candidate.
+		// Removes a streaming candidate.
 
 	virtual std::string token() const = 0;
 	virtual StreamingOptions& options() = 0;
 	virtual PacketStream& stream() = 0;
-	virtual PacketStreamList connections() const = 0;
+	virtual PacketStreamVec connections() const = 0;
 	virtual CandidateList candidates() const = 0;
 
 protected:
-	virtual ~IStreamingSession() = 0 {};
-		/// The session is terminated(), never deleted.
+	virtual ~StreamingSession() = 0 {};
+		// The session is terminated(), never deleted.
 };
 
 
 } } } } // namespace scy::anio::spot::api
 
 
-#endif // Anionu_Spot_API_IStreamingSession_H
+#endif // Anionu_Spot_API_StreamingSession_H
