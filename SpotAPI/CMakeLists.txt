@@ -1,7 +1,7 @@
 # SpotAPI is not header only, nothing to build
 ask_build_sourcey_module(SpotAPI)
 if(BUILD_MODULES AND BUILD_MODULE_SpotAPI) 
-  include_dependency(Poco REQUIRED)
+  #include_dependency(Poco REQUIRED)
   include_dependency(OpenSSL REQUIRED)
   include_dependency(OpenCV REQUIRED)
   include_dependency(RtAudio REQUIRED)

@@ -9,27 +9,19 @@ namespace scy {
 namespace anio {
 
 
-Event::Event(const string& name, const string& message, Severity severity, Realm realm) :
-	name(name), message(message), severity(severity), realm(realm), time(::time(0)) 
+Event::Event(const std::string& name, const std::string& message, Severity severity, Origin origin) :
+	name(name), message(message), severity(severity), origin(origin), time(std::time(0)) 
 {
-}
-
-
-string Event::formatTime(const string& fmt, int timeZoneDifferential) const
-{
-	return DateTimeFormatter::format(
-		Timestamp::fromEpochTime(time),
-			fmt, timeZoneDifferential);
 }
 
 		
-string Event::severityStr() const 
+std::string Event::severityStr() const 
 {
 	return severityToStr(severity);
 }
 
 
-string Event::severityToStr(Severity id) 
+std::string Event::severityToStr(Severity id) 
 { 	
 	switch (id) {
 	case Default:	return "Default";
@@ -43,7 +35,7 @@ string Event::severityToStr(Severity id)
 }
 
 
-Event::Severity Event::strToSeverity(const string& id) 
+Event::Severity Event::strToSeverity(const std::string& id) 
 { 	
 	if (id == "Default")
 		return Default;
@@ -60,25 +52,26 @@ Event::Severity Event::strToSeverity(const string& id)
 }
 
 		
-string Event::realmStr() const 
+std::string Event::originStr() const 
 {
-	return realmToStr(realm);
+	return originToStr(origin);
 }
 
 
-string Event::realmToStr(Realm id) 
+std::string Event::originToStr(Origin id) 
 { 	
 	switch (id) {
 	case SpotLocal:		return "Spot Local";
 	case SpotRemote:	return "Spot Remote";
 	case Dashboard:		return "Dashboard";
+	case External:		return "External";
 	}
-	assert(0 && "unknown realm");
+	assert(0 && "unknown origin");
 	return "Spot Local";
 }
 
 
-Event::Realm Event::strToRealm(const string& id) 
+Event::Origin Event::strToOrigin(const std::string& id) 
 { 	
 	if (id == "Spot Local")
 		return SpotLocal;
@@ -86,7 +79,9 @@ Event::Realm Event::strToRealm(const string& id)
 		return SpotRemote;
 	else if (id == "Dashboard")
 		return Dashboard;
-	assert(0 && "unknown realm");
+	else if (id == "External")
+		return External;
+	assert(0 && "unknown origin");
 	return SpotLocal;
 }
 

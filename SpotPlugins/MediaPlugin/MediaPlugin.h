@@ -23,7 +23,7 @@ class MediaPlugin:
 	/// Define the MediaPlugin class.
 	///
 	/// Note that the plugin class name must match the "id" of
-	/// the plugin specified in the accompanying manifest.json.
+	/// the plugin specified in the accompanying plugin.json.
 	///
 	public api::IPlugin,
 		/// The IPlugin interface is bare minimum required by Spot

@@ -33,8 +33,9 @@ namespace spot {
 namespace api { 
 
 
-// Forward declare base API interfaces 
-// to be included as required.
+// Forward declare base API interfaces.
+// Each module resides in it's own header file,
+// so interfaces can be included as required.
 class IEventManagerBase;
 class MediaManagerBase;
 class ClientBase;
@@ -52,7 +53,8 @@ class EnvironmentBase
 	/// This means that you should be able to use pretty much any compiler to build
 	/// Spot plugins, so long as you ONLY link with the base API environment.
 	///
-	/// Use IModuleBase to include the base API in your plugins.
+	/// Do not use this class directly, extend from IModuleBase which exposes a
+	/// reference to the EnvironmentBase instance for use by plugins.
 {
 public:
 	virtual api::ClientBase& clientBase() = 0;
@@ -66,7 +68,7 @@ public:
 	virtual const char* cVersion() const = 0;
 		// The currently installed Spot package version.
 
-	virtual const char* cStoragePath() const = 0;
+	virtual const char* cStorageDir() const = 0;
 		// The storage path configured for the current user session.
 		// Returns the default path if no session is available.
 		
@@ -75,9 +77,7 @@ protected:
 };
 
 
-// ---------------------------------------------------------------------
-//
-#ifdef Anionu_Spot_USING_CORE_API
+#ifdef Anionu_Spot_USING_CORE_API // Core API
 //
 // Forward declare core API interfaces.
 class StreamingManager;
@@ -139,7 +139,7 @@ public:
 		// The Spot application logger.
 
 	virtual std::string version() const = 0;
-	virtual std::string storagePath() const = 0;
+	virtual std::string storageDir() const = 0;
 		
 protected:
 	virtual ~Environment() = 0 {};

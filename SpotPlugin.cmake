@@ -38,6 +38,18 @@ macro(define_spot_plugin name)
     endif()
     set_target_properties(${name} PROPERTIES
       DEBUG_POSTFIX "${LibSourcey_DEBUG_POSTFIX}")
+  
+    if(MSVC)
+      # Temporary workaround for "error LNK2026: module unsafe for SAFESEH image"
+      # when compiling with certain externally compiled libraries with VS2012, 
+      # such as http://ffmpeg.zeranoe.com/builds/
+      # This disables safe exception handling by default.
+      IF(${_MACHINE_ARCH_FLAG} MATCHES X86)
+        SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
+        SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
+        SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /SAFESEH:NO")
+      ENDIF()
+    endif()
     
     #message(${LibSourcey_INCLUDE_LIBRARIES})
     target_link_libraries(${name} ${LibSourcey_INCLUDE_LIBRARIES}) 

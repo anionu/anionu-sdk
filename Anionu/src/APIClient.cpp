@@ -43,19 +43,19 @@ namespace anio {
 APIClient::APIClient() :
 	_methods(*this)
 {
-	log("trace") << "Creating" << endl;
+	log("trace") << "Create" << endl;
 	_methods.load();
 }
 
 
 APIClient::~APIClient()
 {
-	log("trace") << "Destroying" << endl;
+	log("trace") << "Destroy" << endl;
 	//cancelTransactions();
 }
 
 
-void APIClient::setCredentials(const string& username, const string& password, const string& endpoint) 
+void APIClient::setCredentials(const std::string& username, const std::string& password, const std::string& endpoint) 
 { 
 	log("trace") << "Set credentials for " << endpoint << endl;
 	Mutex::ScopedLock lock(_mutex);
@@ -73,8 +73,8 @@ APIRequest* APIClient::createRequest(const APIMethod& method)
 }
 
 	
-APIRequest* APIClient::createRequest(const string& method, 
-									 const string& format, 
+APIRequest* APIClient::createRequest(const std::string& method, 
+									 const std::string& format, 
 									 const StringMap& params)
 {
 	return createRequest(methods().get(method, format, params));
@@ -82,8 +82,8 @@ APIRequest* APIClient::createRequest(const string& method,
 */
 
 
-APITransaction* APIClient::call(const string& method, 
-								const string& format, 
+APITransaction* APIClient::call(const std::string& method, 
+								const std::string& format, 
 								const StringMap& params)
 {
 	//return call(createRequest(method, format, params));
@@ -135,8 +135,8 @@ APITransaction* APIClient::call(APIRequest* request)
 }
 
 
-AsyncTransaction* APIClient::callAsync(const string& method, 
-									   const string& format, 
+AsyncTransaction* APIClient::callAsync(const std::string& method, 
+									   const std::string& format, 
 									   const StringMap& params)
 {
 	return callAsync(createRequest(method, format, params));
@@ -234,28 +234,28 @@ void APIMethods::load()
 		Mutex::ScopedLock lock(_mutex); 					
 		json::Reader reader;
 		if (!reader.parse(APIv1, *this))
-			throw Exception(reader.getFormatedErrorMessages());
+			throw std::runtime_error(reader.getFormatedErrorMessages());
 		traceL() << "Loaded API Methods: " << json::stringify(*this, true) << endl;
 	} 
-	catch (Exception& exc) 
+	catch (std::exception& exc/*Exception& exc*/) 
 	{
-		errorL() << "API Load Error: " << exc.message() << endl;
-		exc.rethrow();
+		errorL() << "API Load Error: " << exc.what()/*message()*/ << endl;
+		throw exc;/*exc.rethrow();*/
 	}  
 }
 
 
-APIMethod APIMethods::get(const string& name, const string& format, const StringMap& params)
+APIMethod APIMethods::get(const std::string& name, const std::string& format, const StringMap& params)
 {	
 	if (!loaded())
-		throw Exception("Anionu API methods not loaded.");
+		throw std::runtime_error("Anionu API methods not loaded.");
 	
 	APIMethod method;
 	try
 	{			
 		Mutex::ScopedLock lock(_mutex); 	
 		//traceL("APIMethods") << "Get: " << name << endl;	
-		for (json::ValueIterator it = this->begin(); it != this->end(); it++) {	
+		for (auto it = this->begin(); it != this->end(); it++) {	
 			json::Value& meth = (*it);		
 			//traceL() << "Get API Method: " << json::stringify(meth, true) << endl;
 			if (meth.isObject() &&
@@ -270,23 +270,23 @@ APIMethod APIMethods::get(const string& name, const string& format, const String
 		}
 
 		if (method.name.empty())
-			throw Exception("Unknown API method: " + name);
+			throw std::runtime_error("Unknown API method: " + name);
 
 		// Update the format and interpolate parameters
 		method.format(format);
 		method.interpolate(params);
 	}
-	catch (Exception& exc)
+	catch (std::exception& exc/*Exception& exc*/)
 	{
-		errorL("APIMethods") << "Get Error: " << exc.message() << endl;
-		exc.rethrow();
+		errorL("APIMethods") << "Get Error: " << exc.what()/*message()*/ << endl;
+		throw exc;/*exc.rethrow();*/
 	}
 	
 	return method;
 }
 
 
-void APIMethods::print(ostream& os) const
+void APIMethods::print(std::ostream& os) const
 {
 	json::StyledWriter writer;
 	os << writer.write(*this);
@@ -305,7 +305,7 @@ APIMethod::APIMethod() :
 
 void APIMethod::interpolate(const StringMap& params) 
 {
-	string path = url.path();
+	std::string path = url.path();
 	for (StringMap::const_iterator it = params.begin(); it != params.end(); ++it) {	
 		util::replaceInPlace(path, (*it).first, (*it).second);
 	}
@@ -314,9 +314,9 @@ void APIMethod::interpolate(const StringMap& params)
 }
 
 
-void APIMethod::format(const string& format) 
+void APIMethod::format(const std::string& format) 
 {
-	string path = url.path();
+	std::string path = url.path();
 	util::replaceInPlace(path, ":format", format.c_str());
 	url = http::URL(url.scheme(), url.authority(), path);
 	//url.updatePath(path);
@@ -351,13 +351,13 @@ void APIRequest::prepare()
 APITransaction::APITransaction(APIClient* client, const APIMethod& method) : //APIRequest* request
 	http::ClientConnection(client, method.url) //.getHost(), method.url.getPort()
 {
-	traceL("APITransaction") << "Creating" << endl;
+	traceL("APITransaction") << "Create" << endl;
 }
 
 
 APITransaction::~APITransaction()
 {
-	traceL("APITransaction") << "Destroying" << endl;
+	traceL("APITransaction") << "Destroy" << endl;
 }
 
 

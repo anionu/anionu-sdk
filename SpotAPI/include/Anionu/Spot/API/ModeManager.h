@@ -46,7 +46,7 @@ public:
 	virtual void deactivate(const std::string& mode, const std::string& channel) = 0;
 	virtual bool isActive(const std::string& mode, const std::string& channel) = 0;
 
-	virtual StringVec types() const = 0;
+	virtual std::vector<std::string> types() const = 0;
 			
 	Signal<const std::string&> ModeRegistered;
 	Signal<const std::string&> ModeUnregistered;

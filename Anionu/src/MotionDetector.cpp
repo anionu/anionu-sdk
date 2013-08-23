@@ -75,7 +75,7 @@ void MotionDetector::process(IPacket& packet)
 	}
 	
 	if (mpacket->mat == NULL)
-		throw Exception("Video packets must contain an OpenCV image.");
+		throw std::runtime_error("Video packets must contain an OpenCV image.");
 
 	VideoPacket opacket;
 	cv::Mat& source = *mpacket->mat;
@@ -94,11 +94,14 @@ void MotionDetector::process(IPacket& packet)
 		_mhi.convertTo(mask, CV_8UC1, 255.0 / _options.stableMotionLifetime, 
 			(_options.stableMotionLifetime - _timestamp) * (255.0 / _options.stableMotionLifetime));
 
+#if 0
+		cv::imshow("Mask", mask);
+		cv::imshow("MHI", _mhi);
+		cv::waitKey(10);
+#endif
+
 		opacket = MatrixPacket(&mask);
 		_processing = false;	
-		//cv::imshow("Mask", mask);
-		//cv::imshow("MHI", _mhi);
-		//cv::waitKey(10);
 	}
 
 	// NOTE: Dispatched images are GRAY8 so encoders will
@@ -140,7 +143,7 @@ void MotionDetector::computeMotionState()
 	//	<< "Update Motion State: " << state().toString() << endl;	
 	Mutex::ScopedLock lock(_mutex); 
 
-	time_t currentTime = time(0);
+	std::time_t currentTime = time::now();
 		
 	switch (state().id()) {
 	case MotionDetectorState::Idle:
@@ -155,8 +158,7 @@ void MotionDetector::computeMotionState()
 		break;
 	case MotionDetectorState::Waiting: 
 		{
-			// If the timer is expired then set our state back
-			// to Vigilant...
+			// If the timer is expired then set our state back to Vigilant...
 			if (currentTime > _motionCanStartAt) {				
 				setState(this, MotionDetectorState::Vigilant);			
 				debugL("MotionDetector", this) << "Updating State: Set => Vigilant" << endl;
@@ -165,8 +167,7 @@ void MotionDetector::computeMotionState()
 		break;
 	case MotionDetectorState::Vigilant:
 		{
-			// If motion threshold is exceeded then set our state
-			// to Triggered...
+			// If motion threshold is exceeded then set our state to Triggered...
 			if (_motionLevel > _options.motionThreshold) {
 				debugL("MotionDetector", this) << "Updating State: Motion Detected: " 
 					<< _motionLevel << ">" << _options.motionThreshold << endl;
@@ -204,16 +205,14 @@ void MotionDetector::computeMotionState()
 		break;
 	case MotionDetectorState::Triggered: 
 		{
-			// If the timer is expired then set our state back
-			// to Waiting...
+			// If the timer is expired then set our state back to Waiting...
 			if (currentTime > _motionSegmentEndingAt) {				
 				_motionCanStartAt = currentTime + _options.postMotionEndedDelay;
 				setState(this, MotionDetectorState::Waiting);
 				debugL("MotionDetector", this) << "Updating State: Triggered => Waiting" << endl;
 			}
 
-			// If motion threshold is exceeded while triggered
-			// then extend the timer...
+			// If motion threshold is exceeded while triggered then extend the timer...
 			else if (_motionLevel > _options.motionThreshold) {
 				_motionSegmentEndingAt = min<time_t>(
 					currentTime + _options.minTriggeredDuration, 				

@@ -40,10 +40,10 @@ namespace api {
 class IFormProcessor
 {
 public:			
-	virtual void buildForm(smpl::Form& form, smpl::FormElement& element) {};
+	virtual void buildForm(smpl::Form& /* form */, smpl::FormElement& /* element */) {};
 		// Builds the configuration form for this module.
 
-	virtual void parseForm(smpl::Form& form, smpl::FormElement& element) {};
+	virtual void parseForm(smpl::Form& /* form */, smpl::FormElement& /* element */) {};
 		// Parses the configuration form for this module.
 		// Errors can be added to any invalid FormFields to
 		// resubmit the form to the client for correction.

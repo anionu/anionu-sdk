@@ -42,8 +42,8 @@ bool RecordingMode::activate()
 		startRecording();
 		_isActive = true;
 	}
-	catch (Exception& exc) {
-		_error = exc.message();
+	catch (std::exception/*Exception*/& exc) {
+		_error = std::string(exc.what())/*message()*/;
 		log("Activation failed: " + _error, "error");
 		return false;
 	}
@@ -61,8 +61,8 @@ void RecordingMode::deactivate()
 			stopRecording();
 		_isActive = false;
 	}
-	catch (Exception& exc) {
-		log("Deactivation failed: " + exc.message(), "error");
+	catch (std::exception/*Exception*/& exc) {
+		log("Deactivation failed: " + std::string(exc.what())/*message()*/, "error");
 	}
 }
 
@@ -90,7 +90,7 @@ void RecordingMode::startRecording()
 {	
 	log("Start Recording");
 	if (isRecording())
-		throw Exception("Start recording failed: Recorder already active.");
+		throw std::runtime_error("Start recording failed: Recorder already active.");
 	
 	Mutex::ScopedLock lock(_mutex); 
 
@@ -115,7 +115,7 @@ void RecordingMode::stopRecording()
 {	
 	log("Stop Recording");
 	if (!isRecording())		
-		throw Exception("Stop recording failed: Recorder not active.");
+		throw std::runtime_error("Stop recording failed: Recorder not active.");
 	
 	Mutex::ScopedLock lock(_mutex); 
 	env().media().stopRecording(_recordingToken, true);
@@ -124,7 +124,7 @@ void RecordingMode::stopRecording()
 }
 
 
-void RecordingMode::onRecordingStopped(void* sender, RecorderStream& stream)
+void RecordingMode::onRecordingStopped(void*, RecorderStream& stream)
 {
 	if (isActive() &&
 		recordingToken().empty() || 

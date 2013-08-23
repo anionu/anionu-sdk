@@ -21,7 +21,7 @@ namespace spot {
 	using namespace api;
 
 
-SurveillanceMode::SurveillanceMode(Environment& env, const string& channel) :
+SurveillanceMode::SurveillanceMode(Environment& env, const std::string& channel) :
 	api::IModule(env), _channel(channel), _isActive(false), _isConfiguring(false)
 {
 	log("Creating");
@@ -46,8 +46,8 @@ bool SurveillanceMode::activate()
 	try {
 		startMotionDetector();
 	}
-	catch (Exception& exc) {
-		_error = exc.message();
+	catch (std::exception/*Exception*/& exc) {
+		_error = std::string(exc.what())/*message()*/;
 		log("Activation failed: " + _error, "error");
 		return false;
 	}
@@ -62,8 +62,8 @@ void SurveillanceMode::deactivate()
 		stopRecording();
 		stopMotionDetector();
 	}
-	catch (Exception& exc) {
-		log("Deactivation failed: " + exc.message(), "error");
+	catch (std::exception/*Exception*/& exc) {
+		log("Deactivation failed: " + std::string(exc.what())/*message()*/, "error");
 	}
 }
 
@@ -91,7 +91,7 @@ void SurveillanceMode::startMotionDetector()
 {
 	Mutex::ScopedLock lock(_mutex); 
 	if (_motionDetector.isActive())
-		throw Exception("Cannot start: Motion detector already active.");
+		throw std::runtime_error("Cannot start: Motion detector already active.");
 
 	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
@@ -110,7 +110,7 @@ void SurveillanceMode::stopMotionDetector()
 {
 	Mutex::ScopedLock lock(_mutex); 
 	if (!_motionDetector.isActive())	
-		throw Exception("Cannot stop: Motion detector not active.");
+		throw std::runtime_error("Cannot stop: Motion detector not active.");
 
 	_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
 	_motionStream.close();
@@ -121,7 +121,7 @@ void SurveillanceMode::startRecording()
 {	
 	log("Start Recording");
 	if (isRecording())
-		throw Exception("Start recording failed: Recorder already active.");
+		throw std::runtime_error("Start recording failed: Recorder already active.");
 	
 	Mutex::ScopedLock lock(_mutex); 
 	RecordingOptions options = env().media().getRecordingOptions(_channel);
@@ -136,7 +136,7 @@ void SurveillanceMode::stopRecording()
 {	
 	log("Stop Recording");
 	if (!isRecording())		
-		throw Exception("Stop recording failed: Recorder not active.");
+		throw std::runtime_error("Stop recording failed: Recorder not active.");
 
 	Mutex::ScopedLock lock(_mutex); 
 	env().media().stopRecording(_recordingToken, true);
@@ -155,7 +155,7 @@ TimedToken* SurveillanceMode::createStreamingToken(long duration)
 }
 
 	
-TimedToken* SurveillanceMode::getStreamingToken(const string& token)
+TimedToken* SurveillanceMode::getStreamingToken(const std::string& token)
 {
 	Mutex::ScopedLock lock(_mutex);
 	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
@@ -166,7 +166,7 @@ TimedToken* SurveillanceMode::getStreamingToken(const string& token)
 }
 
 
-bool SurveillanceMode::removeStreamingToken(const string& token)
+bool SurveillanceMode::removeStreamingToken(const std::string& token)
 {
 	Mutex::ScopedLock lock(_mutex);
 	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
@@ -179,7 +179,7 @@ bool SurveillanceMode::removeStreamingToken(const string& token)
 }
 
 
-void SurveillanceMode::onMotionStateChange(void* sender, anio::MotionDetectorState& state, const anio::MotionDetectorState&)
+void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& state, const anio::MotionDetectorState&)
 {
 	log("Motion State Changed: " + state.toString());
 	{
@@ -264,13 +264,13 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 		else {
 			log("Configuration Media Stream Timed Out");
 			removeStreamingToken(session.token());
-			throw Exception("Surveillance Mode media preview has timed out.");
+			throw std::runtime_error("Surveillance Mode media preview has timed out.");
 		}
 	}
 }
 
 
-void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& session, PacketStream& stream, bool& handled)
+void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& session, PacketStream& /* stream */, bool& /* handled */)
 {	
 	log("Initialize Media Connection: " + session.token());		
 	
@@ -478,7 +478,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 }
 
 
-void SurveillanceMode::parseForm(smpl::Form& form, smpl::FormElement& element)
+void SurveillanceMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
 	log("Parsing Form");	 
 	smpl::FormField field;

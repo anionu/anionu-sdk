@@ -27,12 +27,12 @@ public:
 	SurveillanceMultipartAdapter(anio::MotionDetector& detector) : 
 		PacketProcessor(Emitter), contentType("image/jpeg"), detector(detector)
 	{
-		traceL("SurveillanceMultipartAdapter", this) << "Creating" << std::endl;
+		traceL("SurveillanceMultipartAdapter", this) << "Create" << std::endl;
 	}
 	
 	virtual ~SurveillanceMultipartAdapter() 
 	{
-		traceL("SurveillanceMultipartAdapter", this) << "Destroying" << std::endl;
+		traceL("SurveillanceMultipartAdapter", this) << "Destroy" << std::endl;
 	}
 	
 	virtual void writeChunkHeader(std::ostringstream& ost)
@@ -76,14 +76,14 @@ public:
 /*
 
 		if (!packet.hasArray())
-			throw Exception("Incompatible packet type");
+			throw std::runtime_error("Incompatible packet type");
 
 		try {
 			RawPacket& raw = dynamic_cast<RawPacket&>(packet);
 		}
 		catch(const std::bad_cast&) {
 			// Must be a RawPacket type
-			throw Exception("Incompatible packet type");
+			throw std::runtime_error("Incompatible packet type");
 		}
 class SurveillanceMultipartAdapter: public scy::http::MultipartAdapter
 {

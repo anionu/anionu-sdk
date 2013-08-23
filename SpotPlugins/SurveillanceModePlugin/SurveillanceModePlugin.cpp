@@ -1,12 +1,6 @@
 #include "SurveillanceModePlugin.h"
 #include "SurveillanceMode.h"
-
 #include "Anionu/Spot/API/Environment.h"
-
-
-#include "Anionu/Spot/API/StreamingManager.h"
-
-using namespace std;
 
 
 namespace scy {
@@ -14,7 +8,11 @@ namespace anio {
 namespace spot {
 
 
-SPOT_CORE_PLUGIN(SurveillanceModePlugin, "Surveillance Mode Plugin", "0.9.3")
+SPOT_CORE_PLUGIN(
+	SurveillanceModePlugin, 
+	"Surveillance Mode Plugin",
+	"0.9.3"
+)
 
 
 SurveillanceModePlugin::SurveillanceModePlugin(api::Environment& env) :

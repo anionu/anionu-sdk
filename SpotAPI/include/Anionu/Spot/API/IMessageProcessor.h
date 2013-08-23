@@ -43,16 +43,16 @@ class IMessageProcessor
 	/// and local messages passing through the Spot client.
 {
 public:		
-	virtual bool onMessage(const char* message) { return false; };
+	virtual bool onMessage(const char* /* message */) { return false; };
 		// Handle incoming messages.
 		// Return true if the message has been responded to.
 
-	virtual bool onCommand(const char* command) { return false; };
+	virtual bool onCommand(const char* /* command */) { return false; };
 		// Handle incoming commands.
 		// Return true if the command has been handled.
 
-	virtual void onPresence(const char* presence) {};
-	virtual void onEvent(const char* event) {};
+	virtual void onPresence(const char* /* presence */) {};
+	virtual void onEvent(const char* /* event */) {};
 };
 
 

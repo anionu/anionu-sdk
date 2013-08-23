@@ -23,7 +23,7 @@
 
 #include "Sourcey/Stateful.h"
 #include "Sourcey/Signal.h"
-#include "Sourcey/Interfaces.h"
+#include "Sourcey/Interface.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Timer.h"
 #include "Sourcey/Media/VideoCapture.h"

@@ -3,7 +3,8 @@
 
 
 #include "Anionu/Config.h"
-#include "Sourcey/DateTime.h"
+#include <ctime>
+#include <string>
 
 
 namespace scy { 
@@ -25,33 +26,30 @@ struct Event
 		High			// High threat level
 	};
 
-	enum Realm
+	enum Origin
 	{
-		SpotLocal = 0,	// Triggered by a command from the local user
+		SpotLocal = 0,	// Triggered by a command from the local user interface
 		SpotRemote,		// Triggered by a command from a remote peer
-		Dashboard		// Triggered from the Anionu dashboard
+		Dashboard,		// Originates from the Anionu dashboard (incoming events)
+		External		// Originates from an external third party or API consumer
 	};
 
 	Event(const std::string& name = "", const std::string& message = "", 	
-		Severity severity = Default, Realm realm = SpotLocal);
+		Severity severity = Default, Origin origin = SpotLocal);
 	
 	std::string name;
 	std::string message;
+	std::time_t time;
 	Severity severity;
-	Realm realm;
-	time_t time;
-		
-	std::string formatTime(
-		const std::string& fmt = DateTimeFormat::ISO8601_FORMAT,
-		int timeZoneDifferential = DateTimeFormatter::UTC) const;
+	Origin origin;
 
 	std::string severityStr() const;
 	static std::string severityToStr(Severity id);
 	static Severity strToSeverity(const std::string& id);	
 
-	std::string realmStr() const;
-	static std::string realmToStr(Realm id);
-	static Realm strToRealm(const std::string& id);
+	std::string originStr() const;
+	static std::string originToStr(Origin id);
+	static Origin strToOrigin(const std::string& id);
 }; 
 
 

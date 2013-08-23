@@ -68,7 +68,7 @@ public:
 		//
 		// Any memory allocated by the library should be freed here.
 
-	virtual void setPath(const char* path) {};
+	virtual void setPath(const char* path) { (void)path; };
 		// The full path to the plugin shared library will be set
 		// by Spot before the load() method is called.
 		// Override this method if you want access to the path.

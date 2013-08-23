@@ -22,9 +22,10 @@
 
 	
 #define Anionu_Spot_USING_CORE_API
-	// This is to specify that we are creating an ABI compatible plugin.
-	// The current compiler must match the compiler used to create the original Spot binary.
-	// If the version and dependency check fail the build will fail with an error.
+	// This specifies that we are creating plugins using the ABI strict core interface.
+	// When using the core API, your compiler and dependencies must match the compiler
+	// used to create the original Spot binary. If the version and dependency check 
+	// fail the build will fail with an error. See Compatibility.txt for more information.
 
 
 #ifdef Anionu_Spot_USING_CORE_API	
@@ -36,8 +37,9 @@
 	// VS 2008 (VC9): 1500
 	// VS 2010 (VC10): 1600
 	// VS 2012 (VC11): 1700
+	// VS 2013 (VC12): 1800
 	#if _WIN32
-		#if _MSC_VER != 1600
+		#if _MSC_VER != 1700
 			#error "Must use MS Visual Studio 2010 to compile binary \
 				compatible plugins using the current API version."
 		#endif
@@ -60,18 +62,18 @@ namespace api {
 
 	
 // Current Spot SDK version number.
-// This version is be bumped whenever the API or
-// dependencies change, breaking binary compatibility.
-// Spot plugins must be built with the same compiler,
-// dependencies, and SDK version as the target Spot client.
-// See Compatibility.txt for more information.
+// This version is bumped whenever any ABI breaking are
+// introduced either by changes to the API or dependencies.
 //
-static const char* SDKVersion = "0.5.1";
+static const char* SDKVersion = "0.5.2";
+static const int SDKVersionNumber = 0x000502;
 
 
-// Date Format
+// Date Format (ISO8601)
+// Always use this date format for consistency.
 //
-static const char* DateFormat = "%Y-%m-%d %H:%M:%S %Z";
+//static const char* DateFormat = "%Y-%m-%dT%H:%M:%SZ";
+//static const char* DateFormatISO8601("%Y-%m-%dT%H:%M:%S%z");
 
 
 } } } } // namespace scy::anio::spot::api

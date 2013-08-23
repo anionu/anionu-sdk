@@ -91,6 +91,8 @@ public:
 class IDataMode
 {	
 public:
+	typedef std::map<std::string, std::string> DataMap;
+
 	virtual ~IDataMode() = 0 {};
 
 	void setData(const std::string& name, const std::string& value)
@@ -106,7 +108,7 @@ public:
 	{
 		{
 			Mutex::ScopedLock lock(_mutex);	
-			StringMap::iterator it = _data.find(name);
+			DataMap::iterator it = _data.find(name);
 			if (it != _data.end()) {
 				_data.erase(it);
 			}
@@ -123,19 +125,19 @@ public:
 		DataChanged.emit(this, data());
 	}
 
-	StringMap data() const
+	DataMap data() const
 	{ 
 		Mutex::ScopedLock lock(_mutex);	
 		return _data; 
 	}
 	
-	Signal<const StringMap&> DataChanged;
+	Signal<const DataMap&> DataChanged;
 		// Signals the outside application when
 		// internal mode data changes.
 
 protected:		
 	mutable Mutex	_mutex;	
-	StringMap _data;
+	DataMap _data;
 }; 
 
 #endif /// Anionu_Spot_USING_CORE_API
@@ -162,7 +164,7 @@ protected:
 #include "Sourcey/Configuration.h"
 #include "Anionu/Spot/API/Environment.h"
 #include "Anionu/Spot/API/Channel.h"
-//#include "Poco/Net/NVHash.h"
+//#include "Poco/Net/NVCollection.h"
 #include "Poco/Format.h"
 #endif
 */
@@ -200,7 +202,7 @@ struct ModeState: public State
 		return "undefined"; 
 	};
 };	
-typedef NVHash ModeOptions;
+typedef NVCollection ModeOptions;
 */
 	
 /*
@@ -313,7 +315,7 @@ protected:
 	//ScopedConfiguration	_config;
 	//ModeOptions			_options;
 	std::string			_name;
-	//StringMap			_data;
+	//DataMap			_data;
 }; 
 
 

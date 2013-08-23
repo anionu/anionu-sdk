@@ -38,7 +38,7 @@ inline ScopedConfiguration getModeConfiguration(IMode* mode)
 {
 	api::IModule* module = dynamic_cast<api::IModule*>(mode);
 	if (!module)
-		throw Exception("Mode must implement IModule");
+		throw std::runtime_error("Mode must implement IModule");
 
 	return ScopedConfiguration(module->env().config(), 
 			//

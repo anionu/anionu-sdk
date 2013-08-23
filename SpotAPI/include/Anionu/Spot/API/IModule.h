@@ -71,6 +71,12 @@ public:
 protected:
 	virtual ~IModuleTmpl() = 0 {};	
 	IEnvType& _env;
+
+private:
+	IModuleTmpl(const IModuleTmpl&); // = delete;
+	IModuleTmpl(IModuleTmpl&&); // = delete;
+	IModuleTmpl& operator=(const IModuleTmpl&); // = delete;
+	IModuleTmpl& operator=(IModuleTmpl&&); // = delete;
 };
 
 

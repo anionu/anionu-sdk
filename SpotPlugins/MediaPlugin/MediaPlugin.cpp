@@ -73,11 +73,11 @@ bool MediaPlugin::load()
 		env().clientBase().createEvent("Media Plugin Activated", message.c_str(), 3);
 #endif			
 	}
-	catch (Exception& exc) 
+	catch (std::exception/*Exception*/& exc) 
 	{
 		// Swallow exceptions for ABI compatibility reasons.
 		// Set the error message to display to the user.
-		_error = exc.message();
+		_error = std::string(exc.what())/*message()*/;
 		log("Load failed: " + _error, "error");
 
 		// Return false to put the plugin in error state.
@@ -127,7 +127,7 @@ void MediaPlugin::synchronizeTestVideo()
 }
 
 
-bool MediaPlugin::onMessage(const char* message)
+bool MediaPlugin::onMessage(const char* /* message */)
 {
 	// Parse the Message and do something with it:
 	// smpl::Message m;
@@ -140,7 +140,7 @@ bool MediaPlugin::onMessage(const char* message)
 }
 
 
-bool MediaPlugin::onCommand(const char* command)
+bool MediaPlugin::onCommand(const char* /* command */)
 {
 	// Parse the Command and do something with it:
 	// smpl::Command c;
@@ -153,7 +153,7 @@ bool MediaPlugin::onCommand(const char* command)
 }
 
 
-void MediaPlugin::onEvent(const char* event)
+void MediaPlugin::onEvent(const char* /* event */)
 {
 	// Parse the Event and do something with it:
 	// smpl::Event e;
@@ -162,7 +162,7 @@ void MediaPlugin::onEvent(const char* event)
 }
 
 
-void MediaPlugin::onPresence(const char* presence) 
+void MediaPlugin::onPresence(const char* /* presence */) 
 {
 	// Parse the Presence and do something with it:
 	// smpl::Message p;
@@ -265,8 +265,8 @@ av::AVPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& opti
 		encoder = new av::AVPacketEncoder(options);
 		encoder->initialize();
 	}
-	catch (Exception& exc) {
-		log("Encoder Error: " + exc.message(), "error");
+	catch (std::exception/*Exception*/& exc) {
+		log("Encoder Error: " + std::string(exc.what())/*message()*/, "error");
 		if (encoder)
 			delete encoder;
 		encoder = NULL;
