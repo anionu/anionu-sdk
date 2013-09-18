@@ -45,10 +45,11 @@ bool SurveillanceMode::activate()
 	log("Activating");	
 	try {
 		startMotionDetector();
+		_isActive = true;
 	}
-	catch (std::exception/*Exception*/& exc) {
-		_error = std::string(exc.what())/*message()*/;
-		log("Activation failed: " + _error, "error");
+	catch (std::exception& exc) {
+		_error = std::string(exc.what());
+		log("Activation error: " + _error, "error");
 		return false;
 	}
 	return true;
@@ -59,11 +60,12 @@ void SurveillanceMode::deactivate()
 {
 	log("Deactivating");
 	try {
+		_isActive = true;
 		stopRecording();
 		stopMotionDetector();
 	}
-	catch (std::exception/*Exception*/& exc) {
-		log("Deactivation failed: " + std::string(exc.what())/*message()*/, "error");
+	catch (std::exception& exc) {
+		log("Deactivation error: " + std::string(exc.what()), "error");
 	}
 }
 
@@ -71,8 +73,8 @@ void SurveillanceMode::deactivate()
 void SurveillanceMode::loadConfig()
 {
 	Mutex::ScopedLock lock(_mutex); 
+	log("Loading config: " + _channel);	
 	ScopedConfiguration config = getModeConfiguration(this);
-	log("Loading Config: " + _channel);	
 	MotionDetector::Options& o = _motionDetector.options();
 	o.motionThreshold = config.getInt("MotionThreshold", 15000);			// 15000 [50 - 100000]
 	o.minPixelValue = config.getInt("MinPixelValue", 30);					// 30 [0 - 255]
@@ -91,7 +93,7 @@ void SurveillanceMode::startMotionDetector()
 {
 	Mutex::ScopedLock lock(_mutex); 
 	if (_motionDetector.isActive())
-		throw std::runtime_error("Cannot start: Motion detector already active.");
+		throw std::runtime_error("Cannot start the motion detector: Already active.");
 
 	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
@@ -110,7 +112,7 @@ void SurveillanceMode::stopMotionDetector()
 {
 	Mutex::ScopedLock lock(_mutex); 
 	if (!_motionDetector.isActive())	
-		throw std::runtime_error("Cannot stop: Motion detector not active.");
+		throw std::runtime_error("Cannot stop the motion detector: Not active.");
 
 	_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
 	_motionStream.close();
@@ -119,7 +121,7 @@ void SurveillanceMode::stopMotionDetector()
 	
 void SurveillanceMode::startRecording()
 {	
-	log("Start Recording");
+	log("Start recording");
 	if (isRecording())
 		throw std::runtime_error("Start recording failed: Recorder already active.");
 	
@@ -127,20 +129,20 @@ void SurveillanceMode::startRecording()
 	RecordingOptions options = env().media().getRecordingOptions(_channel);
 	options.synchronizeVideo  = _synchronizeVideos;
 	env().media().startRecording(options);
-	log("Recording Started: " + options.token);
+	log("Recording started: " + options.token);
 	_recordingToken = options.token;
 }
 
 
 void SurveillanceMode::stopRecording()
 {	
-	log("Stop Recording");
+	log("Stop recording");
 	if (!isRecording())		
 		throw std::runtime_error("Stop recording failed: Recorder not active.");
 
 	Mutex::ScopedLock lock(_mutex); 
 	env().media().stopRecording(_recordingToken, true);
-	log("Recording Stopped: " + _recordingToken);
+	log("Recording stopped: " + _recordingToken);
 	_recordingToken = "";
 }
 
@@ -158,7 +160,7 @@ TimedToken* SurveillanceMode::createStreamingToken(long duration)
 TimedToken* SurveillanceMode::getStreamingToken(const std::string& token)
 {
 	Mutex::ScopedLock lock(_mutex);
-	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
+	for (auto it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
 		if (*it == token)
 			return &*it;  
 	}
@@ -169,7 +171,7 @@ TimedToken* SurveillanceMode::getStreamingToken(const std::string& token)
 bool SurveillanceMode::removeStreamingToken(const std::string& token)
 {
 	Mutex::ScopedLock lock(_mutex);
-	for (std::vector<TimedToken>::iterator it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
+	for (auto it = _streamingTokens.begin(); it != _streamingTokens.end(); ++it) {
 		if (*it == token) {
 			_streamingTokens.erase(it);
 			return true;
@@ -181,7 +183,7 @@ bool SurveillanceMode::removeStreamingToken(const std::string& token)
 
 void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& state, const anio::MotionDetectorState&)
 {
-	log("Motion State Changed: " + state.toString());
+	log("Motion state changed: " + state.toString());
 	{
 		// Discard surveillance events while configuring
 		Mutex::ScopedLock lock(_mutex); 
@@ -226,7 +228,7 @@ void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& sta
 	
 void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, bool& handled)
 {
-	log("Initialize Media Session: " + session.token());
+	log("Initialize stream session: " + session.token());
 	
 	// Check if the session matches any available tokens 
 	TimedToken* token = getStreamingToken(session.token());
@@ -234,7 +236,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 
 		// Ensure token validity
 		if (!token->expired()) {
-			log("Creating live configuration session: " + session.token());
+			log("Creating configuration streaming session: " + session.token());
 			Mutex::ScopedLock lock(_mutex); 
 
 			// Get the video capture or throw an exception.
@@ -249,9 +251,18 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 			session.stream().attach(&_motionDetector, 3, false);			
 			session.StateChange += delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
 
+			// The following commented out code could be used to override the  
+			// entire stream creation, but we'll let Spot instantiate thew encoder
+			// so we don't need to include ffmpeg as a plugin dependency.
+#if 0	
+			// Attach a packet encoder for coverting raw images to JPEG.
+			av::AVPacketEncoder* enc = new av::AVPacketEncoder(session.options());
+			enc->initialize();
+
 			// Let the session manager know we have completely overridden 
 			// session initialization.
 			handled = true;
+#endif
 	
 			// While the isConfiguring flag is set all motion detector states
 			// will be ignored. The flag will be unset when the media session
@@ -262,7 +273,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 		// Otherwise the session is no longer valid, so we throw an exception 
 		// to terminate the session in error.
 		else {
-			log("Configuration Media Stream Timed Out");
+			log("Configuration streaming session timed out");
 			removeStreamingToken(session.token());
 			throw std::runtime_error("Surveillance Mode media preview has timed out.");
 		}
@@ -270,33 +281,22 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 }
 
 
-void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& session, PacketStream& /* stream */, bool& /* handled */)
+void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& session, PacketStream& stream, bool& /* handled */)
 {	
-	log("Initialize Media Connection: " + session.token());		
+	log("Initialize streaming connection: " + session.token());		
 	
 	// Check if the session request matches any of our tokens. 
 	// If so then we can attach our custom packetizer to this connection.
 	if (getStreamingToken(session.token())) {
 
-		// Override the connection packetizer if we are using HTTP.
-		// HTTP is the preferable transport for configuration sessions because
-		// we can prepend surveillance metadata using HTTP headers.
-		// NOTE: We have not completely overridden the connection stream
-		// creation, further encoders and packetizers may be added depending
-		// on streaming configuration.
+		// Override the connection packetizer if the peer requests HTTP
+		// multipart/mixed-replace. HTTP is the preferable transport for 
+		// configuration sessions since we can prepend surveillance metadata
+		// using HTTP headers.
 		Mutex::ScopedLock lock(_mutex); 
-		assert(0 && "fixme"); // use proper http headers
-		//if (session.options().protocol == "HTTP")
-		//	connection.attach(new SurveillanceMultipartAdapter(_motionDetector), 12, true);
-		
-		// TODO: Get the multipart adapter from the connection and replace it with out own.
-		// The instance will have the connection object we need!
-		// We will need to include the HTTP module and connection stull which will change in future
-		//
-		// OR: Hook into packet stream output and send single trailer packets to the client
-		// with multipart/x-mixed-replace; text/plain data
-
-		//MultipartAdapter
+		if (session.options().protocol == "HTTP" && 
+			session.options().framing == "multipart")
+			stream.attach(new SurveillanceMultipartAdapter(_motionDetector), 15, true);
 	}
 }
 
@@ -304,7 +304,7 @@ void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& sessio
 void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingState& state, const StreamingState&)
 {  
 	StreamingSession* session = reinterpret_cast<StreamingSession*>(sender); 			
-	log("Configuration Media Session State Changed: " + state.toString());
+	log("Configuration streaming session state changed: " + state.toString());
 
 	// Remove the configuration media session token
 	// reference when the session closes or times out.
@@ -358,7 +358,7 @@ const char* SurveillanceMode::docFile() const
 //
 void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 {		
-	log("Building Form");	 
+	log("Building form");	 
 	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 	// Determine weather we are building the form at channel or
@@ -378,10 +378,10 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 	// No surveillance events will be triggered while media sessions are active.
 	if (!form.partial() && !defaultScope) {		
 		element.setHint(
-			"This form enables you to configure the settings for Surveillance Mode. "
-			"The video below enables you to visualize motion in real-time as Spot sees it. "
-			"You can use the video as a guide while you fine tune the motion detector settings below. "
-			"Be sure to read the 'Mode Information' page for tips on optimizing your settings for the best results."
+			"This form enables you to configure settings for Surveillance Mode. "
+			"The video below enables you to visualize real-time motion as Spot sees it, "
+			"so you can fine tune the motion detector settings while using the video as a guide. "
+			"Be sure to read the 'Mode Information' page for tips on optimizing settings for the best results."
 		);
 
 		TimedToken* token = this->createStreamingToken();
@@ -466,7 +466,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 	//);
 	//field.setValue(config.getInt("PostTriggeredDelay", defaultScope));
 	//if (!defaultScope)
-		field.setLive(true);
+	//	field.setLive(true);
 
 	// Enable Video Synchronization
 	field = element.addField("boolean", config.getScopedKey("SynchronizeVideos", defaultScope), "Synchronize Videos");	
@@ -480,7 +480,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 
 void SurveillanceMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Parsing Form");	 
+	log("Parsing form");	 
 	smpl::FormField field;
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);

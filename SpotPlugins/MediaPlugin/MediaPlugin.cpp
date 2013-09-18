@@ -73,11 +73,11 @@ bool MediaPlugin::load()
 		env().clientBase().createEvent("Media Plugin Activated", message.c_str(), 3);
 #endif			
 	}
-	catch (std::exception/*Exception*/& exc) 
+	catch (std::exception& exc) 
 	{
 		// Swallow exceptions for ABI compatibility reasons.
 		// Set the error message to display to the user.
-		_error = std::string(exc.what())/*message()*/;
+		_error = std::string(exc.what());
 		log("Load failed: " + _error, "error");
 
 		// Return false to put the plugin in error state.
@@ -265,8 +265,8 @@ av::AVPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& opti
 		encoder = new av::AVPacketEncoder(options);
 		encoder->initialize();
 	}
-	catch (std::exception/*Exception*/& exc) {
-		log("Encoder Error: " + std::string(exc.what())/*message()*/, "error");
+	catch (std::exception& exc) {
+		log("Encoder Error: " + std::string(exc.what()), "error");
 		if (encoder)
 			delete encoder;
 		encoder = NULL;

@@ -38,10 +38,10 @@ bool CaptureMode::activate()
 		video->Emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = true;
 	}
-	catch (std::exception/*Exception*/& exc)
+	catch (std::exception& exc)
 	{
 		// Set and log the error message.
-		_error = std::string(exc.what())/*message()*/;
+		_error = std::string(exc.what());
 		log("Activation failed: " + _error, "error");
 		
 		// Return false to put the mode in error state.
@@ -64,11 +64,11 @@ void CaptureMode::deactivate()
 		video->Emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = false;
 	}
-	catch (std::exception/*Exception*/& exc) 
+	catch (std::exception& exc) 
 	{
 		// Be sure to swallow all exceptions. Since IMode  
 		// is ABI agnostic our implementation should be too.
-		log("Deactivation failed: " + std::string(exc.what())/*message()*/, "error");
+		log("Deactivation failed: " + std::string(exc.what()), "error");
 	}
 }
 

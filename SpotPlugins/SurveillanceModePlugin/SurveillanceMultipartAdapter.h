@@ -55,7 +55,7 @@ public:
 
 		// Broadcast the HTTP header separately 
 		// so we don't need to copy any data.
-		emit(header.str());			
+		emit(header.str());
 
 		// Proxy the input packet
 		emit(packet);

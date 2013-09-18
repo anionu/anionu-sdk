@@ -237,9 +237,9 @@ void APIMethods::load()
 			throw std::runtime_error(reader.getFormatedErrorMessages());
 		traceL() << "Loaded API Methods: " << json::stringify(*this, true) << endl;
 	} 
-	catch (std::exception& exc/*Exception& exc*/) 
+	catch (std::exception& exc) 
 	{
-		errorL() << "API Load Error: " << exc.what()/*message()*/ << endl;
+		errorL() << "API Load Error: " << exc.what() << endl;
 		throw exc;/*exc.rethrow();*/
 	}  
 }
@@ -276,9 +276,9 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 		method.format(format);
 		method.interpolate(params);
 	}
-	catch (std::exception& exc/*Exception& exc*/)
+	catch (std::exception& exc)
 	{
-		errorL("APIMethods") << "Get Error: " << exc.what()/*message()*/ << endl;
+		errorL("APIMethods") << "Get Error: " << exc.what() << endl;
 		throw exc;/*exc.rethrow();*/
 	}
 	

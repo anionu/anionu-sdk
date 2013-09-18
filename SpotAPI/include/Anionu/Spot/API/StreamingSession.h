@@ -45,8 +45,8 @@ struct StreamingOptions: public av::EncoderOptions
 	std::string token;		// The session's unique identification token
 	std::string transport;	// The transport protocol [UDP, TCP, TLS]
 	std::string protocol;	// The packet protocol [Raw, HTTP, RTP/AVP]
-	std::string encoding;	// The packet encoding method [None, Base64, ...]
-	std::string mime;		// The HTTP packet content type [None, image/jpeg, multipart/x-mixed-replace, ...]
+	std::string encoding;	// The packet content encoding method [None, Base64, ...]
+	std::string framing;	// The packet content framing method [None, multipart, ...]
 	int timeout;			// The lifetime after disconnection timeout value
 
 	bool disableLAN;		// Disable LAN candidates
@@ -71,14 +71,14 @@ struct StreamingOptions: public av::EncoderOptions
 		const std::string& transport = "TCP",
 		const std::string& protocol = "Raw",
 		const std::string& encoding = "None",
-		const std::string& mime = "None",
+		const std::string& framing = "None",
 		int timeout = 20000) : 
 			peer(peer),
 			channel(channel),
 			transport(transport),
 			protocol(protocol),
 			encoding(encoding),
-			mime(mime),
+			framing(framing),
 			timeout(timeout),
 			disableLAN(false),
 			disableHost(false),

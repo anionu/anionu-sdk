@@ -42,9 +42,9 @@ bool RecordingMode::activate()
 		startRecording();
 		_isActive = true;
 	}
-	catch (std::exception/*Exception*/& exc) {
-		_error = std::string(exc.what())/*message()*/;
-		log("Activation failed: " + _error, "error");
+	catch (std::exception& exc) {
+		_error = std::string(exc.what());
+		log("Activation error: " + _error, "error");
 		return false;
 	}
 	return true;
@@ -55,29 +55,24 @@ void RecordingMode::deactivate()
 {
 	log("Deactivating");	
 	try {
+		_isActive = false;
 		env().media().RecordingStopped.detach(this);
-		//env().media().RecordingStopped.cleanup();
 		if (isRecording())
 			stopRecording();
-		_isActive = false;
 	}
-	catch (std::exception/*Exception*/& exc) {
-		log("Deactivation failed: " + std::string(exc.what())/*message()*/, "error");
+	catch (std::exception& exc) {
+		log("Deactivation error: " + std::string(exc.what()), "error");
 	}
 }
 
 
 void RecordingMode::loadConfig()
 {
-	log("Loading Config");
-
 	Mutex::ScopedLock lock(_mutex); 	
+	log("Loading Config: " + _channel);	
 	ScopedConfiguration config = getModeConfiguration(this);
 	_segmentDuration = config.getInt("SegmentDuration", 5 * 60);
 	_synchronizeVideos = config.getBool("SynchronizeVideos", false);
-	
-	log("Loading Config: OK");
-
 
 	//api::log(this) << "Loading Config: " << _channel 
 	//	<< "\r\tSegmentDuration: " << _segmentDuration 
@@ -151,7 +146,7 @@ bool RecordingMode::isRecording() const
 }
 
 
-string RecordingMode::recordingToken()
+std::string RecordingMode::recordingToken()
 {	
 	Mutex::ScopedLock lock(_mutex); 
 	return _recordingToken;
@@ -189,7 +184,7 @@ const char* RecordingMode::docFile() const
 //
 void RecordingMode::buildForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Building Form");	
+	log("Building form");	
 	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
@@ -227,7 +222,7 @@ void RecordingMode::buildForm(smpl::Form&, smpl::FormElement& element)
 
 void RecordingMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Parsing Form");
+	log("Parsing form");
 	smpl::FormField field;	
 
 	field = element.getField("Recording Mode.SegmentDuration", true);
