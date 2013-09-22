@@ -17,10 +17,9 @@ namespace scy {
 	using namespace av;
 namespace anio { 
 namespace spot {
-	using namespace api;
 
 
-RecordingMode::RecordingMode(Environment& env, const std::string& channel) : 
+RecordingMode::RecordingMode(api::Environment& env, const std::string& channel) : 
 	api::IModule(env), _channel(channel), _isActive(false)
 {
 	log("Creating");
@@ -71,12 +70,12 @@ void RecordingMode::loadConfig()
 	Mutex::ScopedLock lock(_mutex); 	
 	log("Loading Config: " + _channel);	
 	ScopedConfiguration config = getModeConfiguration(this);
-	_segmentDuration = config.getInt("SegmentDuration", 5 * 60);
-	_synchronizeVideos = config.getBool("SynchronizeVideos", false);
+	_segmentDuration = config.getInt("SegmentDuration", 5 * 60); // 5 minutes
+	_synchronizeVideos = config.getBool("SynchronizeVideos", false); // no sync
 
 	//api::log(this) << "Loading Config: " << _channel 
-	//	<< "\r\tSegmentDuration: " << _segmentDuration 
-	//	<< "\r\tSynchronizeVideos: " << _synchronizeVideos 
+	//	<< "\r\tSegment duration: " << _segmentDuration 
+	//	<< "\r\tSynchronize videos: " << _synchronizeVideos 
 	//	<< endl;
 }
 
@@ -91,7 +90,7 @@ void RecordingMode::startRecording()
 
 	// Get the recording encoder options for the current session
 	// configuration and override some defaults before we start recording.
-	RecordingOptions options = env().media().getRecordingOptions(_channel);
+	api::RecordingOptions options = env().media().getRecordingOptions(_channel);
 	options.synchronizeVideo  = _synchronizeVideos;
 	options.duration = _segmentDuration * 1000;
 
@@ -101,7 +100,7 @@ void RecordingMode::startRecording()
 
 	// Start recording, or throw an exception.
 	env().media().startRecording(options);
-	log("Recording Started: " + options.token);
+	log("Recording started: " + options.token);
 	_recordingToken = options.token;
 }
 
@@ -119,7 +118,7 @@ void RecordingMode::stopRecording()
 }
 
 
-void RecordingMode::onRecordingStopped(void*, RecorderStream& stream)
+void RecordingMode::onRecordingStopped(void*, api::RecorderStream& stream)
 {
 	if (isActive() &&
 		recordingToken().empty() || 

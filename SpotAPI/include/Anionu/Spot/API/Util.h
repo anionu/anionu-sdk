@@ -60,7 +60,7 @@ LogStream log(api::IModule* module, const char* level = "debug")
 }
 
 
-} } } } // namespace anio::spot::api
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_Util_H

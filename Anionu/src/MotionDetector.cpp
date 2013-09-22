@@ -30,7 +30,7 @@ namespace anio {
 
 
 MotionDetector::MotionDetector(const Options& options) : 
-	PacketProcessor(Emitter),
+	PacketProcessor(this->emitter),
 	_options(options),
 	_processing(false),
 	_motionLevel(0),
@@ -140,7 +140,7 @@ void MotionDetector::updateMHI(cv::Mat& source)
 void MotionDetector::computeMotionState() 
 { 
 	//debugL("MotionDetector", this) 
-	//	<< "Update Motion State: " << state().toString() << endl;	
+	//	<< "Update Motion State: " << state() << endl;	
 	Mutex::ScopedLock lock(_mutex); 
 
 	std::time_t currentTime = time::now();

@@ -50,7 +50,7 @@ class IPlugin
 	///
 {
 public:
-	virtual ~IPlugin() = 0 {};
+	virtual ~IPlugin() = 0;
 
 	virtual bool load() = 0;
 		// This method initializes the shared library when it
@@ -176,7 +176,7 @@ class IPlugin: public IPlugin
 {
 public:
 	//IPlugin::IPlugin() : _env(null) {};
-	virtual ~IPlugin() = 0 {};	
+	virtual ~IPlugin() = 0;	
 
 	std::string path() const
 		// Returns the full path to the plugin shared library.

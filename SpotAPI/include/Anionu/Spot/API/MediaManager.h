@@ -58,7 +58,7 @@ public:
 		// exception will be thrown on error.
 		
 protected:
-	virtual ~MediaManagerBase() = 0 {};
+	virtual ~MediaManagerBase() = 0;
 };
 
 
@@ -164,7 +164,7 @@ public:
 	Signal<api::RecorderStream&> RecordingStopped;
 		
 protected:
-	virtual ~MediaManager() = 0 {};
+	virtual ~MediaManager() = 0;
 };
 
 

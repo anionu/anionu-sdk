@@ -51,7 +51,7 @@ public:
 	Signal<api::Channel&> ChannelRemoved;
 		
 protected:
-	virtual ~ChannelManager() = 0 {};
+	virtual ~ChannelManager() = 0;
 };
 
 

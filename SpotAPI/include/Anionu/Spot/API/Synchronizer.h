@@ -46,7 +46,7 @@ public:
 		// Full error message in log file.
 		
 protected:
-	virtual ~SynchronizerBase() = 0 {};
+	virtual ~SynchronizerBase() = 0;
 };
 
 
@@ -92,14 +92,14 @@ public:
 	Signal<SynchronizerTask&> TaskStateChange;
 	
 protected:
-	virtual ~Synchronizer() = 0 {};
+	virtual ~Synchronizer() = 0;
 };
 
 
 #endif // Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace anio::spot::api
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_Synchronizer_H

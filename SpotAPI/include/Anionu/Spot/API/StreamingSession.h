@@ -178,7 +178,7 @@ public:
 	virtual CandidateList candidates() const = 0;
 
 protected:
-	virtual ~StreamingSession() = 0 {};
+	virtual ~StreamingSession() = 0;
 		// The session is terminated(), never deleted.
 };
 

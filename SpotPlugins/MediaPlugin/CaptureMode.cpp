@@ -35,13 +35,13 @@ bool CaptureMode::activate()
 		// Get the video capture and attach a listener, 
 		// or throw an exception.
 		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
-		video->Emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		video->emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = true;
 	}
 	catch (std::exception& exc)
 	{
 		// Set and log the error message.
-		_error = std::string(exc.what());
+		_error = exc.what();
 		log("Activation failed: " + _error, "error");
 		
 		// Return false to put the mode in error state.
@@ -61,7 +61,7 @@ void CaptureMode::deactivate()
 		// Get the video capture and detach the listener,
 		// or throw an exception which we log and swallow.
 		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);
-		video->Emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		video->emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = false;
 	}
 	catch (std::exception& exc) 

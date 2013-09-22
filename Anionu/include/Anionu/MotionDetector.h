@@ -101,7 +101,7 @@ public:
 	virtual bool accepts(IPacket& packet);
 	virtual void process(IPacket& packet);
 			
-	PacketSignal Emitter;
+	PacketSignal emitter;
 	
 	const char* className() const { return "MotionDetector"; }
 

@@ -39,7 +39,7 @@ class IMode
 	/// for all IMode implementations.
 {
 public:
-	virtual ~IMode() = 0 {}
+	virtual ~IMode() = 0
 	
 	virtual bool activate() = 0;
 	virtual void deactivate() = 0;
@@ -93,7 +93,7 @@ class IDataMode
 public:
 	typedef std::map<std::string, std::string> DataMap;
 
-	virtual ~IDataMode() = 0 {};
+	virtual ~IDataMode() = 0;
 
 	void setData(const std::string& name, const std::string& value)
 	{

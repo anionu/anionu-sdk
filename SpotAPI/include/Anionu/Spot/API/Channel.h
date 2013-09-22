@@ -64,7 +64,7 @@ public:
 		// will be accessible via the name() method.
 		
 protected:
-	virtual ~Channel() = 0 {};
+	virtual ~Channel() = 0;
 };
 
 

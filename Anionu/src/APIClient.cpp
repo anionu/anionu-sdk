@@ -129,7 +129,7 @@ APITransaction* APIClient::call(APIRequest* request)
 
 	//APITransaction* transaction = new APITransaction(request);
 	//transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	//ScopedLock lock(_mutex);
+	//Mutex::ScopedLock lock(_mutex);
 	//_transactions.push_back(transaction);
 	//return transaction;
 }

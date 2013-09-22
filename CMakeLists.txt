@@ -5,9 +5,10 @@ set(Anionu_API_PASSWORD "password" CACHE PATH "Anionu API Password")
 set(Anionu_API_USERNAME ${Anionu_API_USERNAME} PARENT_SCOPE)
 set(Anionu_API_PASSWORD ${Anionu_API_PASSWORD} PARENT_SCOPE)
 
+add_subdirectory(Anionu)
+
 ask_build_sourcey_module(Spot)
 if(BUILD_MODULES AND BUILD_MODULE_Spot) 
-  add_subdirectory(Anionu)
   add_subdirectory(SpotAPI)
 endif()
 

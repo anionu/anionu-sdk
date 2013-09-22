@@ -73,7 +73,7 @@ public:
 		// Returns the default path if no session is available.
 		
 protected:
-	virtual ~EnvironmentBase() = 0 {};
+	virtual ~EnvironmentBase() = 0;
 };
 
 
@@ -142,14 +142,14 @@ public:
 	virtual std::string storageDir() const = 0;
 		
 protected:
-	virtual ~Environment() = 0 {};
+	virtual ~Environment() = 0;
 };
 
 
 #endif // Anionu_Spot_USING_CORE_API
 
 
-} } } } // namespace anio::spot::api
+} } } } // namespace scy::anio::spot::api
 
 
 #endif // Anionu_Spot_API_Environment_H

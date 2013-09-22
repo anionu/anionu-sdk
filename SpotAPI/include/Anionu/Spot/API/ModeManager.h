@@ -56,7 +56,7 @@ public:
 	Signal<api::IMode&> ModeError;
 
 protected:
-	virtual ~ModeManager() = 0 {};
+	virtual ~ModeManager() = 0;
 };
 
 

@@ -69,7 +69,7 @@ public:
 		// Override for named logging.
 	
 protected:
-	virtual ~IModuleTmpl() = 0 {};	
+	virtual ~IModuleTmpl() = 0;	
 	IEnvType& _env;
 
 private:
@@ -177,7 +177,7 @@ public:
 		// Override for named logging.
 	
 protected:
-	virtual ~IModuleTmpl() = 0 {};
+	virtual ~IModuleTmpl() = 0;
 	mutable Mutex	_mutex;	
 };
 */
@@ -194,7 +194,7 @@ class IModule: public IModuleTmpl
 {
 public:
 	IModule(api::Environment* env = NULL) : env(env) {};
-	virtual ~IModule() = 0 {};
+	virtual ~IModule() = 0;
 
 	api::Environment* env;
 		// The Spot API interface pointer.

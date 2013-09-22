@@ -79,7 +79,7 @@ public:
 		//
 
 protected:
-	virtual ~StreamingManager() = 0 {};
+	virtual ~StreamingManager() = 0;
 };
 
 
