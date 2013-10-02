@@ -21,15 +21,10 @@
 #define Anionu_Spot_API_Channel_H
 
 
-#include "Sourcey/Base.h"
 #include "Sourcey/Signal.h"
 
 
 namespace scy {
-namespace av {
-	struct Device;
-	class VideoCapture;
-	class AudioCapture;}
 namespace anio {
 namespace spot { 
 namespace api { 
@@ -62,13 +57,14 @@ public:
 		// devices and name. In the case of a name change the
 		// signal will broadcast the old name, and the new name
 		// will be accessible via the name() method.
+		// The Signal sender is the Channel instance.
 		
 protected:
-	virtual ~Channel() = 0;
+	virtual ~Channel() {};
 };
 
 
-typedef std::vector<Channel*> ChannelList;
+typedef std::vector<Channel*> ChannelVec;
 
 
 } } } } // namespace scy::anio::spot::api

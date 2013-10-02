@@ -44,7 +44,7 @@ class MediaManagerBase
 	/// ABI agnostic API
 {
 public:
-	virtual void startRecording(const char* channel, const char* ofile = NULL, bool synchronize = false) = 0;
+	virtual void startRecording(const char* channel, const char* ofile = nullptr, bool synchronize = false) = 0;
 		// Starts recording the video input of the given
 		// surveillance channel.
 		
@@ -58,7 +58,7 @@ public:
 		// exception will be thrown on error.
 		
 protected:
-	virtual ~MediaManagerBase() = 0;
+	virtual ~MediaManagerBase() {};
 };
 
 
@@ -164,7 +164,7 @@ public:
 	Signal<api::RecorderStream&> RecordingStopped;
 		
 protected:
-	virtual ~MediaManager() = 0;
+	virtual ~MediaManager() {};
 };
 
 

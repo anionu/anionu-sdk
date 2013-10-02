@@ -46,7 +46,7 @@ public:
 		// Full error message in log file.
 		
 protected:
-	virtual ~SynchronizerBase() = 0;
+	virtual ~SynchronizerBase() {};
 };
 
 
@@ -92,7 +92,7 @@ public:
 	Signal<SynchronizerTask&> TaskStateChange;
 	
 protected:
-	virtual ~Synchronizer() = 0;
+	virtual ~Synchronizer() {};
 };
 
 

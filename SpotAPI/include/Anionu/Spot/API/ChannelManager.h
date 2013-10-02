@@ -25,6 +25,10 @@
 
 
 namespace scy {
+namespace av {
+	struct Device;
+	class VideoCapture;
+	class AudioCapture;}
 namespace anio { 
 namespace spot { 
 namespace api {
@@ -42,16 +46,16 @@ public:
 
 	virtual Channel* at(int index) const = 0;
 		// Returns the channel at the given 0 based 
-		// index position, or NULL.
+		// index position, or nullptr.
 
-	virtual ChannelList list() const = 0;
+	virtual ChannelVec list() const = 0;
 		// Returns the list of channels.
 		
 	Signal<api::Channel&> ChannelAdded;
 	Signal<api::Channel&> ChannelRemoved;
 		
 protected:
-	virtual ~ChannelManager() = 0;
+	virtual ~ChannelManager() {};
 };
 
 

@@ -69,7 +69,7 @@ public:
 		// Override for named logging.
 	
 protected:
-	virtual ~IModuleTmpl() = 0;	
+	virtual ~IModuleTmpl() {};	
 	IEnvType& _env;
 
 private:
@@ -145,7 +145,7 @@ class IModuleTmpl
 	/// binary compatibility with Spot.
 {
 public:
-	IModuleTmpl(api::EnvironmentBase* env = NULL) : _env(env) {};
+	IModuleTmpl(api::EnvironmentBase* env = nullptr) : _env(env) {};
 
 	api::EnvironmentBase& env() const
 		// Returns the Spot API interface pointer.
@@ -160,14 +160,14 @@ public:
 		// The Spot API base ABI agnostic interface pointer.
 		//
 		// Note that the EnvironmentBase pointer might be
-		// initialized as NULL. If the pointer is not passed
+		// initialized as nullptr. If the pointer is not passed
 		// into the constructor, it is guaranteed to be set
 		// by Spot directly after instantiation.
 
 	virtual void log(const std::string& message, const char* level = "debug") 
 		// Sends log messages the Spot application logger.
 	{
-		if (_env == NULL) 
+		if (_env == nullptr) 
 			return;
 		_env->log(message.c_str(), level, className());
 	}
@@ -193,7 +193,7 @@ protected:
 class IModule: public IModuleTmpl
 {
 public:
-	IModule(api::Environment* env = NULL) : env(env) {};
+	IModule(api::Environment* env = nullptr) : env(env) {};
 	virtual ~IModule() = 0;
 
 	api::Environment* env;

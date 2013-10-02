@@ -58,11 +58,11 @@ public:
 			// Run tests
 			//runCreateEventTest();
 			
-			for (int i = 0; i < 10; i++) {
+			//for (int i = 0; i < 10; i++) {
 				runCreateEventTest();
-				runAssetUploadTest();
+				//runAssetUploadTest();
 				//runAssetDownloadTest();
-			}
+			//}
 			runLoop();
 
 #if TEST_SSL
@@ -101,8 +101,8 @@ public:
 		form->set("event[name]", event.name);
 		form->set("event[message]", event.message);
 		form->set("event[severity]", event.severityStr());
-		form->set("event[realm]", event.realmStr());
-		form->set("event[timestamp]", event.formatTime());
+		form->set("event[origin]", event.originStr());
+		//form->set("event[timestamp]", event.formatTime());
 
 		trans->send();
 
@@ -118,10 +118,10 @@ public:
 		debugL("CreateEventTest") << "Transaction Complete:" 
 			<< "\n\tRequest Head: " << trans->request()
 			<< "\n\tResponse Head: " << response
-			<< "\n\tResponse Body: " << trans->incomingBuffer()
+			//<< "\n\tResponse Body: " << trans->incomingBuffer()
 			<< endl;
 
-		assert(response.success());
+		//assert(response.success());
 	}
 			
 	// ============================================================================
@@ -171,7 +171,7 @@ public:
 		debugL("UploadAssetTest") << "Transaction Complete:" 
 			<< "\n\tRequest Head: " << trans->request()
 			<< "\n\tResponse Head: " << response
-			<< "\n\tResponse Body: " << trans->incomingBuffer()
+			//<< "\n\tResponse Body: " << trans->incomingBuffer()
 			<< endl;
 
 		assert(response.success());
@@ -238,7 +238,7 @@ public:
 
 	void runCleanup() {
 		debugL("Tests") << "#################### Finalizing" << endl;
-		app.cleanup();
+		app.finalize();
 		debugL("Tests") << "#################### Exiting" << endl;
 	}
 };
@@ -249,7 +249,7 @@ public:
 
 int main(int argc, char** argv) 
 {	
-	Logger::instance().add(new ConsoleChannel("debug", TraceLevel));
+	Logger::instance().add(new ConsoleChannel("debug", LTrace));
 	{
 		anio::Tests run;
 	}

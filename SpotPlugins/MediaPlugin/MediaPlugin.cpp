@@ -294,7 +294,7 @@ void MediaPlugin::onInitStreamingSession(void*, api::StreamingSession& session, 
 		
 	// Create the encoder unless streaming raw video.
 	if (session.options().oformat.id != "rawvideo" &&
-		session.stream().getProcessor<av::IPacketEncoder>() == NULL) {	
+		session.stream().base().getProcessor<av::IPacketEncoder>() == NULL) {	
 	
 		av::RecordingOptions options(
 			session.options().iformat, 

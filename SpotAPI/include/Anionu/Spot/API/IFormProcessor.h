@@ -35,8 +35,6 @@ namespace spot {
 namespace api { 
 
 
-// ---------------------------------------------------------------------
-//
 class IFormProcessor
 {
 public:			

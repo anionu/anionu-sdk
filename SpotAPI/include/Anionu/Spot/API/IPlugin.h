@@ -50,7 +50,7 @@ class IPlugin
 	///
 {
 public:
-	virtual ~IPlugin() = 0;
+	virtual ~IPlugin() {};
 
 	virtual bool load() = 0;
 		// This method initializes the shared library when it

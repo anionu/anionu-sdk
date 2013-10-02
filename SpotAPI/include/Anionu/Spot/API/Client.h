@@ -66,6 +66,9 @@ public:
 
 	virtual const char* cUsername() const = 0;
 		// Currently authenticated username.
+		
+protected:
+	virtual ~ClientBase() {};
 };
 
 
@@ -160,6 +163,9 @@ public:
 
 	NullSignal SessionEnd;
 		// Signals when the session ends.
+		
+protected:
+	virtual ~Client() {};
 };
 
 #endif /// Anionu_Spot_USING_CORE_API

@@ -54,7 +54,7 @@ LogStream log(api::IModule* module, const char* level = "debug")
 	/// This method created a log stream which sends  
 	/// messages the Spot application logger.
 { 
-	//if (module->env() == NULL) 
+	//if (module->env() == nullptr) 
 	//	return LogStream();
 	return module->env().logger().send(level, module->className(), module); 
 }

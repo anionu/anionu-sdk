@@ -39,7 +39,7 @@ class IMode
 	/// for all IMode implementations.
 {
 public:
-	virtual ~IMode() = 0
+	virtual ~IMode() {};
 	
 	virtual bool activate() = 0;
 	virtual void deactivate() = 0;
@@ -79,7 +79,7 @@ public:
 		// via the constructor.
 
 	virtual const char** modeNames() const = 0;
-		// Returns a NULL terminated array of modes names 
+		// Returns a nullptr terminated array of modes names 
 		// implemented by this plugin.
 };
 
@@ -93,7 +93,7 @@ class IDataMode
 public:
 	typedef std::map<std::string, std::string> DataMap;
 
-	virtual ~IDataMode() = 0;
+	virtual ~IDataMode() {};
 
 	void setData(const std::string& name, const std::string& value)
 	{

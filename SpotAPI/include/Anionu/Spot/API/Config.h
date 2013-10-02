@@ -40,7 +40,7 @@
 	// VS 2013 (VC12): 1800
 	#if _WIN32
 		#if _MSC_VER != 1700
-			#error "Must use MS Visual Studio 2010 to compile binary \
+			#error "Must use MS Visual Studio 2012 to compile binary \
 				compatible plugins using the current API version."
 		#endif
 	#endif
@@ -70,7 +70,7 @@ static const int SDKVersionNumber = 0x000502;
 
 
 // Date Format (ISO8601)
-// Always use this date format for consistency.
+// The Anionu API always uses ISO8601 for consistency.
 //
 //static const char* DateFormat = "%Y-%m-%dT%H:%M:%SZ";
 //static const char* DateFormatISO8601("%Y-%m-%dT%H:%M:%S%z");

@@ -73,7 +73,7 @@ public:
 		// Returns the default path if no session is available.
 		
 protected:
-	virtual ~EnvironmentBase() = 0;
+	virtual ~EnvironmentBase() {};
 };
 
 
@@ -142,7 +142,7 @@ public:
 	virtual std::string storageDir() const = 0;
 		
 protected:
-	virtual ~Environment() = 0;
+	virtual ~Environment() {};
 };
 
 

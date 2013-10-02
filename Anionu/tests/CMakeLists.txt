@@ -1,1 +1,1 @@
-define_libsourcey_test(AnionuAPIConsole Base UV Anionu Media Net HTTP JSON)
+define_libsourcey_test(AnionuTests Base UV Crypto Archo Net HTTP Media JSON Anionu)

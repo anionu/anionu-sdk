@@ -8,5 +8,5 @@ if(BUILD_MODULES AND BUILD_MODULE_Anionu)
   include_dependency(LibUV REQUIRED)
   include_dependency(HttpParser REQUIRED)
 
-  define_sourcey_module(Anionu Base UV Net Crypto HTTP JSON Media Util)
+  define_sourcey_module(Anionu Base UV Crypto Net HTTP JSON Media Util)
 endif()
