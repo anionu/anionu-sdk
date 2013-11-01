@@ -10,7 +10,7 @@ namespace anio {
 
 
 Event::Event(const std::string& name, const std::string& message, Severity severity, Origin origin) :
-	name(name), message(message), severity(severity), origin(origin), time(std::time(0)) 
+	name(name), message(message), severity(severity), origin(originToStr(origin)), time(std::time(0)) 
 {
 }
 
@@ -52,19 +52,19 @@ Event::Severity Event::strToSeverity(const std::string& id)
 }
 
 		
-std::string Event::originStr() const 
-{
-	return originToStr(origin);
-}
+//std::string Event::originStr() const 
+//{
+//	return originToStr(origin);
+//}
 
 
 std::string Event::originToStr(Origin id) 
 { 	
 	switch (id) {
-	case SpotLocal:		return "Spot Local";
-	case SpotRemote:	return "Spot Remote";
+	case Spot:			return "Spot";
+	//case SpotRemote:	return "Spot Remote";
 	case Dashboard:		return "Dashboard";
-	case External:		return "External";
+	case Unknown:		return "Unknown";
 	}
 	assert(0 && "unknown origin");
 	return "Spot Local";
@@ -73,16 +73,16 @@ std::string Event::originToStr(Origin id)
 
 Event::Origin Event::strToOrigin(const std::string& id) 
 { 	
-	if (id == "Spot Local")
-		return SpotLocal;
-	if (id == "Spot Remote")
-		return SpotRemote;
+	if (id == "Spot")
+		return Spot;
+	//if (id == "Spot Remote")
+	//	return SpotRemote;
 	else if (id == "Dashboard")
 		return Dashboard;
-	else if (id == "External")
-		return External;
+	else if (id == "Unknown")
+		return Unknown;
 	assert(0 && "unknown origin");
-	return SpotLocal;
+	return Unknown;
 }
 
 

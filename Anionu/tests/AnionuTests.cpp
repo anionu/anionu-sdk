@@ -2,6 +2,8 @@
 #include "Sourcey/Application.h"
 #include "Anionu/APIClient.h"
 #include "Anionu/Event.h"
+#include "Sourcey/Net/SSLSocket.h"
+#include "Sourcey/Net/SSLManager.h"
 #include "Sourcey/HTTP/Form.h"
 #include "Sourcey/HTTP/Packetizers.h"
 #include "Sourcey/Util.h"
@@ -9,7 +11,7 @@
 #include "assert.h"
 
 
-using namespace std;
+using std::endl;
 using namespace scy;
 
 
@@ -26,8 +28,9 @@ CMemLeakDetect memLeakDetect;
 namespace scy {
 namespace anio {
 
-
-#define TEST_SSL 0 //1
+	
+#define TEST_SSL 1
+#define Anionu_API_ENDPOINT "https://anionu.com" //"http://localhost:3000"
 
 
 class Tests
@@ -41,25 +44,25 @@ public:
 #ifdef _MSC_VER
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-		{			
-
+		{
 #if TEST_SSL
 			// Initialize SSL Context 
-			SSLContext::Ptr ptrContext = new SSLContext(
-				SSLContext::CLIENT_USE, "", "", "", 
-				SSLContext::VERIFY_NONE, 9, false, 
+			net::SSLContext::Ptr ptrContext = new net::SSLContext(
+				net::SSLContext::CLIENT_USE, "", "", "", 
+				net::SSLContext::VERIFY_NONE, 9, false, 
 				"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");		
-			SSLManager::instance().initializeClient(ptrContext);
+			net::SSLManager::instance().initializeClient(ptrContext);
 #endif
 		
 			// Initialize client credentials
-			client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, "http://localhost:3000");
+			client.setCredentials(Anionu_API_USERNAME, Anionu_API_PASSWORD, Anionu_API_ENDPOINT); 
 			
 			// Run tests
-			//runCreateEventTest();
-			
+			runCreateEventTest();
+			//testAuthentication();
+
 			//for (int i = 0; i < 10; i++) {
-				runCreateEventTest();
+				//runCreateEventTest();
 				//runAssetUploadTest();
 				//runAssetDownloadTest();
 			//}
@@ -67,7 +70,7 @@ public:
 
 #if TEST_SSL
 			// Shutdown SSL
-			SSLManager::instance().shutdown();
+			net::SSLManager::instance().shutdown();
 #endif
 
 			// Shutdown the API client
@@ -81,6 +84,32 @@ public:
 		}
 	}
 	
+	// ============================================================================
+	// Authentication Test
+	//	
+	void testAuthentication()
+	{
+		auto conn = http::createConnection(Anionu_API_ENDPOINT);
+		conn->Headers += delegate(this, &Tests::onAuthenticationHeaders);
+		conn->Complete += delegate(this, &Tests::onAuthenticationComplete);
+		conn->setReadStream(new std::stringstream);
+		conn->request().setURI("/authenticate.json");
+		conn->send(); // send default GET /
+	}	
+	
+	void onAuthenticationHeaders(void*, http::Response& res)
+	{	
+		debugL("StandaloneClientConnectionTest") << "On response headers: " << res << endl;
+	}
+	
+	void onAuthenticationComplete(void* sender, const http::Response& response)
+	{		
+		auto self = reinterpret_cast<http::ClientConnection*>(sender);
+		debugL("StandaloneClientConnectionTest") << "On response complete" 
+			<< response << self->readStream<std::stringstream>()->str() << endl;
+		self->close();
+	}
+
 	// ============================================================================
 	// Create Event Test
 	//
@@ -101,7 +130,7 @@ public:
 		form->set("event[name]", event.name);
 		form->set("event[message]", event.message);
 		form->set("event[severity]", event.severityStr());
-		form->set("event[origin]", event.originStr());
+		form->set("event[origin]", event.origin); //Str()
 		//form->set("event[timestamp]", event.formatTime());
 
 		trans->send();

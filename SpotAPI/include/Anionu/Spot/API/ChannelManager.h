@@ -25,10 +25,6 @@
 
 
 namespace scy {
-namespace av {
-	struct Device;
-	class VideoCapture;
-	class AudioCapture;}
 namespace anio { 
 namespace spot { 
 namespace api {

@@ -12,9 +12,6 @@
 #include "Sourcey/Symple/Form.h"
 
 
-using namespace std;
-
-
 namespace scy {
 namespace anio { 
 namespace spot {
@@ -60,9 +57,9 @@ void SurveillanceMode::deactivate()
 {
 	log("Deactivating");
 	try {
-		_isActive = true;
-		stopRecording();
-		stopMotionDetector();
+		if (isRecording())
+			stopRecording();
+		stopMotionDetector(false);
 	}
 	catch (std::exception& exc) {
 		log("Deactivation error: " + std::string(exc.what()), "error");
@@ -89,61 +86,87 @@ void SurveillanceMode::loadConfig()
 }
 
 
-void SurveillanceMode::startMotionDetector()
+void SurveillanceMode::startMotionDetector(bool whiny)
 {
-	Mutex::ScopedLock lock(_mutex); 
-	if (_motionDetector.isActive())
-		throw std::runtime_error("Cannot start the motion detector: Already active.");
+	try {
+		Mutex::ScopedLock lock(_mutex); 
+		if (_motionDetector.isActive())
+			throw std::runtime_error("Already active.");
+		
+		_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
-	_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
+		// Get the video capture or throw an exception.
+		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
 
-	// Get the video capture or throw an exception.
-	av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
-
-	// Setup our packet stream with the video capture
-	// feeding into the motion detector.
-	_motionStream.attachSource(video, false);	
-	_motionStream.attach(&_motionDetector, 1, false);
-	_motionStream.start();
+		// Setup our packet stream with the video capture
+		// feeding into the motion detector.
+		_motionStream.attachSource(video, true);	
+		_motionStream.attach(&_motionDetector, 1, false);
+		_motionStream.start();
+	}
+	catch (std::exception& exc) {
+		log("Cannot start the motion detector: " + std::string(exc.what()), "warn");
+		if (whiny) throw exc;
+	}
 }
 
 
-void SurveillanceMode::stopMotionDetector()
+void SurveillanceMode::stopMotionDetector(bool whiny)
 {
-	Mutex::ScopedLock lock(_mutex); 
-	if (!_motionDetector.isActive())	
-		throw std::runtime_error("Cannot stop the motion detector: Not active.");
+	try {
+		Mutex::ScopedLock lock(_mutex); 
+		if (!_motionDetector.isActive())
+			throw std::runtime_error("Not active.");
 
-	_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
-	_motionStream.close();
+		_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
+		_motionStream.close();
+	}
+	catch (std::exception& exc) {
+		log("Cannot start the motion detector: " + std::string(exc.what()), "warn");
+		if (whiny) throw exc;
+	}
 }
 
 	
-void SurveillanceMode::startRecording()
+void SurveillanceMode::startRecording(bool whiny)
 {	
 	log("Start recording");
-	if (isRecording())
-		throw std::runtime_error("Start recording failed: Recorder already active.");
+	try {
+		if (isRecording())
+			throw std::runtime_error("Recorder already active.");
 	
-	Mutex::ScopedLock lock(_mutex); 
-	RecordingOptions options = env().media().getRecordingOptions(_channel);
-	options.synchronizeVideo  = _synchronizeVideos;
-	env().media().startRecording(options);
-	log("Recording started: " + options.token);
-	_recordingToken = options.token;
+		Mutex::ScopedLock lock(_mutex); 
+		RecordingOptions options = env().media().getRecordingOptions(_channel);
+		options.synchronizeVideo  = _synchronizeVideos;
+		env().media().startRecording(options);
+		log("Recording started: " + options.token);
+		_recordingToken = options.token;
+	}
+	catch (std::exception& exc) {
+		log("Cannot start recording: " + std::string(exc.what()), "warn");
+		if (whiny) throw exc;
+	}
 }
 
 
-void SurveillanceMode::stopRecording()
+void SurveillanceMode::stopRecording(bool whiny)
 {	
 	log("Stop recording");
-	if (!isRecording())		
-		throw std::runtime_error("Stop recording failed: Recorder not active.");
+	try {
+		if (!isRecording()) {
+			if (!whiny) return;	
+			throw std::runtime_error("Recorder not active.");
+		}
 
-	Mutex::ScopedLock lock(_mutex); 
-	env().media().stopRecording(_recordingToken, true);
-	log("Recording stopped: " + _recordingToken);
-	_recordingToken = "";
+		Mutex::ScopedLock lock(_mutex); 
+		env().media().stopRecording(_recordingToken, true);
+		log("Recording stopped: " + _recordingToken);
+		_recordingToken = "";
+	}
+	catch (std::exception& exc) {
+		log("Cannot stop recording: " + std::string(exc.what()), "warn");
+		if (whiny) throw exc;
+	}
 }
 
 
@@ -195,11 +218,9 @@ void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& sta
 		case anio::MotionDetectorState::Idle: 
 			break;
 		case anio::MotionDetectorState::Waiting:
-			try {	
-				// Stop recording if recording is active
-				if (isRecording())
-					stopRecording();
-			} catch (...) {}
+
+			// Stop recording if active
+			stopRecording(false);
 		break;
 		case anio::MotionDetectorState::Vigilant: 
 			break;
@@ -208,18 +229,19 @@ void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& sta
 			// Create a Motion Detected event via the Anionu API to
 			// notify account users.
 			anio::Event event("Motion Detected", 
-				env().client().name() + ": Motion detected on channel: " + _channel,
-				anio::Event::High, anio::Event::SpotLocal);
+				env().client().name() + ": Motion detected on channel " + _channel,
+				anio::Event::High, anio::Event::Spot);
 			env().client().createEvent(event);
 			
 			try {	
 				// Start recording.
-				startRecording();
+				startRecording(true);
 			} 
-			catch (...) {
-				// Catch and swallow recording errors. 
+			catch (std::exception& exc) {
+				// Log and swallow recording errors. 
 				// Nothing to do here since the "Recording Failed"
 				// event will be triggered by the MediaManager.
+				log("Start recording failed: " + std::string(exc.what()));
 			}
 		break;
 	}
@@ -236,7 +258,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 
 		// Ensure token validity
 		if (!token->expired()) {
-			log("Creating configuration streaming session: " + session.token());
+			log("Creating configuration session: " + session.token());
 			Mutex::ScopedLock lock(_mutex); 
 
 			// Get the video capture or throw an exception.
@@ -245,6 +267,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 			// Set the input format to GRAY8 for the encoder
 			video->getEncoderFormat(session.options().iformat);
 			session.options().iformat.video.pixelFmt = "gray";
+			delete video; // no longer needed
 
 			// Attach motion detector to the stream.
 			// The motion detector acts as the video source.
@@ -273,7 +296,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 		// Otherwise the session is no longer valid, so we throw an exception 
 		// to terminate the session in error.
 		else {
-			log("Configuration streaming session timed out");
+			log("Configuration session timed out");
 			removeStreamingToken(session.token());
 			throw std::runtime_error("Surveillance Mode media preview has timed out.");
 		}
@@ -367,7 +390,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 	//   Channel Scope: channels.[channelName].modes.[modeName]
 	//   Defualt Scope: modes.[modeName]
 	//
-	bool defaultScope = element.id().find("channels.") == 0;
+	bool defaultScope = element.id().find("modes.") == 0;
 
 	// Create a video media element which enables the user to preview motion changes
 	// in real time as the channel is configured. This is achieved by adding a "media"
@@ -527,28 +550,3 @@ void SurveillanceMode::parseForm(smpl::Form&, smpl::FormElement& element)
 
 
 } } } // namespace scy::anio::spot
-
-
-
-
-/*
-bool SurveillanceMode::isConfigurable() const
-{	
-	return true;
-}
-
-
-bool SurveillanceMode::hasParsableFields(smpl::Form& form) const
-{
-	return form.hasField(".Surveillance Mode.", true);
-}
-
-
-Environment* SurveillanceMode::env() const
-{ 
-	// Provide synchronization for environment pointer.
-	Mutex::ScopedLock lock(_mutex);
-	assert(_env);
-	return _env; 
-}
-*/

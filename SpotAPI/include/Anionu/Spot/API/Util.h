@@ -50,7 +50,7 @@ inline ScopedConfiguration getModeConfiguration(IMode* mode)
 }
 
 	
-LogStream log(api::IModule* module, const char* level = "debug")
+LogStream slog(api::IModule* module, const char* level = "debug")
 	/// This method created a log stream which sends  
 	/// messages the Spot application logger.
 { 

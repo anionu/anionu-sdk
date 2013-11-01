@@ -46,7 +46,7 @@
 	#endif
 
 	#include "Sourcey/Base.h"
-	#if SOURCEY_MAJOR_VERSION != 0 || SOURCEY_MINOR_VERSION != 9 || SOURCEY_PATCH_VERSION != 0
+	#if SOURCEY_MAJOR_VERSION != 0 || SOURCEY_MINOR_VERSION != 9 || SOURCEY_PATCH_VERSION != 1
 		#error "Must use LibSourcey 0.9.0 to compile binary \
 				compatible plugins using the current API version."
 	#endif

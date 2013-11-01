@@ -47,11 +47,11 @@ public:
 	/// Local methods
 	void loadConfig();
 
-	void startMotionDetector();
-	void stopMotionDetector();
+	void startMotionDetector(bool whiny = true);
+	void stopMotionDetector(bool whiny = true);
 	
-	void startRecording();
-	void stopRecording();
+	void startRecording(bool whiny = true);
+	void stopRecording(bool whiny = true);
 	
 	TimedToken* createStreamingToken(long duration = 20000);
 	TimedToken* getStreamingToken(const std::string& token);

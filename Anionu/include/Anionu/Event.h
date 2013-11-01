@@ -28,26 +28,26 @@ struct Event
 
 	enum Origin
 	{
-		SpotLocal = 0,	// Triggered by a command from the local user interface
-		SpotRemote,		// Triggered by a command from a remote peer
-		Dashboard,		// Originates from the Anionu dashboard (incoming events)
-		External		// Originates from an external third party or API consumer
+		Spot = 0,		// Triggered from a Spot client
+		Dashboard,		// Triggered from the Anionu dashboard (incoming events)
+		Unknown,		// Unknown origin or third party API consumer
 	};
 
 	Event(const std::string& name = "", const std::string& message = "", 	
-		Severity severity = Default, Origin origin = SpotLocal);
+		Severity severity = Default, Origin origin = Spot);
 	
 	std::string name;
 	std::string message;
+	std::string origin;
 	std::time_t time;
 	Severity severity;
-	Origin origin;
+	//Origin origin;
 
 	std::string severityStr() const;
 	static std::string severityToStr(Severity id);
 	static Severity strToSeverity(const std::string& id);	
 
-	std::string originStr() const;
+	//std::string originStr() const;
 	static std::string originToStr(Origin id);
 	static Origin strToOrigin(const std::string& id);
 }; 

@@ -9,10 +9,6 @@
 #include "Sourcey/Logger.h"
 
 
-
-using namespace std;
-
-
 namespace scy {
 	using namespace av;
 namespace anio { 
@@ -73,7 +69,7 @@ void RecordingMode::loadConfig()
 	_segmentDuration = config.getInt("SegmentDuration", 5 * 60); // 5 minutes
 	_synchronizeVideos = config.getBool("SynchronizeVideos", false); // no sync
 
-	//api::log(this) << "Loading Config: " << _channel 
+	//api::slog(this) << "Loading Config: " << _channel 
 	//	<< "\r\tSegment duration: " << _segmentDuration 
 	//	<< "\r\tSynchronize videos: " << _synchronizeVideos 
 	//	<< endl;

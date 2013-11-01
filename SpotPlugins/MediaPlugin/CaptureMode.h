@@ -74,6 +74,7 @@ private:
 	bool _isActive;
 	std::string _error;
 	std::string _channel;
+	av::VideoCapture* _video;
 	mutable Mutex _mutex;
 };
 

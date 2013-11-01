@@ -14,7 +14,7 @@ namespace spot {
 
 
 CaptureMode::CaptureMode(api::Environment& env, const std::string& channel) : 
-	api::IModule(env), _channel(channel), _isActive(false)
+	api::IModule(env), _channel(channel), _isActive(false), _video(nullptr)
 {
 	log("Creating");
 	loadConfig();
@@ -34,8 +34,9 @@ bool CaptureMode::activate()
 	{
 		// Get the video capture and attach a listener, 
 		// or throw an exception.
-		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
-		video->emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		assert(!_video);
+		_video = env().channels().getChannel(_channel)->videoCapture(true);	
+		_video->emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = true;
 	}
 	catch (std::exception& exc)
@@ -60,8 +61,9 @@ void CaptureMode::deactivate()
 	{
 		// Get the video capture and detach the listener,
 		// or throw an exception which we log and swallow.
-		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);
-		video->emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
+		assert(_video);
+		if (_video)
+			_video->emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = false;
 	}
 	catch (std::exception& exc) 
@@ -84,7 +86,7 @@ void CaptureMode::loadConfig()
 	testConfig.boolValue = config.getBool("BoolValue", false);
 	testConfig.stringValue = config.getBool("StringValue", "Hello Sir");
 
-	api::log(this) << "Loaded Config: " << _channel 
+	api::slog(this) << "Loaded Config: " << _channel 
 		<< "\r\tIntValue: " << testConfig.intValue 
 		<< "\r\tBoolValue: " << testConfig.boolValue 
 		<< "\r\tStringValue: " << testConfig.stringValue 
@@ -96,14 +98,12 @@ void CaptureMode::loadConfig()
 void CaptureMode::onVideoCapture(void*, av::VideoPacket& packet)
 {
 	// Capture and display the current channel video image.
-	av::MatrixPacket* mpacket = dynamic_cast<av::MatrixPacket*>(&packet);		
-	if (mpacket) {
-		cv::Mat& image = *mpacket->mat;
+	const auto& mpacket = dynamic_cast<av::MatrixPacket&>(packet);
+	cv::Mat& image = *mpacket.mat;
 
-		// You could modify the source image here.
-		cv::imshow("Channel Image: " + _channel, image);
-		cv::waitKey(1);
-	}
+	// You could modify the source image here.
+	cv::imshow("Channel Image: " + _channel, image);
+	cv::waitKey(1);
 }
 
 
