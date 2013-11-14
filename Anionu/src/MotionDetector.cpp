@@ -19,6 +19,7 @@
 
 #include "Anionu/MotionDetector.h"
 
+#if defined(HAVE_OPENCV) && defined(HAVE_FFMPEG)
 
 using namespace cv;
 using namespace std;
@@ -261,3 +262,6 @@ bool MotionDetector::isActive() const
 
 
 } } // namespace scy::anio
+
+#endif
+

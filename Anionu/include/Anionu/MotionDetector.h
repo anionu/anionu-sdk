@@ -20,13 +20,17 @@
 #ifndef Anionu_MotionDetector_H
 #define Anionu_MotionDetector_H
 
-
+#include "Sourcey/Base.h"
 #include "Sourcey/Stateful.h"
 #include "Sourcey/Signal.h"
 #include "Sourcey/Interface.h"
 #include "Sourcey/PacketStream.h"
 #include "Sourcey/Timer.h"
+
+#if defined(HAVE_OPENCV) && defined(HAVE_FFMPEG)
+
 #include "Sourcey/Media/VideoCapture.h"
+
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -136,4 +140,5 @@ private:
 } } // namespace scy::anio
 
 
+#endif
 #endif
