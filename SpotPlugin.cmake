@@ -13,49 +13,41 @@ macro(define_spot_plugin name)
     source_group("Src" FILES ${lib_srcs})
     source_group("Include" FILES ${lib_hdrs})
     
-    include_dependency(JsonCpp REQUIRED)
-    include_dependency(OpenSSL REQUIRED) # depreciate
-    #include_dependency(Poco REQUIRED) # depreciate
-    #include_dependency(FFmpeg REQUIRED) # optional
-    include_dependency(HttpParser REQUIRED) # optional
-    include_dependency(OpenCV REQUIRED)
-    include_dependency(RtAudio REQUIRED)
-    include_dependency(LibUV REQUIRED)
-    
-    #message(${LibSourcey_INCLUDE_DIRS})
     include_directories(${LibSourcey_INCLUDE_DIRS})    
     link_directories(${LibSourcey_LIBRARY_DIRS})
     
-    include_sourcey_modules(UV Base Anionu SpotAPI ${ARGN}) # Media Net JSON Media  HTTP    
+    include_sourcey_modules(uv base anionu spotapi ${ARGN}) # Media Net JSON Media  HTTP    
     include_directories(
       "${LibSourcey_INSTALL_DIR}/lib"
-      "${CMAKE_SOURCE_DIR}/src/AnionuSDK/SpotAPI/include")
-
+      "${CMAKE_SOURCE_DIR}/src/AnionuSDK/SpotAPI/include")      
+    
     add_library(${name} MODULE ${lib_srcs} ${lib_hdrs})
-    
-    if(ENABLE_SOLUTION_FOLDERS)
-      set_target_properties(${name} PROPERTIES FOLDER "applications")
-    endif()
-    set_target_properties(${name} PROPERTIES
-      DEBUG_POSTFIX "${LibSourcey_DEBUG_POSTFIX}")
+      
+    #status("  Linking Spot plugin ${name}")    
+    #status("    Libraries:               ${LibSourcey_INCLUDE_LIBRARIES}")    
+    #status("    Library Dirs:            ${LibSourcey_LIBRARY_DIRS}")    
+    #status("    Include Dirs:            ${LibSourcey_INCLUDE_DIRS}")  
+    #status("    Dependencies:            ${LibSourcey_BUILD_DEPENDENCIES}")  
   
-    if(MSVC)
-      # Temporary workaround for "error LNK2026: module unsafe for SAFESEH image"
-      # when compiling with certain externally compiled libraries with VS2012, 
-      # such as http://ffmpeg.zeranoe.com/builds/
-      # This disables safe exception handling by default.
-      IF(${_MACHINE_ARCH_FLAG} MATCHES X86)
-        SET (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
-        SET (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
-        SET (CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /SAFESEH:NO")
-      ENDIF()
-    endif()
-    
-    #message(${LibSourcey_INCLUDE_LIBRARIES})
     target_link_libraries(${name} ${LibSourcey_INCLUDE_LIBRARIES}) 
     
+    if(ENABLE_SOLUTION_FOLDERS)
+      set_target_properties(${name} PROPERTIES FOLDER "plugins")
+    endif()
+    set_target_properties(${name} PROPERTIES DEBUG_POSTFIX "${LibSourcey_DEBUG_POSTFIX}")
+    
+    if (NOT ${name}_EXECUTABLE_NAME)
+      set(${name}_EXECUTABLE_NAME ${name})
+    endif()
+    if (NOT ${name}_DEBUG_POSTFIX AND NOT ${name}_DEBUG_POSTFIX STREQUAL "")
+      set(${name}_DEBUG_POSTFIX ${LibSourcey_DEBUG_POSTFIX})
+    endif()
+    set_target_properties(${name} PROPERTIES
+      OUTPUT_NAME ${${name}_EXECUTABLE_NAME}
+      DEBUG_POSTFIX "${${name}_DEBUG_POSTFIX}")
+    
     install(TARGETS ${name} 
-      DESTINATION "${CMAKE_INSTALL_PREFIX}/Spot/plugins/${name}" COMPONENT main) 
+      DESTINATION "${CMAKE_INSTALL_PREFIX}/spot/plugins/${name}" COMPONENT main) 
         
 endmacro()
 

@@ -17,8 +17,8 @@
 //
 
 
-#include "Anionu/APIClient.h"
-#include "Sourcey/Logger.h"
+#include "anionu/apiclient.h"
+#include "scy/logger.h"
 
 /*
 //#include "Poco/Net/HTTPClientSession.h"
