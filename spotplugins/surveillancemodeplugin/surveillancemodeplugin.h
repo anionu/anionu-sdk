@@ -5,8 +5,6 @@
 #include "anionu/spot/api/iplugin.h"
 #include "anionu/spot/api/imodule.h"
 #include "anionu/spot/api/imode.h"
-
-
 #include "anionu/spot/api/streamingsession.h"
 
 

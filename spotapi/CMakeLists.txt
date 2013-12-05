@@ -8,5 +8,5 @@ if(BUILD_MODULES AND BUILD_MODULE_spotapi)
 
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
       
-  define_sourcey_module(spotapi base net media json symple util)
+  define_sourcey_module(spotapi uv base net media json symple util)
 endif()

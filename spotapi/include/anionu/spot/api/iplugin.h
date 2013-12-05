@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_IPlugin_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 #include "anionu/spot/api/imodule.h"
 
 

@@ -37,7 +37,7 @@ public:
 	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
 	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
 		
-	void onRecordingStopped(void* sender, api::RecorderStream& stream);
+	void onRecordingStopped(void* sender, api::RecorderSession& recorder);
 	
 	virtual const char* docFile() const;	
 	virtual const char* errorMessage() const;

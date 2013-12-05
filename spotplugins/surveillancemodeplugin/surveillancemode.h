@@ -65,12 +65,11 @@ public:
 	//
 	/// Callbacks
 	void onMotionStateChange(void* sender, anio::MotionDetectorState& state, const anio::MotionDetectorState&);
-	void onInitStreamingSession(void*, api::StreamingSession& session, bool& handled);
-	void onInitStreamingConnection(void*, api::StreamingSession& session, PacketStream& stream, bool& handled);
+	void onSetupStreamingSources(void*, api::StreamingSession& session, bool& handled);
+	void onSetupStreamingConnection(void*, api::StreamingSession& session, PacketStream& stream, bool& handled);
 	void onStreamingSessionStateChange(void*, api::StreamingState& state, const api::StreamingState&);
 	
 protected:	
-	mutable Mutex _mutex;
 	bool _isActive;
 	bool _isConfiguring;
 	bool _synchronizeVideos;
@@ -80,6 +79,7 @@ protected:
 	std::vector<TimedToken> _streamingTokens;
 	anio::MotionDetector _motionDetector;
 	PacketStream _motionStream;
+	mutable Mutex _mutex;
 };
 
 

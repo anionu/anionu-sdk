@@ -51,7 +51,7 @@ MotionDetector::~MotionDetector()
 
 void MotionDetector::onStreamStateChange(const PacketStreamState&)
 {
-	debugL("MotionDetector", this) << "Reset Stream State" << endl;
+	DebugLS(this) << "Reset Stream State" << endl;
 	
 	setState(this, MotionDetectorState::Idle);
 
@@ -66,7 +66,7 @@ void MotionDetector::onStreamStateChange(const PacketStreamState&)
 
 void MotionDetector::process(IPacket& packet)
 {
-	traceL("MotionDetector", this) << "Processing" << endl;
+	TraceLS(this) << "Processing" << endl;
 
 	MatrixPacket* mpacket = dynamic_cast<MatrixPacket*>(&packet);		
 	if (!mpacket) {
@@ -140,7 +140,7 @@ void MotionDetector::updateMHI(cv::Mat& source)
 
 void MotionDetector::computeMotionState() 
 { 
-	//debugL("MotionDetector", this) 
+	//DebugLS(this) 
 	//	<< "Update Motion State: " << state() << endl;	
 	Mutex::ScopedLock lock(_mutex); 
 
@@ -154,7 +154,7 @@ void MotionDetector::computeMotionState()
 			_motionCanStartAt = currentTime + _options.preSurveillanceDelay;
 			setState(this, MotionDetectorState::Waiting);
 			
-			debugL("MotionDetector", this) << "Updating State: Set => Waiting" << endl;
+			DebugLS(this) << "Updating State: Set => Waiting" << endl;
 		}
 		break;
 	case MotionDetectorState::Waiting: 
@@ -162,7 +162,7 @@ void MotionDetector::computeMotionState()
 			// If the timer is expired then set our state back to Vigilant...
 			if (currentTime > _motionCanStartAt) {				
 				setState(this, MotionDetectorState::Vigilant);			
-				debugL("MotionDetector", this) << "Updating State: Set => Vigilant" << endl;
+				DebugLS(this) << "Updating State: Set => Vigilant" << endl;
 			}
 		}
 		break;
@@ -170,7 +170,7 @@ void MotionDetector::computeMotionState()
 		{
 			// If motion threshold is exceeded then set our state to Triggered...
 			if (_motionLevel > _options.motionThreshold) {
-				debugL("MotionDetector", this) << "Updating State: Motion Detected: " 
+				DebugLS(this) << "Updating State: Motion Detected: " 
 					<< _motionLevel << ">" << _options.motionThreshold << endl;
 
 				// We need x number of motion frames before we 
@@ -192,14 +192,14 @@ void MotionDetector::computeMotionState()
 							currentTime + _options.minTriggeredDuration, 				
 							_motionStartedAt + _options.maxTriggeredDuration);
 						setState(this, MotionDetectorState::Triggered);
-						debugL("MotionDetector", this) << "Updating State: Vigilant => Triggered" << endl;
+						DebugLS(this) << "Updating State: Vigilant => Triggered" << endl;
 					}
 				} else {
 					_stopwatch.stop();
 					_stopwatch.reset();
 					_motionSegmentEndingAt = 0;
 					_motionFrameCount = 0;
-					debugL("MotionDetector", this) << "Updating State: Motion Timer Expired" << endl;
+					DebugLS(this) << "Updating State: Motion Timer Expired" << endl;
 				}			
 			}
 		}
@@ -210,7 +210,7 @@ void MotionDetector::computeMotionState()
 			if (currentTime > _motionSegmentEndingAt) {				
 				_motionCanStartAt = currentTime + _options.postMotionEndedDelay;
 				setState(this, MotionDetectorState::Waiting);
-				debugL("MotionDetector", this) << "Updating State: Triggered => Waiting" << endl;
+				DebugLS(this) << "Updating State: Triggered => Waiting" << endl;
 			}
 
 			// If motion threshold is exceeded while triggered then extend the timer...
@@ -218,7 +218,7 @@ void MotionDetector::computeMotionState()
 				_motionSegmentEndingAt = min<time_t>(
 					currentTime + _options.minTriggeredDuration, 				
 					_motionStartedAt + _options.maxTriggeredDuration);	
-				debugL("MotionDetector", this) << "Updating State: Extend Triggered Duration: " 
+				DebugLS(this) << "Updating State: Extend Triggered Duration: " 
 					<< _motionSegmentEndingAt << endl;			
 			}
 		}

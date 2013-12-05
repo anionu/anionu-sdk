@@ -42,7 +42,8 @@ public:
 		// Returns the api::StreamingSession instance or throws
 		// a NotFoundException.
 		
-	Signal2<api::StreamingSession&, bool&> InitStreamingSession;
+	Signal2<api::StreamingSession&, bool&> SetupStreamingSources;
+	Signal2<api::StreamingSession&, bool&> SetupStreamingEncoders;
 		// Provides plugins with the ability to override the
 		// creation of source and encoder objects for the
 		// given session. Overriding may be partial or
@@ -63,10 +64,10 @@ public:
 		//		encoders:				5 +
 		//
 
-	Signal3<api::StreamingSession&, PacketStream&, bool&> InitStreamingConnection;
+	Signal3<api::StreamingSession&, PacketStream&, bool&> SetupStreamingConnection;
 		// Provides listeners with the ability to override the 
 		// initialization of session connection objects.	
-		// Methodology is the same as the InitStreamingSession 
+		// Methodology is the same as the SetupStreamingSources 
 		// signal except that stream objects should derive from:
 		//
 		//		PacketProcessor:		processor

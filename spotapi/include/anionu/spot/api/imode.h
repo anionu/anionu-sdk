@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_IMode_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 
 #ifdef Anionu_Spot_USING_CORE_API
 #include "scy/signal.h"

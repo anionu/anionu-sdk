@@ -41,15 +41,6 @@ class MediaPlugin:
 		/// interface for procession all incoming, outgoing
 		/// and local messages passing through the Spot client.
 		///
-		/*
-	public api::IModule
-        /// IModule exposes the full core API environment.
-        /// The core API shares complex data types such as STL and
-        /// cv::VideoCapture with the application, so strict binary compatibility
-        /// between your plugin and the target Spot client is required.
-        /// This is the recommended API to use, especially for beginners.
-        ///
-		*/
 #ifdef Anionu_Spot_USING_CORE_API		
 		///
         /// The IModule interface exposes Spot's internal class structure
@@ -100,8 +91,8 @@ public:
 	av::AVPacketEncoder* createEncoder(const av::RecordingOptions& options);	
 	void registerMediaFormats();
 	
-	void onInitStreamingSession(void*, api::StreamingSession& session, bool& handled);
-	void onInitRecordingEncoder(void*, const api::RecordingOptions& options, api::Recorder*& encoder);
+	void onSetupStreamingSources(void*, api::StreamingSession& session, bool& handled);
+	void onSetupStreamingSources(void*, const api::RecordingOptions& options, api::Recorder*& encoder);
 #endif
 
 	const char* errorMessage() const;

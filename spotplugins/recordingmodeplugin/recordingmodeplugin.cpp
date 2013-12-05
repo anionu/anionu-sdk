@@ -1,7 +1,9 @@
-#include "RecordingModePlugin.h"
-#include "RecordingMode.h"
-
+#include "recordingmodeplugin.h"
+#include "recordingmode.h"
 #include "anionu/spot/api/environment.h"
+
+
+using std::endl;
 
 
 namespace scy {
@@ -22,26 +24,26 @@ RecordingModePlugin::RecordingModePlugin(api::Environment& env) :
 	// Set the default logger instance, otherwise
 	// a new logger singleton instance will be
 	// created for the plugin process.
-	//Logger::setInstance(&env.logger());
+	Logger::setInstance(&env.logger());
 }
 
 
 RecordingModePlugin::~RecordingModePlugin()
 {
-	//Logger::setInstance(NULL);
+	Logger::setInstance(NULL);
 }
 
 
 bool RecordingModePlugin::load() 
 {
-	log("Loading");	
+	DebugL << "Loading" << endl;
 	return true;
 }
 
 
 void RecordingModePlugin::unload() 
 {	
-	log("Unloading");	
+	DebugL << "Unloading" << endl;
 }
 
 

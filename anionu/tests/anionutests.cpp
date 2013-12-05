@@ -99,13 +99,13 @@ public:
 	
 	void onAuthenticationHeaders(void*, http::Response& res)
 	{	
-		debugL("StandaloneClientConnectionTest") << "On response headers: " << res << endl;
+		DebugL << "On response headers: " << res << endl;
 	}
 	
 	void onAuthenticationComplete(void* sender, const http::Response& response)
 	{		
 		auto self = reinterpret_cast<http::ClientConnection*>(sender);
-		debugL("StandaloneClientConnectionTest") << "On response complete" 
+		DebugL << "On response complete" 
 			<< response << self->readStream<std::stringstream>()->str() << endl;
 		self->close();
 	}
@@ -115,7 +115,7 @@ public:
 	//
 	void runCreateEventTest() 
 	{
-		traceL("CreateEventTest") << "Starting" << endl;
+		TraceL << "Starting" << endl;
 		
 		// Create the event
 		Event event("Random Event", "Umm ... something happened");
@@ -137,14 +137,14 @@ public:
 
 		//runLoop();
 		
-		traceL("CreateEventTest") << "Ended" << endl;
+		TraceL << "Ended" << endl;
 	}
 
 	void onCreateEventComplete(void* sender, const http::Response& response)
 	{
 		auto trans = reinterpret_cast<APITransaction*>(sender);
 		
-		debugL("CreateEventTest") << "Transaction Complete:" 
+		DebugL << "Transaction Complete:" 
 			<< "\n\tRequest Head: " << trans->request()
 			<< "\n\tResponse Head: " << response
 			//<< "\n\tResponse Body: " << trans->incomingBuffer()
@@ -161,7 +161,7 @@ public:
 
 	void runAssetUploadTest()
 	{
-		traceL("Test") << "Starting" << endl;
+		TraceL << "Starting" << endl;
 
 		// Create the transaction
 		APITransaction* trans = client.call("UploadAsset");	
@@ -181,7 +181,7 @@ public:
 		//assert(gotUploadProgress);
 		//assert(gotUploadComplete);
 		
-		traceL("Test") << "Ended" << endl;
+		TraceL << "Ended" << endl;
 	}
 
 	void onAssetUploadProgress(void* sender, const double& progress)
@@ -189,7 +189,7 @@ public:
 		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotUploadProgress = true;
 
-		debugL("UploadAssetTest") << "Upload Progress:" << progress << endl;
+		DebugL << "Upload Progress:" << progress << endl;
 	}
 
 	void onAssetUploadComplete(void* sender, const http::Response& response)
@@ -197,7 +197,7 @@ public:
 		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotUploadComplete = true;
 
-		debugL("UploadAssetTest") << "Transaction Complete:" 
+		DebugL << "Transaction Complete:" 
 			<< "\n\tRequest Head: " << trans->request()
 			<< "\n\tResponse Head: " << response
 			//<< "\n\tResponse Body: " << trans->incomingBuffer()
@@ -215,7 +215,7 @@ public:
 
 	void runAssetDownloadTest()
 	{
-		traceL("Test") << "Starting" << endl;
+		TraceL << "Starting" << endl;
 
 		APIMethod method;
 		method.url = "http://localhost:3000/assets/streaming/1645/Administrator_hapyyy_1370318967.jpg";
@@ -237,7 +237,7 @@ public:
 		auto trans = reinterpret_cast<APITransaction*>(sender);
 		gotProgress = true;
 
-		debugL() << "Anionu API Incoming Progress:" << progress << endl;
+		DebugL << "Anionu API Incoming Progress:" << progress << endl;
 	}
 
 	void onAssetTransactionComplete(void* sender, const http::Response& response) //APIMethod& service, 
@@ -249,7 +249,7 @@ public:
 
 		// TODO: Check file veracity
 
-		debugL() << "Anionu API Response:" 
+		DebugL << "Anionu API Response:" 
 			<< "\n\tHeaders: " << response
 			<< "\n\tPayload Size: " << response.getContentLength()
 			<< endl;
@@ -260,15 +260,15 @@ public:
 	// ============================================================================
 	//
 	void runLoop() {
-		debugL("Tests") << "#################### Running" << endl;
+		DebugL << "#################### Running" << endl;
 		app.run();
-		debugL("Tests") << "#################### Ended" << endl;
+		DebugL << "#################### Ended" << endl;
 	}
 
 	void runCleanup() {
-		debugL("Tests") << "#################### Finalizing" << endl;
+		DebugL << "#################### Finalizing" << endl;
 		app.finalize();
-		debugL("Tests") << "#################### Exiting" << endl;
+		DebugL << "#################### Exiting" << endl;
 	}
 };
 

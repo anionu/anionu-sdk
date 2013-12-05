@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_Client_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 #include <string>
 
 #ifdef Anionu_Spot_USING_CORE_API
@@ -33,6 +33,7 @@
 
 namespace scy {
 namespace smpl {
+	class Peer;
 	class Message;
 	struct MessageDelegate;}
 namespace anio {
@@ -138,6 +139,12 @@ public:
 		// which don't need to be stored in the database.
 		// An exception will be thrown on error, or if the Symple
 		// client is offline.
+	
+	virtual std::vector<smpl::Peer*> peers() = 0;
+		// Returns a list of active peers.
+	
+	virtual smpl::Peer* getPeer(const std::string& id) = 0;
+		// Returns a pointer to the peer with the given session ID.
 
 	virtual std::string name() const = 0;
 	virtual std::string username() const = 0;

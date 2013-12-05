@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_MediaManager_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 
 #ifdef Anionu_Spot_USING_CORE_API
 #include "scy/base.h"
@@ -81,12 +81,13 @@ struct RecordingOptions: public av::RecordingOptions
 };
 
 
-struct RecorderStream: public PacketStream
+struct RecorderSession//: public PacketStream
 {
+	PacketStream stream;
 	api::RecordingOptions options;
-	RecorderStream(const api::RecordingOptions& options) :
-		PacketStream(options.token),
-		options(options) {}
+
+	RecorderSession(const api::RecordingOptions& options) :
+		stream(options.token), options(options) {}
 };
 
 
@@ -108,9 +109,9 @@ public:
 		// Returns true on success, or if whiny is set then an 
 		// exception will be thrown on error.
 
-	virtual api::RecorderStream* createRecorder(api::RecordingOptions& options) = 0;
+	virtual api::RecorderSession* createRecorder(api::RecordingOptions& options, bool whiny = true) = 0;
 		// Creates a new recorder instance from the given options.
-		// Call RecorderStream::start() to start actual recording.
+		// Call RecorderSession->stream.start() to start actual recording.
 		// Using this method directly, instead of startRecording() 
 		// enables custom manipulation of the PacketStream adapters.
 		// The RecordingOptions must be correctly populated, 
@@ -154,14 +155,29 @@ public:
 
 	virtual av::FormatRegistry& audioStreamingFormats() = 0;
 		// Media formats for streaming audio over the internet.
+	
+	Signal2<api::RecorderSession&, bool&> SetupRecordingSources;
+		// Provides plugins with the ability to override the device capture 
+		// sources for this recording session.
+		//
+		// If the capture source creation is overridden the handled boolean
+		// (second signal argument) must return true in order to indicate to 
+		// Spot and lower priority plugins that captures have been initialized.	
+		//
+		// Also, when overriding capture sources the output format encoder 
+		// options should be updated accordingly depending the availability
+		// of audio and video sources eg:
+		//
+		//     session.options.oformat.video.enabled = !!hasVideoSource;
+		//     session.options.oformat.audio.enabled = !!hasAudioSource;
 
-	Signal2<const api::RecordingOptions&, api::Recorder*&> InitRecordingEncoder;
+	Signal2<api::RecorderSession&, bool&> SetupRecordingEncoders;
 		// Provides listeners with the ability to instantiate the recording encoder.
 		// If a valid Recorder instance is assigned to the second parameter,
 		// it will be used for encoding.
 		
-	Signal<api::RecorderStream&> RecordingStarted;
-	Signal<api::RecorderStream&> RecordingStopped;
+	Signal<api::RecorderSession&> RecordingStarted;
+	Signal<api::RecorderSession&> RecordingStopped;
 		
 protected:
 	virtual ~MediaManager() {};

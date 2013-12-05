@@ -235,11 +235,11 @@ void APIMethods::load()
 		json::Reader reader;
 		if (!reader.parse(APIv1, *this))
 			throw std::runtime_error(reader.getFormatedErrorMessages());
-		traceL() << "Loaded API Methods: " << json::stringify(*this, true) << endl;
+		TraceL << "Loaded API Methods: " << json::stringify(*this, true) << endl;
 	} 
 	catch (std::exception& exc) 
 	{
-		errorL() << "API Load Error: " << exc.what() << endl;
+		ErrorL << "API Load Error: " << exc.what() << endl;
 		throw exc;/*exc.rethrow();*/
 	}  
 }
@@ -254,13 +254,13 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 	try
 	{			
 		Mutex::ScopedLock lock(_mutex); 	
-		//traceL("APIMethods") << "Get: " << name << endl;	
+		//TraceL << "Get: " << name << endl;	
 		for (auto it = this->begin(); it != this->end(); it++) {	
 			json::Value& meth = (*it);		
-			//traceL() << "Get API Method: " << json::stringify(meth, true) << endl;
+			//TraceL << "Get API Method: " << json::stringify(meth, true) << endl;
 			if (meth.isObject() &&
 				meth["name"] == name) {
-				//traceL() << "Get API Method name: " << meth["name"].asString() << endl;
+				//TraceL << "Get API Method name: " << meth["name"].asString() << endl;
 				method.name = meth["name"].asString();
 				method.httpMethod = meth["http"].asString();
 				method.url = _client.endpoint() + meth["uri"].asString();
@@ -278,7 +278,7 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 	}
 	catch (std::exception& exc)
 	{
-		errorL("APIMethods") << "Get Error: " << exc.what() << endl;
+		ErrorL << "Get Error: " << exc.what() << endl;
 		throw exc;/*exc.rethrow();*/
 	}
 	
@@ -351,20 +351,20 @@ void APIRequest::prepare()
 APITransaction::APITransaction(APIClient* client, const APIMethod& method) : //APIRequest* request
 	http::ClientConnection(client, method.url) //.getHost(), method.url.getPort()
 {
-	traceL("APITransaction") << "Create" << endl;
+	TraceL << "Create" << endl;
 }
 
 
 APITransaction::~APITransaction()
 {
-	traceL("APITransaction") << "Destroy" << endl;
+	TraceL << "Destroy" << endl;
 }
 
 
 /*
 void APITransaction::onComplete()
 {	
-	//traceL("APITransaction") << "Callbacks: " << !cancelled() << endl;
+	//TraceL << "Callbacks: " << !cancelled() << endl;
 
 	//assert(!cancelled());
 	// Send from the current instance, so the

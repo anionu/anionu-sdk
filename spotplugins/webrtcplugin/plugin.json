@@ -1,0 +1,7 @@
+{
+   "author" : "Sourcey",
+   "id" : "WebRTCPlugin",
+   "name" : "WebRTC Plugin",
+   "sdk-version" : "0.6.0",
+   "version" : "0.1.0"
+}

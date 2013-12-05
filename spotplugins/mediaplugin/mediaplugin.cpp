@@ -1,10 +1,12 @@
-#include "MediaPlugin.h"
-#include "CaptureMode.h"
-
+#include "mediaplugin.h"
+#include "capturemode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/synchronizer.h"
 #include "anionu/spot/api/client.h"
 #include "scy/media/formatregistry.h"
+
+
+using std::endl;
 
 
 namespace scy {
@@ -26,13 +28,13 @@ MediaPlugin::MediaPlugin(api::Environment& env) :
 	// otherwise a new default logger singleton will be created for the
 	// plugin process. You could also register a file logger if you want
 	// to keep the plugin logs separate from Spot.
-	//Logger::setInstance(&env.logger());
+	Logger::setInstance(&env.logger());
 }
 
 
 MediaPlugin::~MediaPlugin()
 {	
-	//Logger::setInstance(NULL);
+	Logger::setInstance(NULL, false);
 }
 
 
@@ -47,11 +49,11 @@ bool MediaPlugin::load()
 		// This is we always call the logger (at minimum), so if everything blows
 		// up at this point, we know what we are dealing with.
 		//
-		log("Loading");
+		DebugL << "Loading" << endl;
 
 		// Override encoder creation with custom media sources for streaming and recording, 
-		env().streaming().InitStreamingSession += delegate(this, &MediaPlugin::onInitStreamingSession);
-		env().media().InitRecordingEncoder += delegate(this, &MediaPlugin::onInitRecordingEncoder);
+		//env().streaming().SetupStreamingSources += delegate(this, &MediaPlugin::onSetupStreamingSources); // TODO
+		//env().media().SetupStreamingSources += delegate(this, &MediaPlugin::onSetupStreamingSources); // TODO
 	
 		// To test the events system we create a custom "Media Plugin Activated"  
 		// event which will notify all peers that the plugin loaded successfully.
@@ -78,7 +80,7 @@ bool MediaPlugin::load()
 		// Swallow exceptions for ABI compatibility reasons.
 		// Set the error message to display to the user.
 		_error = std::string(exc.what());
-		log("Load failed: " + _error, "error");
+		ErrorL << "Load failed: " << _error << endl;
 
 		// Return false to put the plugin in error state.
 		return false;
@@ -91,11 +93,11 @@ bool MediaPlugin::load()
 
 void MediaPlugin::unload() 
 {	
-	log("Unloading");
+	DebugL << "Unloading" << endl;
 
 	// All allocated memory and delegates should be freed here.
-	env().streaming().InitStreamingSession.detach(this);
-	env().media().InitRecordingEncoder.detach(this);
+	//env().streaming().SetupStreamingSources.detach(this); // TODO
+	//env().media().SetupStreamingSources.detach(this); // TODO
 }
 
 
@@ -119,7 +121,7 @@ void MediaPlugin::synchronizeTestVideo()
 {
 	// This method shows how to synchronize a file with online storage.
 	// Be sure to change the video file path for testing.
-	log("Synchronizing test video");	
+	DebugL << "Synchronizing test video" << endl;
 	env().synchronizer().sync("Video", "/path/to/video.mp4", "Test Video");
 }
 
@@ -129,7 +131,7 @@ bool MediaPlugin::onMessage(const char* /* message */)
 	// Parse the Message and do something with it:
 	// smpl::Message m;
 	// m.read(message);
-	// log("Recv Message: " + m.toStyledString());
+	// DebugL << "Recv Message: " + m.toStyledString());
 	//
 	// Return true if the message has been responded to, 
 	// false otherwise.
@@ -142,7 +144,7 @@ bool MediaPlugin::onCommand(const char* /* command */)
 	// Parse the Command and do something with it:
 	// smpl::Command c;
 	// c.read(command);
-	// log("Recv Command: " + c.toStyledString());	
+	// DebugL << "Recv Command: " + c.toStyledString());	
 	//
 	// Return true if the message has been responded to, 
 	// false otherwise.
@@ -155,7 +157,7 @@ void MediaPlugin::onEvent(const char* /* event */)
 	// Parse the Event and do something with it:
 	// smpl::Event e;
 	// e.read(event);
-	// log("Recv Event: " + e.toStyledString());
+	// DebugL << "Recv Event: " + e.toStyledString());
 }
 
 
@@ -164,7 +166,7 @@ void MediaPlugin::onPresence(const char* /* presence */)
 	// Parse the Presence and do something with it:
 	// smpl::Message p;
 	// p.read(presence);	
-	// log("Recv Presence: " + p.toStyledString());
+	// DebugL << "Recv Presence: " + p.toStyledString());
 }
 
 
@@ -183,7 +185,7 @@ const char* MediaPlugin::errorMessage() const
 //
 void MediaPlugin::registerMediaFormats()
 {
-	log("Registering custom media formats.");
+	DebugL << "Registering custom media formats." << endl;
 
 	// This function shows how you can register custom media
 	// formats for video recording and streaming. Registered 
@@ -253,45 +255,45 @@ void MediaPlugin::registerMediaFormats()
 
 av::AVPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& options)
 {
-	log("Initializing AV Encoder");	
+	DebugL << "Initializing AV Encoder" << endl;	
 	
 	// Create the encoder and return the instance pointer.	 
 	// the returned pointer must extend from IPacketEncoder.
-	av::AVPacketEncoder* encoder = NULL;
+	av::AVPacketEncoder* encoder = nullptr;
 	try {
 		encoder = new av::AVPacketEncoder(options);
 		encoder->initialize();
 	}
 	catch (std::exception& exc) {
-		log("Encoder Error: " + std::string(exc.what()), "error");
+		ErrorL << "Encoder Error: " + std::string(exc.what()) << endl;
 		if (encoder)
 			delete encoder;
-		encoder = NULL;
+		encoder = nullptr;
 	}
 	return encoder;
 }
 
 
-void MediaPlugin::onInitRecordingEncoder(void*, const api::RecordingOptions& options, api::Recorder*& encoder)
+void MediaPlugin::onSetupStreamingSources(void*, const api::RecordingOptions& options, api::Recorder*& encoder)
 {
-	log("Initialize Recording Encoder");
+	DebugL << "Initialize Recording Encoder" << endl;
 
 	// Create the encoder unless recording raw video.
 	if (options.oformat.id != "rawvideo" &&
 		encoder == NULL) {
 		encoder = createEncoder(options); //reinterpret_cast<api::Recorder*>();
-		log("Initializing Recording Encoder: OK");
+		DebugL << "Initializing Recording Encoder: OK" << endl;
 	}
 }
 
 
-void MediaPlugin::onInitStreamingSession(void*, api::StreamingSession& session, bool&)
+void MediaPlugin::onSetupStreamingSources(void*, api::StreamingSession& session, bool&)
 {
-	log("Initialize Streaming Session");
+	DebugL << "Initialize Streaming Session" << endl;
 		
 	// Create the encoder unless streaming raw video.
 	if (session.options().oformat.id != "rawvideo" &&
-		session.stream().base().getProcessor<av::IPacketEncoder>() == NULL) {	
+		session.encodeStream().base().getProcessor<av::IPacketEncoder>() == NULL) {	
 	
 		av::RecordingOptions options(
 			session.options().iformat, 
@@ -300,7 +302,7 @@ void MediaPlugin::onInitStreamingSession(void*, api::StreamingSession& session, 
 		
 		// Attach the encoder to the packet stream.
 		if (encoder)
-			session.stream().attach(encoder, 5, true);			
+			session.encodeStream().attach(encoder, 5, true);			
 	}
 }
 

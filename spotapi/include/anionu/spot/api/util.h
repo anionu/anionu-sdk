@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_Util_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 #include "anionu/spot/api/imode.h"
 #include "anionu/spot/api/imodule.h"
 #include "scy/configuration.h"
@@ -50,6 +50,7 @@ inline ScopedConfiguration getModeConfiguration(IMode* mode)
 }
 
 	
+#if 0
 LogStream slog(api::IModule* module, const char* level = "debug")
 	/// This method created a log stream which sends  
 	/// messages the Spot application logger.
@@ -58,6 +59,7 @@ LogStream slog(api::IModule* module, const char* level = "debug")
 	//	return LogStream();
 	return module->env().logger().send(level, module->className(), module); 
 }
+#endif
 
 
 } } } } // namespace scy::anio::spot::api

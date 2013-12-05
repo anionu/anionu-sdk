@@ -1,5 +1,5 @@
-#include "SurveillanceMode.h"
-#include "SurveillanceMultipartAdapter.h"
+#include "surveillancemode.h"
+#include "surveillancemultipartadapter.h"
 #include "anionu/spot/api/client.h"
 #include "anionu/spot/api/channel.h"
 #include "anionu/spot/api/channelmanager.h"
@@ -12,41 +12,43 @@
 #include "scy/symple/form.h"
 
 
+using std::endl;
+
+
 namespace scy {
 namespace anio { 
 namespace spot {
-	using namespace api;
 
 
-SurveillanceMode::SurveillanceMode(Environment& env, const std::string& channel) :
+SurveillanceMode::SurveillanceMode(api::Environment& env, const std::string& channel) :
 	api::IModule(env), _channel(channel), _isActive(false), _isConfiguring(false)
 {
-	log("Creating");
+	DebugL << "Creating" << endl;
 	loadConfig();	
-	env.streaming().InitStreamingSession += delegate(this, &SurveillanceMode::onInitStreamingSession);
-	env.streaming().InitStreamingConnection += delegate(this, &SurveillanceMode::onInitStreamingConnection);
+	env.streaming().SetupStreamingSources += delegate(this, &SurveillanceMode::onSetupStreamingSources);
+	env.streaming().SetupStreamingConnection += delegate(this, &SurveillanceMode::onSetupStreamingConnection);
 }
 
 
 SurveillanceMode::~SurveillanceMode()
 {	
-	log("Destroying");	
-	env().streaming().InitStreamingSession.detach(this);
-	env().streaming().InitStreamingConnection.detach(this);
-	log("Destroying: OK");	
+	DebugL << "Destroying" << endl;	
+	env().streaming().SetupStreamingSources.detach(this);
+	env().streaming().SetupStreamingConnection.detach(this);
+	DebugL << "Destroying: OK" << endl;	
 }
 
 
 bool SurveillanceMode::activate() 
 {
-	log("Activating");	
+	DebugL << "Activating" << endl;	
 	try {
 		startMotionDetector();
 		_isActive = true;
 	}
 	catch (std::exception& exc) {
 		_error = std::string(exc.what());
-		log("Activation error: " + _error, "error");
+		ErrorL << "Activation error: " << _error << endl;
 		return false;
 	}
 	return true;
@@ -55,14 +57,14 @@ bool SurveillanceMode::activate()
 
 void SurveillanceMode::deactivate() 
 {
-	log("Deactivating");
+	DebugL << "Deactivating" << endl;
 	try {
 		if (isRecording())
 			stopRecording();
 		stopMotionDetector(false);
 	}
 	catch (std::exception& exc) {
-		log("Deactivation error: " + std::string(exc.what()), "error");
+		ErrorL << "Deactivation error: " << std::string(exc.what()) << endl;
 	}
 }
 
@@ -70,7 +72,7 @@ void SurveillanceMode::deactivate()
 void SurveillanceMode::loadConfig()
 {
 	Mutex::ScopedLock lock(_mutex); 
-	log("Loading config: " + _channel);	
+	DebugL << "Loading config: " << _channel << endl;	
 	ScopedConfiguration config = getModeConfiguration(this);
 	MotionDetector::Options& o = _motionDetector.options();
 	o.motionThreshold = config.getInt("MotionThreshold", 15000);			// 15000 [50 - 100000]
@@ -105,7 +107,7 @@ void SurveillanceMode::startMotionDetector(bool whiny)
 		_motionStream.start();
 	}
 	catch (std::exception& exc) {
-		log("Cannot start the motion detector: " + std::string(exc.what()), "warn");
+		WarnL << "Cannot start the motion detector: " << exc.what() << endl;
 		if (whiny) throw exc;
 	}
 }
@@ -122,7 +124,7 @@ void SurveillanceMode::stopMotionDetector(bool whiny)
 		_motionStream.close();
 	}
 	catch (std::exception& exc) {
-		log("Cannot start the motion detector: " + std::string(exc.what()), "warn");
+		WarnL << "Cannot start the motion detector: " << exc.what() << endl;
 		if (whiny) throw exc;
 	}
 }
@@ -130,20 +132,20 @@ void SurveillanceMode::stopMotionDetector(bool whiny)
 	
 void SurveillanceMode::startRecording(bool whiny)
 {	
-	log("Start recording");
+	DebugL << "Start recording" << endl;
 	try {
 		if (isRecording())
 			throw std::runtime_error("Recorder already active.");
 	
 		Mutex::ScopedLock lock(_mutex); 
-		RecordingOptions options = env().media().getRecordingOptions(_channel);
+		api::RecordingOptions options = env().media().getRecordingOptions(_channel);
 		options.synchronizeVideo  = _synchronizeVideos;
 		env().media().startRecording(options);
-		log("Recording started: " + options.token);
+		DebugL << "Recording started: " << options.token << endl;
 		_recordingToken = options.token;
 	}
 	catch (std::exception& exc) {
-		log("Cannot start recording: " + std::string(exc.what()), "warn");
+		WarnL << "Cannot start recording: " << exc.what() << endl;
 		if (whiny) throw exc;
 	}
 }
@@ -151,7 +153,7 @@ void SurveillanceMode::startRecording(bool whiny)
 
 void SurveillanceMode::stopRecording(bool whiny)
 {	
-	log("Stop recording");
+	DebugL << "Stop recording" << endl;
 	try {
 		if (!isRecording()) {
 			if (!whiny) return;	
@@ -160,11 +162,11 @@ void SurveillanceMode::stopRecording(bool whiny)
 
 		Mutex::ScopedLock lock(_mutex); 
 		env().media().stopRecording(_recordingToken, true);
-		log("Recording stopped: " + _recordingToken);
+		DebugL << "Recording stopped: " << _recordingToken << endl;
 		_recordingToken = "";
 	}
 	catch (std::exception& exc) {
-		log("Cannot stop recording: " + std::string(exc.what()), "warn");
+		WarnL << "Cannot stop recording: " << exc.what() << endl;
 		if (whiny) throw exc;
 	}
 }
@@ -206,7 +208,7 @@ bool SurveillanceMode::removeStreamingToken(const std::string& token)
 
 void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& state, const anio::MotionDetectorState&)
 {
-	log("Motion state changed: " + state.toString());
+	DebugL << "Motion state changed: " + state.toString() << endl;
 	{
 		// Discard surveillance events while configuring
 		Mutex::ScopedLock lock(_mutex); 
@@ -241,16 +243,16 @@ void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& sta
 				// Log and swallow recording errors. 
 				// Nothing to do here since the "Recording Failed"
 				// event will be triggered by the MediaManager.
-				log("Start recording failed: " + std::string(exc.what()));
+				WarnL << "Start recording failed: " << exc.what() << endl;
 			}
 		break;
 	}
 }
 
 	
-void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, bool& handled)
+void SurveillanceMode::onSetupStreamingSources(void*, api::StreamingSession& session, bool& handled)
 {
-	log("Initialize stream session: " + session.token());
+	DebugL << "Initialize stream session: " << session.token() << endl;
 	
 	// Check if the session matches any available tokens 
 	TimedToken* token = getStreamingToken(session.token());
@@ -258,7 +260,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 
 		// Ensure token validity
 		if (!token->expired()) {
-			log("Creating configuration session: " + session.token());
+			DebugL << "Creating configuration session: " << session.token() << endl;
 			Mutex::ScopedLock lock(_mutex); 
 
 			// Get the video capture or throw an exception.
@@ -271,7 +273,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 
 			// Attach motion detector to the stream.
 			// The motion detector acts as the video source.
-			session.stream().attach(&_motionDetector, 3, false);			
+			session.captureStream().attach(&_motionDetector, 3, false);			
 			session.StateChange += delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
 
 			// The following commented out code could be used to override the  
@@ -296,7 +298,7 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 		// Otherwise the session is no longer valid, so we throw an exception 
 		// to terminate the session in error.
 		else {
-			log("Configuration session timed out");
+			DebugL << "Configuration session timed out" << endl;
 			removeStreamingToken(session.token());
 			throw std::runtime_error("Surveillance Mode media preview has timed out.");
 		}
@@ -304,9 +306,9 @@ void SurveillanceMode::onInitStreamingSession(void*, StreamingSession& session, 
 }
 
 
-void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& session, PacketStream& stream, bool& /* handled */)
+void SurveillanceMode::onSetupStreamingConnection(void*, api::StreamingSession& session, PacketStream& stream, bool& /* handled */)
 {	
-	log("Initialize streaming connection: " + session.token());		
+	DebugL << "Initialize streaming connection: " << session.token() << endl;		
 	
 	// Check if the session request matches any of our tokens. 
 	// If so then we can attach our custom packetizer to this connection.
@@ -324,14 +326,14 @@ void SurveillanceMode::onInitStreamingConnection(void*, StreamingSession& sessio
 }
 
 
-void SurveillanceMode::onStreamingSessionStateChange(void* sender, StreamingState& state, const StreamingState&)
+void SurveillanceMode::onStreamingSessionStateChange(void* sender, api::StreamingState& state, const api::StreamingState&)
 {  
-	StreamingSession* session = reinterpret_cast<StreamingSession*>(sender); 			
-	log("Configuration streaming session state changed: " + state.toString());
+	api::StreamingSession* session = reinterpret_cast<api::StreamingSession*>(sender); 			
+	DebugL << "Configuration streaming session state changed: " << state << endl;
 
 	// Remove the configuration media session token
 	// reference when the session closes or times out.
-	if (state.equals(StreamingState::Terminating)) {
+	if (state.equals(api::StreamingState::Terminated)) {
 		session->StateChange -= delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
 				
 		removeStreamingToken(session->token());
@@ -373,7 +375,7 @@ const char* SurveillanceMode::channelName() const
 
 const char* SurveillanceMode::docFile() const
 {	
-	return "SurveillanceModePlugin/surveillancemode.md";
+	return "SurveillanceModePlugin/SurveillanceMode.md";
 }
 
 
@@ -381,7 +383,7 @@ const char* SurveillanceMode::docFile() const
 //
 void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 {		
-	log("Building form");	 
+	DebugL << "Building form" << endl;	 
 	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 	// Determine weather we are building the form at channel or
@@ -396,7 +398,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 	// in real time as the channel is configured. This is achieved by adding a "media"
 	// type field with is associated with a media session token. When an incoming media
 	// session request subscribes to the token we use our motion detector as the streaming
-	// source (see onInitStreamingConnection). Media streaming sessions are only 
+	// source (see onSetupStreamingConnection). Media streaming sessions are only 
 	// available when configuring at channel scope ie. defaultScope == false.
 	// No surveillance events will be triggered while media sessions are active.
 	if (!form.partial() && !defaultScope) {		
@@ -503,7 +505,7 @@ void SurveillanceMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 
 void SurveillanceMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Parsing form");	 
+	DebugL << "Parsing form" << endl;	 
 	smpl::FormField field;
 	
 	field = element.getField("Surveillance Mode.MotionThreshold", true);

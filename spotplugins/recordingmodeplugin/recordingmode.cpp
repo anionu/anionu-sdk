@@ -1,4 +1,4 @@
-#include "RecordingMode.h"
+#include "recordingmode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/channel.h"
 #include "anionu/spot/api/synchronizer.h"
@@ -9,8 +9,10 @@
 #include "scy/logger.h"
 
 
+using std::endl;
+
+
 namespace scy {
-	using namespace av;
 namespace anio { 
 namespace spot {
 
@@ -18,20 +20,20 @@ namespace spot {
 RecordingMode::RecordingMode(api::Environment& env, const std::string& channel) : 
 	api::IModule(env), _channel(channel), _isActive(false)
 {
-	log("Creating");
+	DebugL << "Creating" << endl;
 	loadConfig();
 }
 
 
 RecordingMode::~RecordingMode()
 {	
-	log("Destroying");
+	DebugL << "Destroying" << endl;
 }
 
 
 bool RecordingMode::activate() 
 {
-	log("Activating");	
+	DebugL << "Activating" << endl;
 	try {
 		env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
 		startRecording();
@@ -39,7 +41,7 @@ bool RecordingMode::activate()
 	}
 	catch (std::exception& exc) {
 		_error = std::string(exc.what());
-		log("Activation error: " + _error, "error");
+		ErrorL << "Activation error: " << _error << endl;
 		return false;
 	}
 	return true;
@@ -48,7 +50,7 @@ bool RecordingMode::activate()
 
 void RecordingMode::deactivate() 
 {
-	log("Deactivating");	
+	DebugL << "Deactivating" << endl;
 	try {
 		_isActive = false;
 		env().media().RecordingStopped.detach(this);
@@ -56,7 +58,7 @@ void RecordingMode::deactivate()
 			stopRecording();
 	}
 	catch (std::exception& exc) {
-		log("Deactivation error: " + std::string(exc.what()), "error");
+		ErrorL << "Deactivation error: " + std::string(exc.what()) << endl;
 	}
 }
 
@@ -64,7 +66,7 @@ void RecordingMode::deactivate()
 void RecordingMode::loadConfig()
 {
 	Mutex::ScopedLock lock(_mutex); 	
-	log("Loading Config: " + _channel);	
+	DebugL << "Loading Config: " << _channel << endl;
 	ScopedConfiguration config = getModeConfiguration(this);
 	_segmentDuration = config.getInt("SegmentDuration", 5 * 60); // 5 minutes
 	_synchronizeVideos = config.getBool("SynchronizeVideos", false); // no sync
@@ -78,7 +80,7 @@ void RecordingMode::loadConfig()
 	
 void RecordingMode::startRecording()
 {	
-	log("Start Recording");
+	DebugL << "Start Recording" << endl;
 	if (isRecording())
 		throw std::runtime_error("Start recording failed: Recorder already active.");
 	
@@ -96,29 +98,29 @@ void RecordingMode::startRecording()
 
 	// Start recording, or throw an exception.
 	env().media().startRecording(options);
-	log("Recording started: " + options.token);
+	DebugL << "Recording started: " << options.token << endl;
 	_recordingToken = options.token;
 }
 
 
 void RecordingMode::stopRecording()
 {	
-	log("Stop Recording");
+	DebugL << "Stop Recording" << endl;
 	if (!isRecording())		
 		throw std::runtime_error("Stop recording failed: Recorder not active.");
 	
 	Mutex::ScopedLock lock(_mutex); 
 	env().media().stopRecording(_recordingToken, true);
-	log("Recording Stopped: " + _recordingToken);
+	DebugL << "Recording Stopped: " << _recordingToken << endl;
 	_recordingToken = "";
 }
 
 
-void RecordingMode::onRecordingStopped(void*, api::RecorderStream& stream)
+void RecordingMode::onRecordingStopped(void*, api::RecorderSession& recorder)
 {
 	if (isActive() &&
 		recordingToken().empty() || 
-		recordingToken() != stream.options.token) 
+		recordingToken() != recorder.options.token) 
 		return;
 	
 	try {	
@@ -171,7 +173,7 @@ bool RecordingMode::isActive() const
 
 const char* RecordingMode::docFile() const
 {
-	return "RecordingModePlugin/recordingmode.md";
+	return "RecordingModePlugin/RecordingMode.md";
 }
 
 
@@ -179,7 +181,7 @@ const char* RecordingMode::docFile() const
 //
 void RecordingMode::buildForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Building form");	
+	DebugL << "Building form" << endl;
 	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
@@ -217,7 +219,7 @@ void RecordingMode::buildForm(smpl::Form&, smpl::FormElement& element)
 
 void RecordingMode::parseForm(smpl::Form&, smpl::FormElement& element)
 {
-	log("Parsing form");
+	DebugL << "Parsing form" << endl;
 	smpl::FormField field;	
 
 	field = element.getField("Recording Mode.SegmentDuration", true);

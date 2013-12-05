@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_IModule_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 #include "anionu/spot/api/environment.h"
 
 #ifdef Anionu_Spot_USING_CORE_API
@@ -37,12 +37,12 @@ namespace api {
 
 template <class IEnvType>
 class IModuleTmpl
-	/// This template exposes a reference to Spot's API 
-	/// environment for integrating with plugins and modes.
+	/// This template exposes the Spot API instance  
+	/// for plugins which extend and integrate with Spot.
 	///
 	/// IEnvType may be a EnvironmentBase or a Environment
 	/// depending on which API level you're linking with.
-	/// See Module Types below for both IModuleBase and IModule
+	/// See Module types below for both IModuleBase and IModule
 	/// implementations.
 {
 public:
@@ -57,16 +57,15 @@ public:
 		return _env; 
 	}
 
+#if 0
 	virtual void log(const std::string& message, const char* level = "debug") 
 		// Sends a log message Spot's application logger.
 	{
 		// No STL types are shared with the client so we
 		// can retain binary compatibility across compilers.
 		env().log(message.c_str(), level, className());
-	}	
-
-	virtual const char* className() const { return "IModule"; }
-		// Override for named logging.
+	}
+#endif
 	
 protected:
 	virtual ~IModuleTmpl() {};	

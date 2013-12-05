@@ -3,6 +3,9 @@
 #include "anionu/spot/api/environment.h"
 
 
+using std::endl;
+
+
 namespace scy {
 namespace anio { 
 namespace spot {
@@ -18,26 +21,26 @@ SPOT_CORE_PLUGIN(
 SurveillanceModePlugin::SurveillanceModePlugin(api::Environment& env) :
 	api::IModule(env)
 {
-	//Logger::setInstance(&env.logger());
+	Logger::setInstance(&env.logger());
 }
 
 
 SurveillanceModePlugin::~SurveillanceModePlugin()
 {
-	//Logger::setInstance(NULL);
+	Logger::setInstance(NULL);
 }
 
 
 bool SurveillanceModePlugin::load() 
 {
-	log("Loading");	
+	DebugL << "Loading" << endl;
 	return true;
 }
 
 
 void SurveillanceModePlugin::unload() 
 {	
-	log("Unloading");	
+	DebugL << "Unloading" << endl;
 }
 
 

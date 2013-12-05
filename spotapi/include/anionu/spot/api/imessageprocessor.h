@@ -21,7 +21,7 @@
 #define Anionu_Spot_API_IEventManager_H
 
 
-#include "anionu/spot/api/config.h"
+#include "anionu/spot/api/api.h"
 
 
 #ifdef Anionu_Spot_USING_CORE_API
@@ -54,6 +54,9 @@ public:
 	virtual void onPresence(const char* /* presence */) {};
 	virtual void onEvent(const char* /* event */) {};
 };
+
+
+// TODO: Base and core imlementations
 
 
 } } } } // namespace scy::anio::spot::api

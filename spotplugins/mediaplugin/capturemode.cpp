@@ -1,11 +1,11 @@
-#include "CaptureMode.h"
+#include "capturemode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/channelmanager.h"
 #include "anionu/spot/api/util.h"
 #include "scy/symple/form.h"
 
 
-using namespace std;
+using std::endl;
 
 
 namespace scy {
@@ -16,20 +16,20 @@ namespace spot {
 CaptureMode::CaptureMode(api::Environment& env, const std::string& channel) : 
 	api::IModule(env), _channel(channel), _isActive(false), _video(nullptr)
 {
-	log("Creating");
+	DebugL << "Creating" << endl;
 	loadConfig();
 }
 
 
 CaptureMode::~CaptureMode()
 {	
-	log("Destroying");
+	DebugL << "Destroying" << endl;
 }
 
 
 bool CaptureMode::activate() 
 {
-	log("Activating");	
+	DebugL << "Activating" << endl;	
 	try 
 	{
 		// Get the video capture and attach a listener, 
@@ -43,7 +43,7 @@ bool CaptureMode::activate()
 	{
 		// Set and log the error message.
 		_error = exc.what();
-		log("Activation failed: " + _error, "error");
+		ErrorL << "Activation failed: " << _error << endl;
 		
 		// Return false to put the mode in error state.
 		return false;
@@ -56,7 +56,7 @@ bool CaptureMode::activate()
 
 void CaptureMode::deactivate() 
 {
-	log("Deactivating");	
+	DebugL << "Deactivating" << endl;	
 	try 
 	{
 		// Get the video capture and detach the listener,
@@ -70,7 +70,7 @@ void CaptureMode::deactivate()
 	{
 		// Be sure to swallow all exceptions. Since IMode  
 		// is ABI agnostic our implementation should be too.
-		log("Deactivation failed: " + std::string(exc.what()), "error");
+		ErrorL << "Deactivation failed: " << exc.what() << endl;
 	}
 }
 
@@ -86,7 +86,7 @@ void CaptureMode::loadConfig()
 	testConfig.boolValue = config.getBool("BoolValue", false);
 	testConfig.stringValue = config.getBool("StringValue", "Hello Sir");
 
-	api::slog(this) << "Loaded Config: " << _channel 
+	DebugL << "Loaded Config: " << _channel 
 		<< "\r\tIntValue: " << testConfig.intValue 
 		<< "\r\tBoolValue: " << testConfig.boolValue 
 		<< "\r\tStringValue: " << testConfig.stringValue 
@@ -141,7 +141,7 @@ const char* CaptureMode::docFile() const
 //
 void CaptureMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 {	
-	log("Building form: " + form.root().toStyledString());
+	DebugL << "Building form: " << form.root().toStyledString() << endl;
 	smpl::FormField field;
 	ScopedConfiguration config = getModeConfiguration(this);
 
@@ -178,7 +178,7 @@ void CaptureMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 
 void CaptureMode::parseForm(smpl::Form& form, smpl::FormElement& element)
 {
-	log("Building form: " + form.root().toStyledString());
+	//DebugL << "Building form: " << form.root().toStyledString() << endl;
 	smpl::FormField field;	
 	
 	// Some Integer Value

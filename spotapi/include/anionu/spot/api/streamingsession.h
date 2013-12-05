@@ -26,6 +26,7 @@
 #include "scy/packetstream.h"
 #include "scy/media/iencoder.h"
 #include "scy/net/address.h"
+#include "scy/json/json.h"
 
 
 #include <sstream>
@@ -48,11 +49,18 @@ struct StreamingOptions: public av::EncoderOptions
 	std::string encoding;	// The packet content encoding method [None, Base64, ...]
 	std::string framing;	// The packet content framing method [None, multipart, ...]
 	int timeout;			// The lifetime after disconnection timeout value
-
+	
 	bool disableLAN;		// Disable LAN candidates
 	bool disableHost;		// Disable Host candidates
 	bool disableRelay;		// Disable Relay candidates
-	
+	bool disableAudio;		// Disable the audio stream
+	bool supportWebRTC;	    // The client supports WebRTC
+	                        // Note that if WebRTC is used then transport, protocol, 
+	                        // encoding and framing values will have no effect.	
+	bool supressEvents;     // Optionally supress events for this session.
+	                        // This is handy if you are creating an separate audio
+	                        // stream and want to avoid event spam.
+
 	bool valid() const 
 	{
 		return !peer.empty()
@@ -82,43 +90,47 @@ struct StreamingOptions: public av::EncoderOptions
 			timeout(timeout),
 			disableLAN(false),
 			disableHost(false),
-			disableRelay(false) {}
+			disableRelay(false),
+			disableAudio(false),
+			supportWebRTC(false) {}
 };
-
-
-typedef PacketProcessor StreamEncoder; 
-	/// The stream encoder type, generally an av::IEncoder instance.
-	/// May become a full type in the future.
 
 
 //
 // Candidate
 //
 
-
-struct Candidate
-{
-	std::string type; 
-		// Candidate type is implementation defined.
-		// Currently used are lan, host and relay.
-
-	net::Address address;
-	std::string uri; 
-
-	Candidate(const std::string& type = "", 
-			  const net::Address& address = net::Address(), 
-			  const std::string& uri = "") :
-		type(type), address(address), uri(uri) {};	
 	
-	bool operator == (const Candidate& r) const {
-		return type == r.type 
-			&& address == r.address 
-			&& uri == r.uri;
-	}
-};
-
-	
+typedef json::Value Candidate;
 typedef std::vector<Candidate> CandidateList;
+	/// Candidates are an arbitrary JSON object.
+	/// Internally we use the following types: lan, host and relay.
+	/// ICE type SDP candidates are also supported via the WebRTC plugin.
+
+
+inline Candidate makeDefaultCandidate(const std::string& type, 
+                                      const net::Address& address, 
+							          const std::string& uri = "")
+{
+	Candidate c;
+	c["type"] = type;
+	c["address"] = address.toString();
+	c["uri"] = uri;
+	return c;
+}
+
+
+inline Candidate makeWebRtcCandidate(const std::string& mid, 
+									 int mlineindex, 
+									 const std::string sdp)
+{
+	Candidate c;
+	c["type"] = "webrtc";
+	c["sdpMid"] = mid;
+	c["sdpMLineIndex"] = mlineindex;
+	c["candidate"] = sdp;
+	return c;
+}
 
 
 //
@@ -135,7 +147,7 @@ struct StreamingState: public State
 		Ready,
 		Active,
 		Error,
-		Terminating
+		Terminated
 	};
 
 	std::string str(unsigned int id) const 
@@ -146,7 +158,7 @@ struct StreamingState: public State
 		case Ready:				return "Ready";
 		case Active:			return "Active";
 		case Error:				return "Error";
-		case Terminating:		return "Terminating";
+		case Terminated:		return "Terminated";
 		default:				assert(false);
 		}
 		return "undefined"; 
@@ -163,23 +175,57 @@ class StreamingSession: public Stateful<api::StreamingState>
 {
 public:
 	virtual void addCandidate(const std::string& type, 
-							  const net::Address& address, 
+                              const net::Address& address, 
 							  const std::string& uri = "") = 0;
+	virtual void addCandidate(const Candidate& cand) = 0;
 		// Adds a streaming candidate.
 
-	virtual bool removeCandidate(const std::string& type, 
-							     const net::Address& address) = 0;
+	virtual bool removeCandidate(const Candidate& cand) = 0;
 		// Removes a streaming candidate.
+		// The given candidate fields must match the 
+		// stored candidate fields exactly.
+	
+	virtual void addRef() = 0;
+		// Increment in internal reference count.
+		// When the count becomes positive the state will transition
+		// to Active, and the connection timeout will be cancelled.
+
+	virtual void removeRef() = 0;
+		// Decrement in internal reference count.
+		// When the count becomes zero the state will transition
+		// to Ready, and the connection timeout will be started.
+		// When the timeout expires the session will be destroyed.
+
+	virtual int refCount() const = 0;
+		// Returns the current reference count.
 
 	virtual std::string token() const = 0;
+		// Returns the unique streaming session token.	
+
 	virtual StreamingOptions& options() = 0;
-	virtual PacketStream& stream() = 0;
+		// Returns a reference to the streaming options.
+	
+	virtual PacketStream& captureStream() = 0;
+		// Returns a reference to the source capture packet stream.
+		// This stream primarily contains audio and video capture devices.
+		// This stream can also contain filters which process and emit the 
+		// same packet type as the device captures. This enables us to preform
+		// arbritrary processing of captured raw media packets before they are  
+		// sent to the encode stream for encoding.
+	
+	virtual PacketStream& encodeStream() = 0;
+		// Returns a reference to the encode packet stream.
+		// The encode stream processes data from the capture stream
+		// and emits the result to available connections.
+
 	virtual PacketStreamVec connections() const = 0;
+		// Returns a list of connection packet streams.
+
 	virtual CandidateList candidates() const = 0;
+		// Returns a list of streaming candidates in JSON format.
 
 protected:
-	virtual ~StreamingSession() {};;
-		// The session is terminated(), never deleted.
+	virtual ~StreamingSession() {};
 };
 
 

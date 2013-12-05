@@ -153,40 +153,12 @@ struct APICredentials
 };
 
 
-/*
-// ---------------------------------------------------------------------
-//
-struct APIRequest: public http::Request
-{
-	APIRequest() {} 	
-	APIRequest(const APIMethod& method, 
-			   const APICredentials& credentials) :
-		method(method), 
-		credentials(credentials) {}
-	virtual ~APIRequest() {}
-
-	virtual void prepare();
-		// MUST be called after setting all information and
-		// credentials before sending the request.
-
-	APIMethod method;
-
-	APICredentials credentials;
-		// HTTP authentication credentials.
-
-//private:
-	//APIRequest(APIRequest& r) {}
-		// The copy constructor is private
-};
-*/
-
-
 // ---------------------------------------------------------------------
 //
 class APITransaction: public http::ClientConnection
 {
 public:
-	APITransaction(APIClient* client, const APIMethod& method); //APIRequest* request = NULL
+	APITransaction(APIClient* client, const APIMethod& method);
 	virtual ~APITransaction();
 
 //protected:
@@ -261,3 +233,33 @@ private:
 
 
 #endif
+
+
+
+
+/*
+// ---------------------------------------------------------------------
+//
+struct APIRequest: public http::Request
+{
+	APIRequest() {} 	
+	APIRequest(const APIMethod& method, 
+			   const APICredentials& credentials) :
+		method(method), 
+		credentials(credentials) {}
+	virtual ~APIRequest() {}
+
+	virtual void prepare();
+		// MUST be called after setting all information and
+		// credentials before sending the request.
+
+	APIMethod method;
+
+	APICredentials credentials;
+		// HTTP authentication credentials.
+
+//private:
+	//APIRequest(APIRequest& r) {}
+		// The copy constructor is private
+};
+*/
