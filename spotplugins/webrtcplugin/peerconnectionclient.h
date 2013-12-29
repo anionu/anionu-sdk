@@ -1,18 +1,33 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #ifndef SCY_PeerConnectionClient_H
 #define SCY_PeerConnectionClient_H
 
 
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/streamingsession.h"
-//#include "scy/packetstream.h"
-
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "talk/app/webrtc/jsep.h"
 #include "talk/app/webrtc/datachannelinterface.h"
-#include "talk/media/devices/devicemanager.h"
 #include "talk/app/webrtc/videosourceinterface.h"
 #include "talk/app/webrtc/test/fakeconstraints.h"
-#include "talk/base/logging.h"
+#include "talk/media/devices/devicemanager.h"
 #include "assert.h"
 
 
@@ -28,7 +43,7 @@ class PeerConnectionClient :
 	public webrtc::PeerConnectionObserver,
 	public webrtc::CreateSessionDescriptionObserver {
 public:
-	PeerConnectionClient(WebRTCPlugin& observer, api::StreamingSession& session); //
+	PeerConnectionClient(WebRTCPlugin& observer, api::StreamingSession& session);
 	virtual ~PeerConnectionClient();
 	
 	bool initConnection(PacketSignal& source);
@@ -39,9 +54,6 @@ public:
 	bool handleRemoteOffer(const std::string& type, const std::string sdp);
 	bool handleRemoteAnswer(const std::string& type, const std::string sdp);
 	bool handleRemoteCandidate(const std::string& mid, int mlineindex, const std::string sdp);
-	
-	void onVideoCaptureStart();
-	void onVideoCaptureStop();
 	
 	api::StreamingSession& session() { return session_; };
 
@@ -65,8 +77,8 @@ private:
 	WebRTCPlugin& observer_;
 	api::StreamingSession& session_;
 	webrtc::PeerConnectionInterface::IceServers servers_;
-	webrtc::PeerConnectionInterface::IceServer server_;
-	webrtc::FakeConstraints constraints_;
+	webrtc::FakeConstraints sdpConstraints_;
+	webrtc::FakeConstraints mediaConstraints_;
 	talk_base::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peer_connection_factory_;
 	talk_base::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
 	talk_base::scoped_refptr<webrtc::MediaStreamInterface> stream_;
@@ -92,11 +104,3 @@ protected:
 
 
 #endif
-
-
-
-	
-	//cricket::VideoCapturer* OpenVideoCaptureDevice();
-	//const webrtc::SessionDescriptionInterface* local_description() const {
-	//		return peer_connection_->local_description();
-	//}

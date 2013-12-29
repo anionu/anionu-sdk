@@ -1,5 +1,22 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include "mediaplugin.h"
-#include "capturemode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/synchronizer.h"
 #include "anionu/spot/api/client.h"
@@ -24,10 +41,6 @@ SPOT_CORE_PLUGIN(
 MediaPlugin::MediaPlugin(api::Environment& env) :
 	api::IModule(env)
 {
-	// Set the Spot client's default logger instance for debugging,
-	// otherwise a new default logger singleton will be created for the
-	// plugin process. You could also register a file logger if you want
-	// to keep the plugin logs separate from Spot.
 	Logger::setInstance(&env.logger());
 }
 
@@ -40,53 +53,22 @@ MediaPlugin::~MediaPlugin()
 
 bool MediaPlugin::load() 
 {
-	try 
-	{
-		// Load all your classes and run any system checks here. 
-		//	
-		// The load() method should never be empty because we want to know as soon
-		// as possible if the plugin is not binary compatible with the Spot client. 
-		// This is we always call the logger (at minimum), so if everything blows
-		// up at this point, we know what we are dealing with.
-		//
+	try {
 		DebugL << "Loading" << endl;
 
-		// Override encoder creation with custom media sources for streaming and recording, 
-		//env().streaming().SetupStreamingSources += delegate(this, &MediaPlugin::onSetupStreamingSources); // TODO
-		//env().media().SetupStreamingSources += delegate(this, &MediaPlugin::onSetupStreamingSources); // TODO
-	
-		// To test the events system we create a custom "Media Plugin Activated"  
-		// event which will notify all peers that the plugin loaded successfully.
-		//
-		// When the event is created, real-time notifications will be sent to everyone
-		// configured to receive notifications for the "Media Plugin Activated" event.
-		// See the online tutorial for help configuring notifications.
-		//
-		// If you are logged into the dashboard, you will see this event displayed in
-		// real-time in the sidebar notifications panel, and also on the Events page.
-		//		
-		std::string message = "The Media Plugin has been activated!";						
-#ifdef Anionu_Spot_USING_CORE_API
-		// If the core API is being used, we create the event like so:
-		env().client().createEvent("Media Plugin Activated", message, anio::Event::Safe);
-#else
-		// For base API implementations we create the string first and pass the
-		// char pointer to Spot so as to avoid sharing STL containers.
-		env().clientBase().createEvent("Media Plugin Activated", message.c_str(), 3);
-#endif			
-	}
-	catch (std::exception& exc) 
-	{
-		// Swallow exceptions for ABI compatibility reasons.
-		// Set the error message to display to the user.
-		_error = std::string(exc.what());
-		ErrorL << "Load failed: " << _error << endl;
+		// Register our custom media formats
+		registerCustomMediaFormats();
 
-		// Return false to put the plugin in error state.
+		// Override encoder creation for streaming and recording
+		env().streaming().SetupStreamingEncoders += delegate(this, &MediaPlugin::onSetupStreamingEncoders);
+		env().media().SetupRecordingEncoders += delegate(this, &MediaPlugin::onSetupRecordingEncoders);		
+	}
+	catch (std::exception& exc) {
+		ErrorL << "Load failed: " << exc.what() << endl;
+		_error.assign(exc.what());
 		return false;
 	}
 
-	// Return true if the plugin loaded properly.
 	return true;
 }
 
@@ -95,140 +77,116 @@ void MediaPlugin::unload()
 {	
 	DebugL << "Unloading" << endl;
 
-	// All allocated memory and delegates should be freed here.
-	//env().streaming().SetupStreamingSources.detach(this); // TODO
-	//env().media().SetupStreamingSources.detach(this); // TODO
+	env().streaming().SetupStreamingEncoders.detach(this);
+	env().media().SetupRecordingEncoders.detach(this);
+	env().media().resetDefaultMediaFormats();
 }
 
 
-api::IMode* MediaPlugin::createModeInstance(const char* modeName, const char* channelName)
+bool MediaPlugin::createEncoder(PacketStream& stream, av::EncoderOptions& options)
+{	
+	av::AVPacketEncoder* encoder = nullptr;
+	try {
+		// Create and initialize the encoder
+		encoder = new av::AVPacketEncoder(options);
+		encoder->initialize(); // may throw
+		
+		// Attach the encoder to the packet stream
+		// The PacketStream will take ownership of the encoder
+		stream.attach(encoder, 5, true);	
+	}
+	catch (std::exception& exc) {
+		ErrorL << "Encoder initialization failed: " << exc.what() << endl;
+		if (encoder)
+			delete encoder;
+		encoder = nullptr;
+	}
+	return !!encoder;
+}
+
+
+void MediaPlugin::onSetupStreamingEncoders(void*, api::StreamingSession& session, bool& handled)
 {
-	// Instantiate our Capture Mode for testing.
-	assert(strcmp(modeName, "Capture Mode") == 0);
-	return new CaptureMode(env(), channelName);
+	DebugL << "Initialize streaming encoder: " << session.token() << endl;
+		
+	// Create the encoder unless streaming raw video
+	if (session.options().oformat.id == "rawvideo" || handled)
+		return;
+	
+	assert(!session.encodeStream().getProcessor<av::IPacketEncoder>());
+		
+	// Initialize the session and set the handled flag on success
+	handled = createEncoder(session.encodeStream(), session.options());
 }
 
 
-const char** MediaPlugin::modeNames() const
+void MediaPlugin::onSetupRecordingEncoders(void*, api::RecordingSession& session, bool& handled)
+{	
+	DebugL << "Initialize recording encoder: " << session.options.token << endl;
+		
+	// Create the encoder unless streaming raw video
+	if (session.options.oformat.id == "rawvideo" || handled)
+		return;
+	
+	assert(!session.stream.getProcessor<av::IPacketEncoder>());
+		
+	// Initialize the session and set the handled flag on success
+	handled = createEncoder(session.stream, session.options);
+}
+
+
+void MediaPlugin::registerCustomMediaFormats()
 {
-	// Return the list of modes we provide.
-	static const char* modeNames[] = { "Capture Mode", NULL };
-	return modeNames;
-}
+	DebugL << "Registering custom media formats" << endl;
 
+	// This function registers our custom media formats for 
+	// video recording and streaming. Registered formats are  
+	// selectable and configurable via the dashboard.
 
-void MediaPlugin::synchronizeTestVideo()
-{
-	// This method shows how to synchronize a file with online storage.
-	// Be sure to change the video file path for testing.
-	DebugL << "Synchronizing test video" << endl;
-	env().synchronizer().sync("Video", "/path/to/video.mp4", "Test Video");
-}
-
-
-bool MediaPlugin::onMessage(const char* /* message */)
-{
-	// Parse the Message and do something with it:
-	// smpl::Message m;
-	// m.read(message);
-	// DebugL << "Recv Message: " + m.toStyledString());
-	//
-	// Return true if the message has been responded to, 
-	// false otherwise.
-	return false;
-}
-
-
-bool MediaPlugin::onCommand(const char* /* command */)
-{
-	// Parse the Command and do something with it:
-	// smpl::Command c;
-	// c.read(command);
-	// DebugL << "Recv Command: " + c.toStyledString());	
-	//
-	// Return true if the message has been responded to, 
-	// false otherwise.
-	return false;
-}
-
-
-void MediaPlugin::onEvent(const char* /* event */)
-{
-	// Parse the Event and do something with it:
-	// smpl::Event e;
-	// e.read(event);
-	// DebugL << "Recv Event: " + e.toStyledString());
-}
-
-
-void MediaPlugin::onPresence(const char* /* presence */) 
-{
-	// Parse the Presence and do something with it:
-	// smpl::Message p;
-	// p.read(presence);	
-	// DebugL << "Recv Presence: " + p.toStyledString());
-}
-
-
-const char* MediaPlugin::errorMessage() const 
-{ 
-	Mutex::ScopedLock lock(_mutex);
-
-	// Return a pointer to the error char buffer.
-	return _error.empty() ? 0 : _error.c_str();
-}
-
-
-#ifdef Anionu_Spot_USING_CORE_API
-//
-/// Core API media methods and callbacks
-//
-void MediaPlugin::registerMediaFormats()
-{
-	DebugL << "Registering custom media formats." << endl;
-
-	// This function shows how you can register custom media
-	// formats for video recording and streaming. Registered 
-	// formats are selectable and configurable via the dashboard.
-	// MP: in the labels below is so we can differentiate from
-	// internal media formats.
+#define ENABLE_H264 0
+	// Set this to 1 in order to enable h.264 streaming
+	// and recording for Spot via FFmpeg. Note that x264
+	// support must be compiled into FFmpeg.
 		
 	//
 	// MP4 (Recording)
-	av::Format mp4("MP: MP4", "mp4", 
+	av::Format mp4("MP4", "mp4", 
 		av::VideoCodec("MPEG4", "mpeg4", 480, 360, 25), 
 		av::AudioCodec("AC3", "ac3_fixed")
 	);
-	
+
+#if ENABLE_H264
 	//
-	// MJPEG (Streaming)
-	av::Format mjpeg("MP: MJPEG", "mjpeg", 
-		av::VideoCodec("MJPEG", "mjpeg", 480, 360, 15));
-	mjpeg.video.pixelFmt = "yuvj420p";
+	// MP4 H.264 (Recording)
+	av::Format mp4h264("MP4 (h.264)", "mp4", 
+		av::VideoCodec("H.264", "libx264", 480, 360, 25), 
+		av::AudioCodec("AC3", "ac3_fixed")
+	);
 
 	//
-	// FLV Video (Streaming)
-	av::Format flvVideo("MP: Flash Video", "flv", 
-		av::VideoCodec("FLV", "flv", 480, 360, 10), 100);
-
-	//
-	// Flash H264 (Streaming)
+	// Flash H.264 (Streaming)
 	//
 	// Restrictions for MP4 on older iPhone/iPad:
 	// H.264 video, up to 1.5 Mbps, 640 by 480 pixels, 30 frames per second,
 	// Low-Complexity version of the H.264 Baseline Profile with AAC-LC audio
 	// up to 160 Kbps, 48kHz, stereo audio in .m4v, .mp4, and .mov file formats.
-	av::Format flvH264("MP: Flash H264", "flv", 
-		av::VideoCodec("H264", "libx264"));
+	av::Format flvH264("Flash H.264", "flv", 
+		av::VideoCodec("H.264", "libx264"));
+#endif
+
+	//
+	// FLV Video (Streaming)
+	av::Format flvVideo("Flash Video", "flv", 
+		av::VideoCodec("FLV", "flv", 480, 360, 10), 100);
 
 	//
 	// Speex (Streaming)
-	av::Format flvSpeex("MP: Flash Speex", "flv", 
+	av::Format flvSpeex("Flash Speex", "flv", 
 		av::AudioCodec("Speex", "libspeex", 1, 16000), 100);
 
 	//
 	// MP3 Mono (Streaming)
-	av::Format flvMonoMP3("MP: Flash Mono MP3", "flv", 
+	av::Format flvMonoMP3("Flash Mono MP3", "flv", 
 		av::AudioCodec("MP3", "libmp3lame", 1, 8000, 64000), 100);
 
 	api::MediaManager& media = env().media();
@@ -236,77 +194,35 @@ void MediaPlugin::registerMediaFormats()
 	//
 	/// Register Recording Formats
 	media.recordingFormats().registerFormat(mp4);
-	media.recordingFormats().setDefault("MP: MP4");
+#if ENABLE_H264
+	media.recordingFormats().registerFormat(mp4h264);
+	media.recordingFormats().setDefault("MP4 (h.264)");
+#else
+	media.recordingFormats().setDefault("MP4");
+#endif
 	
 	//
 	/// Register Video Streaming Formats
-	media.videoStreamingFormats().registerFormat(mjpeg);
 	media.videoStreamingFormats().registerFormat(flvVideo);
+#if ENABLE_H264
 	media.videoStreamingFormats().registerFormat(flvH264);
-	media.videoStreamingFormats().setDefault("MP: Flash Video");
+	media.videoStreamingFormats().setDefault("Flash H.264");
+#else
+	media.videoStreamingFormats().setDefault("Flash Video");
+#endif
 		
 	//
 	/// Register Audio Streaming Formats
 	media.audioStreamingFormats().registerFormat(flvSpeex);
 	media.audioStreamingFormats().registerFormat(flvMonoMP3);
-	media.audioStreamingFormats().setDefault("MP: Flash Speex");
+	media.audioStreamingFormats().setDefault("Flash Speex");
 }
 
 
-av::AVPacketEncoder* MediaPlugin::createEncoder(const av::RecordingOptions& options)
-{
-	DebugL << "Initializing AV Encoder" << endl;	
-	
-	// Create the encoder and return the instance pointer.	 
-	// the returned pointer must extend from IPacketEncoder.
-	av::AVPacketEncoder* encoder = nullptr;
-	try {
-		encoder = new av::AVPacketEncoder(options);
-		encoder->initialize();
-	}
-	catch (std::exception& exc) {
-		ErrorL << "Encoder Error: " + std::string(exc.what()) << endl;
-		if (encoder)
-			delete encoder;
-		encoder = nullptr;
-	}
-	return encoder;
+const char* MediaPlugin::errorMessage() const 
+{ 
+	return _error.empty() ? 0 : _error.c_str();
 }
-
-
-void MediaPlugin::onSetupStreamingSources(void*, const api::RecordingOptions& options, api::Recorder*& encoder)
-{
-	DebugL << "Initialize Recording Encoder" << endl;
-
-	// Create the encoder unless recording raw video.
-	if (options.oformat.id != "rawvideo" &&
-		encoder == NULL) {
-		encoder = createEncoder(options); //reinterpret_cast<api::Recorder*>();
-		DebugL << "Initializing Recording Encoder: OK" << endl;
-	}
-}
-
-
-void MediaPlugin::onSetupStreamingSources(void*, api::StreamingSession& session, bool&)
-{
-	DebugL << "Initialize Streaming Session" << endl;
-		
-	// Create the encoder unless streaming raw video.
-	if (session.options().oformat.id != "rawvideo" &&
-		session.encodeStream().base().getProcessor<av::IPacketEncoder>() == NULL) {	
-	
-		av::RecordingOptions options(
-			session.options().iformat, 
-			session.options().oformat);
-		av::AVPacketEncoder* encoder = createEncoder(options);
-		
-		// Attach the encoder to the packet stream.
-		if (encoder)
-			session.encodeStream().attach(encoder, 5, true);			
-	}
-}
-
-#endif
 
 
 } } } // namespace scy::anio::spot

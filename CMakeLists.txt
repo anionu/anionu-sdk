@@ -1,4 +1,5 @@
 include(SpotPlugin.cmake REQUIRED)
+include(AnionuUtilities.cmake REQUIRED)
 
 set(Anionu_API_USERNAME "username" CACHE PATH "Anionu API Username")
 set(Anionu_API_KEY "password" CACHE PATH "Anionu API Password")

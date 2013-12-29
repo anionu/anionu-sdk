@@ -1,3 +1,21 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include "surveillancemode.h"
 #include "surveillancemultipartadapter.h"
 #include "anionu/spot/api/client.h"
@@ -33,6 +51,7 @@ SurveillanceMode::SurveillanceMode(api::Environment& env, const std::string& cha
 SurveillanceMode::~SurveillanceMode()
 {	
 	DebugL << "Destroying" << endl;	
+	assert(!isActive());
 	env().streaming().SetupStreamingSources.detach(this);
 	env().streaming().SetupStreamingConnection.detach(this);
 	DebugL << "Destroying: OK" << endl;	
@@ -47,8 +66,8 @@ bool SurveillanceMode::activate()
 		_isActive = true;
 	}
 	catch (std::exception& exc) {
-		_error = std::string(exc.what());
-		ErrorL << "Activation error: " << _error << endl;
+		ErrorL << "Activation error: " << exc.what() << endl;
+		_error.assign(exc.what());
 		return false;
 	}
 	return true;
@@ -62,9 +81,10 @@ void SurveillanceMode::deactivate()
 		if (isRecording())
 			stopRecording();
 		stopMotionDetector(false);
+		_isActive = false;
 	}
 	catch (std::exception& exc) {
-		ErrorL << "Deactivation error: " << std::string(exc.what()) << endl;
+		ErrorL << "Deactivation error: " << exc.what() << endl;
 	}
 }
 
@@ -93,16 +113,16 @@ void SurveillanceMode::startMotionDetector(bool whiny)
 	try {
 		Mutex::ScopedLock lock(_mutex); 
 		if (_motionDetector.isActive())
-			throw std::runtime_error("Already active.");
+			throw std::runtime_error("Cannot start the motion detector because it is already active.");
 		
 		_motionDetector.StateChange += delegate(this, &SurveillanceMode::onMotionStateChange);
 
 		// Get the video capture or throw an exception.
-		av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
+		av::VideoCapture::Ptr video(env().channels().getChannel(_channel)->videoCapture(true));	
 
 		// Setup our packet stream with the video capture
 		// feeding into the motion detector.
-		_motionStream.attachSource(video, true);	
+		_motionStream.attachSource<av::VideoCapture>(video, true);	
 		_motionStream.attach(&_motionDetector, 1, false);
 		_motionStream.start();
 	}
@@ -116,12 +136,15 @@ void SurveillanceMode::startMotionDetector(bool whiny)
 void SurveillanceMode::stopMotionDetector(bool whiny)
 {
 	try {
+		DebugL << "Stopping motion detector" << endl;	
+
 		Mutex::ScopedLock lock(_mutex); 
 		if (!_motionDetector.isActive())
-			throw std::runtime_error("Not active.");
-
+			throw std::runtime_error("Cannot stop the motion detector because it is not active.");
+		
 		_motionDetector.StateChange -= delegate(this, &SurveillanceMode::onMotionStateChange);
 		_motionStream.close();
+		//_motionStream.base().cleanup();
 	}
 	catch (std::exception& exc) {
 		WarnL << "Cannot start the motion detector: " << exc.what() << endl;
@@ -135,10 +158,10 @@ void SurveillanceMode::startRecording(bool whiny)
 	DebugL << "Start recording" << endl;
 	try {
 		if (isRecording())
-			throw std::runtime_error("Recorder already active.");
+			throw std::runtime_error("Cannot start recording because recording is already active.");
 	
 		Mutex::ScopedLock lock(_mutex); 
-		api::RecordingOptions options = env().media().getRecordingOptions(_channel);
+		api::EncoderOptions options = env().media().getEncoderOptions(_channel);
 		options.synchronizeVideo  = _synchronizeVideos;
 		env().media().startRecording(options);
 		DebugL << "Recording started: " << options.token << endl;
@@ -155,10 +178,8 @@ void SurveillanceMode::stopRecording(bool whiny)
 {	
 	DebugL << "Stop recording" << endl;
 	try {
-		if (!isRecording()) {
-			if (!whiny) return;	
-			throw std::runtime_error("Recorder not active.");
-		}
+		if (!isRecording())
+			throw std::runtime_error("Cannot stop recording because recording is not active.");
 
 		Mutex::ScopedLock lock(_mutex); 
 		env().media().stopRecording(_recordingToken, true);
@@ -208,7 +229,7 @@ bool SurveillanceMode::removeStreamingToken(const std::string& token)
 
 void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& state, const anio::MotionDetectorState&)
 {
-	DebugL << "Motion state changed: " + state.toString() << endl;
+	DebugL << "Motion state changed: " << state.toString() << endl;
 	{
 		// Discard surveillance events while configuring
 		Mutex::ScopedLock lock(_mutex); 
@@ -253,6 +274,8 @@ void SurveillanceMode::onMotionStateChange(void*, anio::MotionDetectorState& sta
 void SurveillanceMode::onSetupStreamingSources(void*, api::StreamingSession& session, bool& handled)
 {
 	DebugL << "Initialize stream session: " << session.token() << endl;
+
+	if (handled) return;
 	
 	// Check if the session matches any available tokens 
 	TimedToken* token = getStreamingToken(session.token());
@@ -264,30 +287,22 @@ void SurveillanceMode::onSetupStreamingSources(void*, api::StreamingSession& ses
 			Mutex::ScopedLock lock(_mutex); 
 
 			// Get the video capture or throw an exception.
-			av::VideoCapture* video = env().channels().getChannel(_channel)->videoCapture(true);	
+			av::VideoCapture::Ptr video(env().channels().getChannel(_channel)->videoCapture(true));	
+			session.captureStream().attachSource<av::VideoCapture>(video, true);
 
 			// Set the input format to GRAY8 for the encoder
 			video->getEncoderFormat(session.options().iformat);
 			session.options().iformat.video.pixelFmt = "gray";
-			delete video; // no longer needed
 
 			// Attach motion detector to the stream.
-			// The motion detector acts as the video source.
+			// The motion detector filters video frames before they are
+			// sent to the encoder.
 			session.captureStream().attach(&_motionDetector, 3, false);			
 			session.StateChange += delegate(this, &SurveillanceMode::onStreamingSessionStateChange);
-
-			// The following commented out code could be used to override the  
-			// entire stream creation, but we'll let Spot instantiate thew encoder
-			// so we don't need to include ffmpeg as a plugin dependency.
-#if 0	
-			// Attach a packet encoder for coverting raw images to JPEG.
-			av::AVPacketEncoder* enc = new av::AVPacketEncoder(session.options());
-			enc->initialize();
-
-			// Let the session manager know we have completely overridden 
-			// session initialization.
+			
+			// Let the session manager know we have overridden 
+			// session capture initialization.
 			handled = true;
-#endif
 	
 			// While the isConfiguring flag is set all motion detector states
 			// will be ignored. The flag will be unset when the media session

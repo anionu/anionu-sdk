@@ -1,21 +1,20 @@
 //
-// LibSourcey
-// Copyright (C) 2005, Sourcey <http://sourcey.com>
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
 //
-// LibSourcey is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// LibSourcey is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-
 
 #ifndef Anionu_Spot_API_MediaManager_H
 #define Anionu_Spot_API_MediaManager_H
@@ -65,7 +64,7 @@ protected:
 #ifdef Anionu_Spot_USING_CORE_API
 
 
-struct RecordingOptions: public av::RecordingOptions
+struct EncoderOptions: public av::EncoderOptions
 {
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The channel we're recording on
@@ -73,20 +72,20 @@ struct RecordingOptions: public av::RecordingOptions
 	bool supressEvents;		// Suppress events for this recording session
 	bool synchronizeVideo;	// Weather or not to synchronize the recorded video.
 							// The user configured value will be set when creating
-							// options using MediaManager::getRecordingOptions()
-	RecordingOptions(const std::string& channel = "") : 
+							// options using MediaManager::getEncoderOptions()
+	EncoderOptions(const std::string& channel = "") : 
 		channel(channel),
 		supressEvents(false), 
 		synchronizeVideo(false) {}
 };
 
 
-struct RecorderSession//: public PacketStream
+struct RecordingSession//: public PacketStream
 {
 	PacketStream stream;
-	api::RecordingOptions options;
+	api::EncoderOptions options;
 
-	RecorderSession(const api::RecordingOptions& options) :
+	RecordingSession(const api::EncoderOptions& options) :
 		stream(options.token), options(options) {}
 };
 
@@ -99,7 +98,7 @@ typedef PacketProcessor Recorder;
 class MediaManager: public MediaManagerBase
 {
 public:	
-	virtual void startRecording(api::RecordingOptions& options) = 0;
+	virtual void startRecording(api::EncoderOptions& options) = 0;
 		// Starts a new recorder instance from the given options.
 		// Calls createRecorder() internally.
 		// An exception will be thrown on error.
@@ -109,16 +108,16 @@ public:
 		// Returns true on success, or if whiny is set then an 
 		// exception will be thrown on error.
 
-	virtual api::RecorderSession* createRecorder(api::RecordingOptions& options, bool whiny = true) = 0;
+	virtual api::RecordingSession* createRecorder(api::EncoderOptions& options, bool whiny = true) = 0;
 		// Creates a new recorder instance from the given options.
-		// Call RecorderSession->stream.start() to start actual recording.
+		// Call RecordingSession->stream.start() to start actual recording.
 		// Using this method directly, instead of startRecording() 
 		// enables custom manipulation of the PacketStream adapters.
-		// The RecordingOptions must be correctly populated, 
-		// ideally using the getRecordingOptions() method.
+		// The EncoderOptions must be correctly populated, 
+		// ideally using the getEncoderOptions() method.
 		// An exception will be thrown on error.
 
-	virtual api::RecordingOptions getRecordingOptions(const std::string& channel) = 0;
+	virtual api::EncoderOptions getEncoderOptions(const std::string& channel) = 0;
 		// Initializes default recorder and encoder input format options 
 		// for the given channel, and output format options from the
 		// current user configuration. 
@@ -155,8 +154,11 @@ public:
 
 	virtual av::FormatRegistry& audioStreamingFormats() = 0;
 		// Media formats for streaming audio over the internet.
+
+	virtual void MediaManager::resetDefaultMediaFormats() = 0;
+		// Resets default media formats for recording and streaming.
 	
-	Signal2<api::RecorderSession&, bool&> SetupRecordingSources;
+	Signal2<api::RecordingSession&, bool&> SetupRecordingSources;
 		// Provides plugins with the ability to override the device capture 
 		// sources for this recording session.
 		//
@@ -171,13 +173,13 @@ public:
 		//     session.options.oformat.video.enabled = !!hasVideoSource;
 		//     session.options.oformat.audio.enabled = !!hasAudioSource;
 
-	Signal2<api::RecorderSession&, bool&> SetupRecordingEncoders;
+	Signal2<api::RecordingSession&, bool&> SetupRecordingEncoders;
 		// Provides listeners with the ability to instantiate the recording encoder.
 		// If a valid Recorder instance is assigned to the second parameter,
 		// it will be used for encoding.
 		
-	Signal<api::RecorderSession&> RecordingStarted;
-	Signal<api::RecorderSession&> RecordingStopped;
+	Signal<api::RecordingSession&> RecordingStarted;
+	Signal<api::RecordingSession&> RecordingStopped;
 		
 protected:
 	virtual ~MediaManager() {};

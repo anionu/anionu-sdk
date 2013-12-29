@@ -1,3 +1,21 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #ifndef Anionu_Spot_WebRTCPlugin_H
 #define Anionu_Spot_WebRTCPlugin_H
 
@@ -79,9 +97,9 @@ inline PacketStreamAdapter* getLastStreamAdapter(PacketStream& stream)
 	//mutable Mutex _mutex;
 
 	*/
-	//av::AVPacketEncoder* createEncoder(const av::RecordingOptions& options);	
+	//av::AVPacketEncoder* createEncoder(const av::EncoderOptions& options);	
 	//void registerMediaFormats();
 #endif // Anionu_Spot_WebRTCPlugin_H
 
 
-	//void onSetupRecordingEncoders(void*, api::RecorderSession& session, bool& handled);
+	//void onSetupRecordingEncoders(void*, api::RecordingSession& session, bool& handled);

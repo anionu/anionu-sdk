@@ -1,9 +1,29 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include "webrtcplugin.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/synchronizer.h"
 #include "anionu/spot/api/client.h"
 #include "scy/media/formatregistry.h"
 #include "scy/symple/client.h"
+
+#include "talk/base/openssladapter.h"
 
 
 using std::endl;
@@ -40,13 +60,18 @@ bool WebRTCPlugin::load()
 	try {
 		DebugL << "Loading" << endl;
 
+		// Initialize SSL for libjingle
+		if (!talk_base::InitializeSSL(NULL) || 
+			!talk_base::InitializeSSLThread())
+			throw std::runtime_error("Failed to initialize SSL");
+
 		// TODO: Test WebRTC subsytem to check everything is in order.
 		
 		// WebRTC is the preferred media transport method for browser clients that support it.
-		env().streaming().SetupStreamingEncoders += delegate(this, &WebRTCPlugin::onSetupStreamingEncoders);		
+		env().streaming().SetupStreamingEncoders += delegate(this, &WebRTCPlugin::onSetupStreamingEncoders);	
 	}
 	catch (std::exception& exc) {
-		_error = std::string(exc.what());
+		_error.assign(exc.what());
 		ErrorL << "Load failed: " << exc.what() << endl;
 		return false;
 	}
@@ -62,6 +87,8 @@ void WebRTCPlugin::unload()
 
 	DebugL << "Unloading: Cleanup" << endl;
 	_manager.clear();
+	DebugL << "Unloading: Cleanup: SSL" << endl;
+	talk_base::CleanupSSL();
 	DebugL << "Unloading: Cleanup: OK" << endl;
 }
 
@@ -173,7 +200,7 @@ void WebRTCPlugin::onSetupStreamingEncoders(void*, api::StreamingSession& sessio
 	DebugL << "Initialize streaming session: " << session.token() << endl;
 		
 	// Override stream processors if the client supports WebRTC.	
-	if (session.options().supportWebRTC) {
+	if (session.options().enableWebRTC) {
 		if (_manager.exists(session.token())) {
 			ErrorL << "Session already exists for token: " << session.token() << endl;
 			return;
@@ -220,110 +247,3 @@ const char* WebRTCPlugin::errorMessage() const
 
 
 } } } // namespace scy::anio::spot
-
-
-
-
-//bool WebRTCPlugin::onMessage(const char* /* message */)
-//{
-//	// Parse the Message and do something with it:
-//	// smpl::Message m;
-//	// m.read(message);
-//	// log("Recv Message: " + m.toStyledString());
-//	//
-//	// Return true if the message has been responded to, 
-//	// false otherwise.
-//	return false;
-//}
-//
-//
-//bool WebRTCPlugin::onCommand(const char* /* command */)
-//{
-//	// Parse the Command and do something with it:
-//	// smpl::Command c;
-//	// c.read(command);
-//	// log("Recv Command: " + c.toStyledString());	
-//	//
-//	// Return true if the message has been responded to, 
-//	// false otherwise.
-//	return false;
-//}
-//
-//
-//void WebRTCPlugin::onEvent(const char* /* event */)
-//{
-//	// Parse the Event and do something with it:
-//	// smpl::Event e;
-//	// e.read(event);
-//	// log("Recv Event: " + e.toStyledString());
-//}
-//
-//
-//void WebRTCPlugin::onPresence(const char* /* presence */) 
-//{
-//	// Parse the Presence and do something with it:
-//	// smpl::Message p;
-//	// p.read(presence);	
-//	// log("Recv Presence: " + p.toStyledString());
-//}
-
-
-	/*
-
-
-void WebRTCPlugin::onSetupRecordingEncoders(void*, api::RecorderSession& session, bool& handled)
-{
-	log("Initialize Recording Encoder");
-}
-
-
-	// Create the encoder unless recording raw video.
-	if (options.oformat.id != "rawvideo" && !handled) {
-		encoder = createEncoder(options); //reinterpret_cast<api::Recorder*>();
-		log("Initializing Recording Encoder: OK");
-		
-		// Attach the encoder to the packet stream.
-		if (encoder)
-			session.stream().attach(encoder, 5, true);	
-	}
-	*/
-
-
-	/*
-	// Create the encoder unless streaming raw video.
-	if (session.options().oformat.id != "rawvideo" && !handled) {			
-		assert(session.stream().base().getProcessor<av::IPacketEncoder>() == NULL);
-	
-		av::RecordingOptions options(
-			session.options().iformat, 
-			session.options().oformat);
-		av::AVPacketEncoder* encoder = createEncoder(options);
-		
-		// Attach the encoder to the packet stream.
-		if (encoder)
-			session.stream().attach(encoder, 5, true);			
-	}
-	*/
-
-
-/*
-av::AVPacketEncoder* WebRTCPlugin::createEncoder(const av::RecordingOptions& options)
-{
-	log("Initializing AV Encoder");	
-	
-	// Create the encoder and return the instance pointer.	 
-	// the returned pointer must extend from IPacketEncoder.
-	av::AVPacketEncoder* encoder = nullptr;
-	try {
-		encoder = new av::AVPacketEncoder(options);
-		encoder->initialize();
-	}
-	catch (std::exception& exc) {
-		log("Encoder Error: " + std::string(exc.what()), "error");
-		if (encoder)
-			delete encoder;
-		encoder = nullptr;
-	}
-	return encoder;
-}
-*/

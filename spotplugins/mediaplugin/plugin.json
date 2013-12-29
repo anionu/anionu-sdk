@@ -1,8 +1,7 @@
 {
    "author" : "Sourcey",
-   "id" : "RecordingModePlugin",
-   "name" : "Recording Mode Plugin",
-   "path" : "C:\\Users\\Kam\\AppData\\Local\\Anionu\\Spot\\plugins\\RecordingModePlugin\\plugin.json",
+   "id" : "mediaplugin",
+   "name" : "Media Plugin",
    "sdk-version" : "0.6.0",
    "version" : "0.9.2"
 }

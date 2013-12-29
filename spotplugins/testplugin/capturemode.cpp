@@ -1,3 +1,21 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include "capturemode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/channelmanager.h"
@@ -17,6 +35,7 @@ CaptureMode::CaptureMode(api::Environment& env, const std::string& channel) :
 	api::IModule(env), _channel(channel), _isActive(false), _video(nullptr)
 {
 	DebugL << "Creating" << endl;
+
 	loadConfig();
 }
 
@@ -30,8 +49,8 @@ CaptureMode::~CaptureMode()
 bool CaptureMode::activate() 
 {
 	DebugL << "Activating" << endl;	
-	try 
-	{
+
+	try {
 		// Get the video capture and attach a listener, 
 		// or throw an exception.
 		assert(!_video);
@@ -39,11 +58,10 @@ bool CaptureMode::activate()
 		_video->emitter.attach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = true;
 	}
-	catch (std::exception& exc)
-	{
+	catch (std::exception& exc) {
 		// Set and log the error message.
-		_error = exc.what();
-		ErrorL << "Activation failed: " << _error << endl;
+		_error.assign(exc.what());
+		ErrorL << "Activation failed: " << exc.what() << endl;
 		
 		// Return false to put the mode in error state.
 		return false;
@@ -57,8 +75,8 @@ bool CaptureMode::activate()
 void CaptureMode::deactivate() 
 {
 	DebugL << "Deactivating" << endl;	
-	try 
-	{
+
+	try {
 		// Get the video capture and detach the listener,
 		// or throw an exception which we log and swallow.
 		assert(_video);
@@ -66,8 +84,7 @@ void CaptureMode::deactivate()
 			_video->emitter.detach(packetDelegate(this, &CaptureMode::onVideoCapture));
 		_isActive = false;
 	}
-	catch (std::exception& exc) 
-	{
+	catch (std::exception& exc) {
 		// Be sure to swallow all exceptions. Since IMode  
 		// is ABI agnostic our implementation should be too.
 		ErrorL << "Deactivation failed: " << exc.what() << endl;
@@ -80,13 +97,12 @@ void CaptureMode::loadConfig()
 	// NOTE: IFormProcessor configuration is only
 	// available when using the core API.
 #ifdef Anionu_Spot_USING_CORE_API
-	Mutex::ScopedLock lock(_mutex); 	
 	ScopedConfiguration config = getModeConfiguration(this);
 	testConfig.intValue = config.getInt("IntValue", 60);
 	testConfig.boolValue = config.getBool("BoolValue", false);
 	testConfig.stringValue = config.getBool("StringValue", "Hello Sir");
 
-	DebugL << "Loaded Config: " << _channel 
+	DebugL << "Loaded config: " << _channel 
 		<< "\r\tIntValue: " << testConfig.intValue 
 		<< "\r\tBoolValue: " << testConfig.boolValue 
 		<< "\r\tStringValue: " << testConfig.stringValue 
@@ -109,21 +125,18 @@ void CaptureMode::onVideoCapture(void*, av::VideoPacket& packet)
 
 const char* CaptureMode::errorMessage() const 
 { 
-	Mutex::ScopedLock lock(_mutex);
 	return _error.empty() ? 0 : _error.c_str();
 }
 
 
 const char* CaptureMode::channelName() const
 {
-	Mutex::ScopedLock lock(_mutex); 
 	return _channel.c_str();
 }
 
 
 bool CaptureMode::isActive() const
 {
-	Mutex::ScopedLock lock(_mutex); 
 	return _isActive;
 }
 
@@ -131,7 +144,7 @@ bool CaptureMode::isActive() const
 const char* CaptureMode::docFile() const
 {
 	// Return the relative path to the markdown help file.
-	return "MediaPlugin/CaptureMode.md";
+	return "TestPlugin/CaptureMode.md";
 }
 
 
@@ -179,6 +192,7 @@ void CaptureMode::buildForm(smpl::Form& form, smpl::FormElement& element)
 void CaptureMode::parseForm(smpl::Form& form, smpl::FormElement& element)
 {
 	//DebugL << "Building form: " << form.root().toStyledString() << endl;
+
 	smpl::FormField field;	
 	
 	// Some Integer Value

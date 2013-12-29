@@ -1,8 +1,7 @@
 {
    "author" : "Sourcey",
-   "id" : "SurveillanceModePlugin",
+   "id" : "surveillancemodeplugin",
    "name" : "Surveillance Mode Plugin",
-   "path" : "C:\\Users\\Kam\\AppData\\Local\\Anionu\\Spot\\plugins\\SurveillanceModePlugin\\plugin.json",
    "sdk-version" : "0.6.0",
    "version" : "0.9.3"
 }

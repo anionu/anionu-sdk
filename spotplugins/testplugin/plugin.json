@@ -1,0 +1,7 @@
+{
+   "id" : "TestPlugin"       /* The plugin ID (alphanumeric only) */
+   "name" : "Test Plugin",   /* The human readable name of the plugin */
+   "author" : "Sourcey",     /* The author of the plugin */
+   "version" : "0.0.1",      /* The version of the plugin */
+   "sdk-version" : "0.6.0",  /* The SDK version the plugin was compiled with */
+}

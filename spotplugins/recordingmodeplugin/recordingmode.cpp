@@ -1,3 +1,21 @@
+//
+// Anionu SDK
+// Copyright (C) 2011, Anionu <http://anionu.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+
 #include "recordingmode.h"
 #include "anionu/spot/api/environment.h"
 #include "anionu/spot/api/channel.h"
@@ -88,7 +106,7 @@ void RecordingMode::startRecording()
 
 	// Get the recording encoder options for the current session
 	// configuration and override some defaults before we start recording.
-	api::RecordingOptions options = env().media().getRecordingOptions(_channel);
+	api::EncoderOptions options = env().media().getEncoderOptions(_channel);
 	options.synchronizeVideo  = _synchronizeVideos;
 	options.duration = _segmentDuration * 1000;
 
@@ -116,7 +134,7 @@ void RecordingMode::stopRecording()
 }
 
 
-void RecordingMode::onRecordingStopped(void*, api::RecorderSession& recorder)
+void RecordingMode::onRecordingStopped(void*, api::RecordingSession& recorder)
 {
 	if (isActive() &&
 		recordingToken().empty() || 
@@ -264,8 +282,8 @@ bool RecordingMode::hasParsableFields(smpl::Form& form) const
 	return form.hasField(".Recording Mode.", true);
 }
 	
-	//Signal2<const RecordingOptions&, RecordingStream*&> RecordingStarted;
-	//Signal2<const RecordingOptions&, RecordingStream*&> RecordingStopped;
+	//Signal2<const EncoderOptions&, RecordingStream*&> RecordingStarted;
+	//Signal2<const EncoderOptions&, RecordingStream*&> RecordingStopped;
 	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
 	//env().media().RecordingStarted.detach(this);
 		//_recordingToken.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
@@ -314,7 +332,7 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 			encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
 			// Synchronize video's if required
 			if (_synchronizeVideos) {
-				RecordingOptions& options = static_cast<RecordingOptions&>(encoder->options());
+				EncoderOptions& options = static_cast<EncoderOptions&>(encoder->options());
 				spot::Job job; 
 				job.type = "Video";
 				job.path = options.ofile;
