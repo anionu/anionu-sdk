@@ -132,7 +132,6 @@ public:
 	void print(std::ostream& os) const;
 
 private:
-	mutable Mutex	_mutex;
 	APIClient& _client;
 };
 
@@ -141,33 +140,23 @@ private:
 //
 struct APICredentials
 {	
+#if Anionu_ENABLE_PASSWORD
 	std::string username;
 	std::string password;
-	std::string endpoint;
 
 	APICredentials(
 		const std::string& username = "", 
-		const std::string& password = "", 
-		const std::string& endpoint = Anionu_API_ENDPOINT) :
-		username(username), password(password), endpoint(endpoint) {} 
+		const std::string& password = "") :
+			username(username), 
+			password(password) {} 
+#else
+	std::string token; // OAuth token
+
+	APICredentials(
+		const std::string& token = "") :
+			token(token) {} 
+#endif
 };
-
-
-// ---------------------------------------------------------------------
-//
-class APITransaction: public http::ClientConnection
-{
-public:
-	APITransaction(APIClient* client, const APIMethod& method);
-	virtual ~APITransaction();
-
-//protected:
-	//virtual void onComplete();
-};
-
-	
-//typedef AsyncSendable<APITransaction> AsyncTransaction;
-typedef std::vector<APITransaction*> APITransactionList;
 
 
 // ---------------------------------------------------------------------
@@ -177,11 +166,17 @@ class APIClient: public http::Client
 public:
 	APIClient();
 	virtual ~APIClient();
+
+	virtual void setEndpoint(const std::string& endpoint);
 	
 	virtual void setCredentials(
+#if Anionu_ENABLE_PASSWORD
 		const std::string& username, 
-		const std::string& password = "", 
-		const std::string& endpoint = Anionu_API_ENDPOINT);
+		const std::string& password = ""
+#else
+		const std::string& token
+#endif
+		);
 		// Sets the HTTP authentication credentials.
 		// This must be called before calling any API methods.
 
@@ -194,50 +189,34 @@ public:
 
 	virtual std::string endpoint();
 		// Returns the API HTTP endpoint.
-		// Defaults to Anionu_API_ENDPOINT declaration.
-	
-	//virtual APIRequest* createRequest(const APIMethod& method);
-	//virtual APIRequest* createRequest(const std::string& method, 
-	//								  const std::string& format = "json", 
-	//								  const StringMap& params = StringMap());
+		// Defaults to Anionu_API_ENDPOINT.
 
-	//virtual APITransaction* call(APIRequest* request);
-	virtual APITransaction* call(const APIMethod& method);
-	virtual APITransaction* call(const std::string& method, 
-								 const std::string& format = "json", 
-								 const StringMap& params = StringMap());
-	
-	/*
-	virtual AsyncTransaction* callAsync(APIRequest* request);
-	virtual AsyncTransaction* callAsync(const APIMethod& method);
-	virtual AsyncTransaction* callAsync(const std::string& method, 
-										const std::string& format = "json", 
-										const StringMap& params = StringMap());
-										*/
-
-	virtual const char* className() const { return "APIClient"; }
-
-//protected:
-	//void cancelTransactions();
-	//void onTransactionComplete(void* sender, http::Response& response);
+	virtual http::ClientConnection::Ptr call(const APIMethod& method);
+	virtual http::ClientConnection::Ptr call(const std::string& method, 
+								             const std::string& format = "json", 
+								             const StringMap& params = StringMap());
 
 private:
-	mutable Mutex _mutex;
-	APIMethods			_methods;
-	APICredentials		_credentials;
-	//APITransactionList	_transactions;
+	APIMethods _methods;
+	APICredentials _credentials;
+	std::string _endpoint;
 };
 
 
-} } // namespace anio
+#if 0 // Old API
+// ---------------------------------------------------------------------
+//
+class APITransaction: public http::ClientConnection
+{
+public:
+	APITransaction(APIClient* client, const APIMethod& method);
+	virtual ~APITransaction();
+};
+
+	
+typedef std::vector<APITransaction::Ptr> APITransactionList;
 
 
-#endif
-
-
-
-
-/*
 // ---------------------------------------------------------------------
 //
 struct APIRequest: public http::Request
@@ -257,9 +236,11 @@ struct APIRequest: public http::Request
 
 	APICredentials credentials;
 		// HTTP authentication credentials.
-
-//private:
-	//APIRequest(APIRequest& r) {}
-		// The copy constructor is private
 };
-*/
+#endif
+
+
+} } // namespace scy::anio
+
+
+#endif

@@ -240,6 +240,13 @@ int MotionDetector::motionLevel() const
 }
 
 
+void MotionDetector::setOptions(Options& opts)
+{
+	Mutex::ScopedLock lock(_mutex); 
+	_options = opts;
+}
+
+
 MotionDetector::Options& MotionDetector::options()
 {
 	Mutex::ScopedLock lock(_mutex); 

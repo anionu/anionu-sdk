@@ -68,9 +68,14 @@ public:
 	virtual const char* cVersion() const = 0;
 		// The currently installed Spot package version.
 
+	virtual const char* cRootDir() const = 0;
+		// The application root directory.
+
+	virtual const char* cConfigDir() const = 0;
+		// The directory which stores application and user configuration.
+
 	virtual const char* cStorageDir() const = 0;
-		// The storage path configured for the current user session.
-		// Returns the default path if no session is available.
+		// The directory which stores surveillance videos and other user data.
 		
 protected:
 	virtual ~EnvironmentBase() {};
@@ -106,10 +111,7 @@ class Environment: public EnvironmentBase
 {
 public:
 	virtual scy::Configuration& config() = 0;
-		// Configuration for the current user session.
-
-	virtual scy::Configuration& appConfig() = 0;
-		// Configuration for the entire application.
+		// Configuration for the user and application.
 
 	virtual api::Client& client() = 0;	
 		// The Anionu client interface implements remote messaging and 
@@ -139,6 +141,8 @@ public:
 		// The Spot application logger.
 
 	virtual std::string version() const = 0;
+	virtual std::string rootDir() const = 0;
+	virtual std::string configDir() const = 0;
 	virtual std::string storageDir() const = 0;
 		
 protected:

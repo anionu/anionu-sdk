@@ -68,7 +68,6 @@ public:
 	
 	const char* errorMessage() const;
 	const char* channelName() const;
-	const char* docFile() const;
 	const char* modeName() const { return "Capture Mode"; }
 
 	void onVideoCapture(void*, av::VideoPacket& packet);

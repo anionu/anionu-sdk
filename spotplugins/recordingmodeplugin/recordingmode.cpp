@@ -53,7 +53,7 @@ bool RecordingMode::activate()
 {
 	DebugL << "Activating" << endl;
 	try {
-		env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
+		env().media().RecordingStopped += sdelegate(this, &RecordingMode::onRecordingStopped);
 		startRecording();
 		_isActive = true;
 	}
@@ -144,6 +144,7 @@ void RecordingMode::onRecordingStopped(void*, api::RecordingSession& recorder)
 	try {	
 		// Start a new recording segment if the
 		// mode is still active.
+		_recordingToken = "";
 		startRecording();
 	} 
 	catch (...) {
@@ -168,10 +169,16 @@ std::string RecordingMode::recordingToken()
 }
 
 
-const char* RecordingMode::errorMessage() const 
-{ 
-	Mutex::ScopedLock lock(_mutex);
-	return _error.empty() ? 0 : _error.c_str();
+bool RecordingMode::isActive() const
+{
+	Mutex::ScopedLock lock(_mutex); 
+	return _isActive;
+}
+
+
+const char* RecordingMode::modeName() const
+{
+	return "Recording Mode";
 }
 
 
@@ -182,16 +189,16 @@ const char* RecordingMode::channelName() const
 }
 
 
-bool RecordingMode::isActive() const
-{
-	Mutex::ScopedLock lock(_mutex); 
-	return _isActive;
+const char* RecordingMode::errorMessage() const 
+{ 
+	Mutex::ScopedLock lock(_mutex);
+	return _error.empty() ? 0 : _error.c_str();
 }
 
 
 const char* RecordingMode::docFile() const
 {
-	return "RecordingModePlugin/RecordingMode.md";
+	return "recordingmodeplugin/README.md";
 }
 
 
@@ -284,10 +291,10 @@ bool RecordingMode::hasParsableFields(smpl::Form& form) const
 	
 	//Signal2<const EncoderOptions&, RecordingStream*&> RecordingStarted;
 	//Signal2<const EncoderOptions&, RecordingStream*&> RecordingStopped;
-	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
+	//env().media().RecordingStarted += sdelegate(this, &RecordingMode::onRecordingStarted);
 	//env().media().RecordingStarted.detach(this);
-		//_recordingToken.encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);
-	//_recordingToken.encoder->StateChange += delegate(this, &RecordingMode::onEncoderStateChange);
+		//_recordingToken.encoder->StateChange -= sdelegate(this, &RecordingMode::onEncoderStateChange);
+	//_recordingToken.encoder->StateChange += sdelegate(this, &RecordingMode::onEncoderStateChange);
 void RecordingMode::onRecordingStarted(void* sender, RecorderStream& stream)
 {
 }
@@ -329,7 +336,7 @@ void RecordingMode::onEncoderStateChange(void* sender, EncoderState& state, cons
 			*/	
 
 /*
-			encoder->StateChange -= delegate(this, &RecordingMode::onEncoderStateChange);	
+			encoder->StateChange -= sdelegate(this, &RecordingMode::onEncoderStateChange);	
 			// Synchronize video's if required
 			if (_synchronizeVideos) {
 				EncoderOptions& options = static_cast<EncoderOptions&>(encoder->options());

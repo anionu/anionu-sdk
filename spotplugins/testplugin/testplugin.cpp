@@ -32,29 +32,29 @@ namespace anio {
 namespace spot {
 
 	
-	// Declare your plugin like so, using SPOT_CORE_PLUGIN or 
-	// SPOT_BASE_PLUGIN depending on the API you are implementing.
+// Declare your plugin like so, using SPOT_CORE_PLUGIN or 
+// SPOT_BASE_PLUGIN depending on the API you are implementing.
 #ifdef Anionu_Spot_USING_CORE_API
 SPOT_CORE_PLUGIN(TestPlugin, "Test Plugin", "0.1.0")
 #else
 SPOT_BASE_PLUGIN(TestPlugin, "Test Plugin", "0.1.0")
 #endif	
 	
-	// The video file to synchronize with clous storage.
-	// The default path is invalid and will generate an error.
+// The video file to synchronize with clous storage.
+// The default path is invalid and will generate an error.
 #define SYNC_VIDEO_PATH "/path/to/video.mp4"
 	
-	// Override media encoders for streaming an recording.
-	// The FFmpeg shard library (.dll) files must be copied
-	// to the plugin folder, otherwise the plugin will fail to load.
-	// You can use the pre-compiled FFmpeg binaries from 
-	// ~/anionu-abi/ffmpeg/bin, or you can build your own.
+// Override media encoders for streaming an recording.
+// The FFmpeg shard library (.dll) files must be copied
+// to the plugin folder, otherwise the plugin will fail to load.
+// You can use the pre-compiled FFmpeg binaries from 
+// ~/anionu-abi/ffmpeg/bin, or you can build your own.
 #define ENABLE_MEDIA 0 //Anionu_Spot_USING_CORE_API
 	
-	// Set this to 1 in order to enable h.264 streaming
-	// and recording for Spot via FFmpeg. Note that x264
-	// support must be compiled into FFmpeg, so you will
-	// need to build FFmpeg yourself.
+// Set this to 1 in order to enable h.264 streaming
+// and recording for Spot via FFmpeg. Note that x264
+// support must be compiled into FFmpeg, so you will
+// need to build FFmpeg yourself.
 #define ENABLE_H264 0
 
 
@@ -91,10 +91,10 @@ bool TestPlugin::load()
 		// Override encoder creation with custom media sources for streaming and recording.
 		// Note that we handle these signals at the lowest priority to give other plugins
 		// first chance at instantiating media sources and encoders.
-		env().streaming().SetupStreamingSources += delegate(this, &TestPlugin::onSetupStreamingSources, -1);
-		env().streaming().SetupStreamingEncoders += delegate(this, &TestPlugin::onSetupStreamingEncoders, -1);
-		env().media().SetupRecordingSources += delegate(this, &TestPlugin::onSetupRecordingSources, -1);
-		env().media().SetupRecordingEncoders += delegate(this, &TestPlugin::onSetupRecordingEncoders, -1);
+		env().streaming().SetupStreamingSources += sdelegate(this, &TestPlugin::onSetupStreamingSources, -1);
+		env().streaming().SetupStreamingEncoders += sdelegate(this, &TestPlugin::onSetupStreamingEncoders, -1);
+		env().media().SetupRecordingSources += sdelegate(this, &TestPlugin::onSetupRecordingSources, -1);
+		env().media().SetupRecordingEncoders += sdelegate(this, &TestPlugin::onSetupRecordingEncoders, -1);
 #endif
 
 		// To test the events system we create a custom "Test Plugin Activated"  

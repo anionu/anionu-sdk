@@ -30,7 +30,8 @@ namespace anio {
 
 	
 #define TEST_SSL 1
-#define Anionu_API_ENDPOINT "https://anionu.com" //"http://localhost:3000"
+#define Anionu_API_ENDPOINT    "http://localhost:3000" //"https://anionu.com" //
+#define Anionu_API_OAUTH_TOKEN "ya29.1.AADtN_V5-IqRTru3ZOS5PNhrMcl_9Ui8se7P7gp8bndEE7HW_Cb_R6y0_oDymM3H5fPtew"
 
 
 class Tests
@@ -55,18 +56,22 @@ public:
 #endif
 		
 			// Initialize client credentials
+			client.setEndpoint(Anionu_API_ENDPOINT);
+#if Anionu_ENABLE_PASSWORD
 			client.setCredentials(Anionu_API_USERNAME, Anionu_API_KEY, Anionu_API_ENDPOINT); 
-			
-			// Run tests
-			runCreateEventTest();
-			//testAuthentication();
+#else
+			client.setCredentials(Anionu_API_OAUTH_TOKEN);
+#endif
 
-			//for (int i = 0; i < 10; i++) {
-				//runCreateEventTest();
-				//runAssetUploadTest();
-				//runAssetDownloadTest();
-			//}
+			// Run tests
+			runAssetUploadTest();
+#if 0
+			//runCreateEventTest();
+			//testAuthentication();
+			//runCreateEventTest();
+			//runAssetDownloadTest();
 			runLoop();
+#endif
 
 #if TEST_SSL
 			// Shutdown SSL
@@ -89,9 +94,9 @@ public:
 	//	
 	void testAuthentication()
 	{
-		auto conn = http::createConnection(Anionu_API_ENDPOINT);
-		conn->Headers += delegate(this, &Tests::onAuthenticationHeaders);
-		conn->Complete += delegate(this, &Tests::onAuthenticationComplete);
+		auto conn = http::Client::instance().createConnection(Anionu_API_ENDPOINT);
+		conn->Headers += sdelegate(this, &Tests::onAuthenticationHeaders);
+		conn->Complete += sdelegate(this, &Tests::onAuthenticationComplete);
 		conn->setReadStream(new std::stringstream);
 		conn->request().setURI("/authenticate.json");
 		conn->send(); // send default GET /
@@ -121,8 +126,8 @@ public:
 		Event event("Random Event", "Umm ... something happened");
 
 		// Create the transaction
-		APITransaction* trans = client.call("CreateEvent");
-		trans->Complete += delegate(this, &Tests::onCreateEventComplete);
+		http::ClientConnection::Ptr trans = client.call("CreateEvent");
+		trans->Complete += sdelegate(this, &Tests::onCreateEventComplete);
 
 		// Attach a HTML form writer for event fields
 		// TODO: Add a helper method for filling event form from Event object
@@ -142,7 +147,7 @@ public:
 
 	void onCreateEventComplete(void* sender, const http::Response& response)
 	{
-		auto trans = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<http::ClientConnection*>(sender);
 		
 		DebugL << "Transaction Complete:" 
 			<< "\n\tRequest Head: " << trans->request()
@@ -164,14 +169,15 @@ public:
 		TraceL << "Starting" << endl;
 
 		// Create the transaction
-		APITransaction* trans = client.call("UploadAsset");	
-		trans->OutgoingProgress += delegate(this, &Tests::onAssetUploadProgress);
-		trans->Complete += delegate(this, &Tests::onAssetUploadComplete);
+		http::ClientConnection::Ptr trans = client.call("UploadAsset");	
+		trans->request().setChunkedTransferEncoding(true);
+		trans->OutgoingProgress += sdelegate(this, &Tests::onAssetUploadProgress);
+		trans->Complete += sdelegate(this, &Tests::onAssetUploadComplete);
 
 		// Attach a HTML form writer for uploading files
-		http::FormWriter* form = http::FormWriter::create(*trans, http::FormWriter::ENCODING_MULTIPART);
+		http::FormWriter* form = http::FormWriter::create(*trans, http::FormWriter::ENCODING_MULTIPART_FORM);
 		form->set("asset[type]", "Image");
-		form->addFile("asset[file]", new http::FilePart("D:/test.jpg"));
+		form->addPart("asset[file]", new http::FilePart("D:/test.jpg"));
 		
 		// Send the request
 		trans->send();
@@ -186,7 +192,7 @@ public:
 
 	void onAssetUploadProgress(void* sender, const double& progress)
 	{
-		auto trans = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<http::ClientConnection*>(sender);
 		gotUploadProgress = true;
 
 		DebugL << "Upload Progress:" << progress << endl;
@@ -194,7 +200,7 @@ public:
 
 	void onAssetUploadComplete(void* sender, const http::Response& response)
 	{
-		auto trans = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<http::ClientConnection*>(sender);
 		gotUploadComplete = true;
 
 		DebugL << "Transaction Complete:" 
@@ -219,11 +225,11 @@ public:
 
 		APIMethod method;
 		method.url = "http://localhost:3000/assets/streaming/1645/Administrator_hapyyy_1370318967.jpg";
-		APITransaction* trans = client.call(method);
+		http::ClientConnection::Ptr trans = client.call(method);
 
 		trans->setReadStream(new std::ofstream("somefile.jpg", std::ios_base::out | std::ios_base::binary));
-		trans->IncomingProgress += delegate(this, &Tests::onAssetTransactionIncomingProgress);
-		trans->Complete += delegate(this, &Tests::onAssetTransactionComplete);
+		trans->IncomingProgress += sdelegate(this, &Tests::onAssetTransactionIncomingProgress);
+		trans->Complete += sdelegate(this, &Tests::onAssetTransactionComplete);
 		trans->send();	
 
 		//runLoop();
@@ -234,7 +240,7 @@ public:
 
 	void onAssetTransactionIncomingProgress(void* sender, const double& progress)
 	{
-		auto trans = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<http::ClientConnection*>(sender);
 		gotProgress = true;
 
 		DebugL << "Anionu API Incoming Progress:" << progress << endl;
@@ -242,7 +248,7 @@ public:
 
 	void onAssetTransactionComplete(void* sender, const http::Response& response) //APIMethod& service, 
 	{
-		auto trans = reinterpret_cast<APITransaction*>(sender);
+		auto trans = reinterpret_cast<http::ClientConnection*>(sender);
 		gotComplete = true;
 		//assert(trans->incomingBuffer().position() == 0);
 		//assert(trans->incomingBuffer().available() == response.getContentLength());

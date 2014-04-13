@@ -24,19 +24,22 @@
 
 
 #ifdef Anionu_Spot_USING_CORE_API
-#include "scy/base.h"
-#include "scy/signal.h"
-#include "anionu/event.h"
+#include "scy/json/json.h"
 #endif
 
 
 namespace scy {
+namespace smpl {
+	class Message;
+	class Command;
+	class Presence;
+	class Event; }
 namespace anio { 
 namespace spot { 
 namespace api { 
 	
 	
-class IMessageProcessor
+class IMessageProcessorBase
 	/// The message processor provides an ABI agnostic
 	/// interface for processing all incoming, outgoing
 	/// and local messages passing through the Spot client.
@@ -55,7 +58,47 @@ public:
 };
 
 
-// TODO: Base and core imlementations
+#ifdef Anionu_Spot_USING_CORE_API
+
+
+class IMessageProcessor: public IMessageProcessorBase
+{
+public:		
+	virtual bool onMessage(const smpl::Message& /* message */) { return false; };
+	virtual bool onCommand(const smpl::Command& /* command */) { return false; };
+	virtual void onPresence(const smpl::Presence& /* presence */) {};
+	virtual void onEvent(const smpl::Event& /* event */) {};
+
+	virtual void generateCommands(json::Value& /* root */) {};
+};
+
+
+//
+// Command Definition
+//
+
+
+typedef json::Value CommandDefinition;
+	/// CommandDefinition defines an arbitrary command which run 
+	/// on this Spot client by peers with sufficient permission.
+	/// It is used by remote client interfaces to build custom menus.
+	
+
+inline CommandDefinition makeCommandDefinition(const std::string& node, 
+                                               const std::string& name, 
+							                   const std::string& desc, 
+							                   bool enabled = true)
+{
+	CommandDefinition c;
+	c["node"] = node;
+	c["name"] = name;
+	c["desc"] = desc;
+	c["enabled"] = enabled;
+	return c;
+}
+
+
+#endif // Anionu_Spot_USING_CORE_API
 
 
 } } } } // namespace scy::anio::spot::api

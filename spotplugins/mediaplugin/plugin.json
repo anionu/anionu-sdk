@@ -1,7 +1,7 @@
 {
-   "author" : "Sourcey",
    "id" : "mediaplugin",
    "name" : "Media Plugin",
-   "sdk-version" : "0.6.0",
-   "version" : "0.9.2"
+   "author" : "Sourcey",
+   "version" : "0.8.8",
+   "sdk-version" : "0.6.0"
 }

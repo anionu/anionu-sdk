@@ -68,7 +68,7 @@ bool WebRTCPlugin::load()
 		// TODO: Test WebRTC subsytem to check everything is in order.
 		
 		// WebRTC is the preferred media transport method for browser clients that support it.
-		env().streaming().SetupStreamingEncoders += delegate(this, &WebRTCPlugin::onSetupStreamingEncoders);	
+		env().streaming().SetupStreamingEncoders += sdelegate(this, &WebRTCPlugin::onSetupStreamingEncoders);	
 	}
 	catch (std::exception& exc) {
 		_error.assign(exc.what());
@@ -211,7 +211,7 @@ void WebRTCPlugin::onSetupStreamingEncoders(void*, api::StreamingSession& sessio
 			conn->createOffer();
 			_manager.add(session.token(), conn);
 			
-			session.StateChange += delegate(this, &WebRTCPlugin::onStreamingSessionStateChange);
+			session.StateChange += sdelegate(this, &WebRTCPlugin::onStreamingSessionStateChange);
 	
 			DebugL << "Created WebRTC streaming session: " << session.token() << endl;
 		}

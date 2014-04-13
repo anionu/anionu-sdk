@@ -65,8 +65,8 @@ namespace api {
 // This version is bumped whenever any ABI breaking are
 // introduced either by changes to the API or dependencies.
 //
-static const char* SDKVersion = "0.6.0";
-static const int SDKVersionNumber = 0x000600;
+static const char* SDKVersion = "0.6.1";
+static const int SDKVersionNumber = 0x000601;
 
 
 // Date Format (ISO8601)

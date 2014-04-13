@@ -10,4 +10,7 @@
 #endif
 
 
+#define Anionu_ENABLE_PASSWORD 0
+
+
 #endif // Anionu_Config_H

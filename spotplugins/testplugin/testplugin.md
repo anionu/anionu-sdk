@@ -1,3 +1,0 @@
-# About Test Plugin
-
-Description pending ...

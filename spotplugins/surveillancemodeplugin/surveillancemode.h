@@ -46,20 +46,21 @@ public:
 	virtual ~SurveillanceMode();
 	
 	//
-	/// IMode interface
+	/// IMode methods
 	virtual bool activate();
 	virtual void deactivate();
 	
-	bool isActive() const;
-	bool isRecording() const;
-	virtual const char* docFile() const;	
-	virtual const char* errorMessage() const;
+	virtual bool isActive() const;
+
+	virtual const char* modeName() const;
 	virtual const char* channelName() const;
-	virtual const char* modeName() const { return "Surveillance Mode"; }
-	
+	virtual const char* errorMessage() const;
+	virtual const char* docFile() const;	
+
 	//
-	/// IModule methods	
-	virtual const char* className() const { return "SurveillanceMode"; }
+	/// IFormProcessor methods
+	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
+	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
 	
 	//
 	/// Local methods
@@ -70,15 +71,11 @@ public:
 	
 	void startRecording(bool whiny = true);
 	void stopRecording(bool whiny = true);
+	bool isRecording() const;
 	
 	TimedToken* createStreamingToken(long duration = 20000);
 	TimedToken* getStreamingToken(const std::string& token);
 	bool removeStreamingToken(const std::string& token);
-
-	//
-	/// IFormProcessor methods
-	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
-	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
 
 	//
 	/// Callbacks
@@ -96,6 +93,7 @@ protected:
 	std::string	_recordingToken;
 	std::vector<TimedToken> _streamingTokens;
 	anio::MotionDetector _motionDetector;
+	anio::MotionDetector* _tempMotionDetector;
 	PacketStream _motionStream;
 	mutable Mutex _mutex;
 };

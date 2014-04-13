@@ -141,13 +141,6 @@ bool CaptureMode::isActive() const
 }
 
 
-const char* CaptureMode::docFile() const
-{
-	// Return the relative path to the markdown help file.
-	return "TestPlugin/CaptureMode.md";
-}
-
-
 #ifdef Anionu_Spot_USING_CORE_API
 //
 /// IFormProcessor methods

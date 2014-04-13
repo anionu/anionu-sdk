@@ -19,6 +19,10 @@
 #ifndef Anionu_Spot_API_StreamingSession_H
 #define Anionu_Spot_API_StreamingSession_H
 
+//#ifndef Anionu_Spot_USING_CORE_API
+//#error "StreamingSession requires the Core API"
+//#endif
+
 
 #include "scy/base.h"
 #include "scy/stateful.h"
@@ -58,7 +62,8 @@ struct StreamingOptions: public av::EncoderOptions
 	                        // encoding and framing values will have no effect.	
 	bool supressEvents;     // Optionally supress events for this session.
 	                        // This is handy if you are creating an separate audio
-	                        // stream and want to avoid event spam.
+	                        // stream and want to avoid event spam.	
+	bool isLocalPeer;		// True if the peer is on the same LAN
 
 	bool valid() const 
 	{
@@ -79,7 +84,7 @@ struct StreamingOptions: public av::EncoderOptions
 		const std::string& protocol = "Raw",
 		const std::string& encoding = "None",
 		const std::string& framing = "None",
-		int timeout = 20000) : 
+		int timeout = 10000) : 
 			peer(peer),
 			channel(channel),
 			transport(transport),
@@ -91,7 +96,8 @@ struct StreamingOptions: public av::EncoderOptions
 			disableHost(false),
 			disableRelay(false),
 			disableAudio(false),
-			enableWebRTC(false) {}
+			enableWebRTC(false),
+			isLocalPeer(false) {}
 };
 
 

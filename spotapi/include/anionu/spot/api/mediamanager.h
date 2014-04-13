@@ -69,6 +69,7 @@ struct EncoderOptions: public av::EncoderOptions
 	std::string token;		// The session's unique identification token
 	std::string channel;	// The channel we're recording on
 	std::string user;		// The user ID of the initiating peer
+	std::string mime;		// The encoded video mime type ie. "video/mp4"
 	bool supressEvents;		// Suppress events for this recording session
 	bool synchronizeVideo;	// Weather or not to synchronize the recorded video.
 							// The user configured value will be set when creating

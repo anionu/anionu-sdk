@@ -34,7 +34,7 @@ namespace spot {
 SPOT_CORE_PLUGIN(
 	MediaPlugin, 
 	"Media Plugin", 
-	"0.9.0"
+	"0.8.8"
 )
 
 
@@ -60,8 +60,8 @@ bool MediaPlugin::load()
 		registerCustomMediaFormats();
 
 		// Override encoder creation for streaming and recording
-		env().streaming().SetupStreamingEncoders += delegate(this, &MediaPlugin::onSetupStreamingEncoders);
-		env().media().SetupRecordingEncoders += delegate(this, &MediaPlugin::onSetupRecordingEncoders);		
+		env().streaming().SetupStreamingEncoders += sdelegate(this, &MediaPlugin::onSetupStreamingEncoders);
+		env().media().SetupRecordingEncoders += sdelegate(this, &MediaPlugin::onSetupRecordingEncoders);		
 	}
 	catch (std::exception& exc) {
 		ErrorL << "Load failed: " << exc.what() << endl;

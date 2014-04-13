@@ -19,21 +19,10 @@
 
 #include "anionu/apiclient.h"
 #include "scy/logger.h"
-
-/*
-//#include "Poco/Net/HTTPClientSession.h"
-//#include "Poco/Net/HTTPBasicAuthenticator.h"
-#include "Poco/StreamCopier.h"
-#include "Poco/Format.h"
-*/
-
 #include <assert.h>
 
 
-using namespace std;
-
-//
-//using namespace scy;
+using std::endl;
 
 
 namespace scy {
@@ -41,171 +30,91 @@ namespace anio {
 
 
 APIClient::APIClient() :
-	_methods(*this)
+	_methods(*this),
+	_endpoint(Anionu_API_ENDPOINT)
 {
-	log("trace") << "Create" << endl;
+	TraceL << "Create" << endl;
 	_methods.load();
 }
 
 
 APIClient::~APIClient()
 {
-	log("trace") << "Destroy" << endl;
-	//cancelTransactions();
+	TraceL << "Destroy" << endl;
 }
 
 
-void APIClient::setCredentials(const std::string& username, const std::string& password, const std::string& endpoint) 
+#if Anionu_ENABLE_PASSWORD
+void APIClient::setCredentials(const std::string& username, const std::string& password) 
 { 
-	log("trace") << "Set credentials for " << endpoint << endl;
-	Mutex::ScopedLock lock(_mutex);
+	TraceL << "Set credentials for " << username << endl;	
 	_credentials.username = username;
 	_credentials.password = password;
 	_credentials.endpoint = endpoint;
 }
+#else
+void APIClient::setCredentials(const std::string& token) 
+{ 
+	//TraceL << "Set OAuth token " << token << endl;	
+	_credentials.token = token;
+}
+#endif
 
 
-/*
-APIRequest* APIClient::createRequest(const APIMethod& method)
-{
-	Mutex::ScopedLock lock(_mutex);
-	return new APIRequest(method, _credentials);
+void APIClient::setEndpoint(const std::string& endpoint) 
+{ 
+	TraceL << "Set endpoint " << endpoint << endl;	
+	_endpoint = endpoint;
 }
 
-	
-APIRequest* APIClient::createRequest(const std::string& method, 
-									 const std::string& format, 
-									 const StringMap& params)
-{
-	return createRequest(methods().get(method, format, params));
-}
-*/
 
-
-APITransaction* APIClient::call(const std::string& method, 
-								const std::string& format, 
-								const StringMap& params)
+http::ClientConnection::Ptr APIClient::call(const std::string& method, 
+											const std::string& format, 
+											const StringMap& params)
 {
-	//return call(createRequest(method, format, params));
 	return call(methods().get(method, format, params));
 }
 
 
-APITransaction* APIClient::call(const APIMethod& method)
+http::ClientConnection::Ptr APIClient::call(const APIMethod& method)
 {
-	APITransaction* transaction = new APITransaction(this, method);
+	auto transaction = http::Client::instance().createConnection(method.url);
 
 	transaction->request().setMethod(method.httpMethod);
-	transaction->request().setURI(method.url.str());
+	//transaction->request().setURI(method.url.str());
 
 	if (method.authenticatable) {		
+#if Anionu_ENABLE_PASSWORD
 		http::BasicAuthenticator auth(
 			_credentials.username,
 			_credentials.password);
 		auth.authenticate(transaction->request());
+#else
+		transaction->request().set("Authorization", "Bearer " + _credentials.token);
+#endif
 	}
 
 	return transaction;
-}
-
-		//assert(0);
-	//return call(createRequest(method));
-		
-	//http::Request::prepare();
-		/* // createConnectionT<APITransaction>();
-		// Using basic auth over SSL
-		http::BasicAuthenticator cred(
-			_credentials.username,
-			_credentials.password);
-		cred.authenticate(transaction->request()); 
-		*/
-
-/*
-APITransaction* APIClient::call(APIRequest* request)
-{
-	log("trace") << "Calling: " << request->method.name << endl;
-	APITransaction* transaction = createConnectionT<APITransaction>();
-	return transaction;
-
-	//APITransaction* transaction = new APITransaction(request);
-	//transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	//Mutex::ScopedLock lock(_mutex);
-	//_transactions.push_back(transaction);
-	//return transaction;
-}
-
-
-AsyncTransaction* APIClient::callAsync(const std::string& method, 
-									   const std::string& format, 
-									   const StringMap& params)
-{
-	return callAsync(createRequest(method, format, params));
-}
-
-
-AsyncTransaction* APIClient::callAsync(const APIMethod& method)
-{
-	return callAsync(createRequest(method));
-}
-
-
-AsyncTransaction* APIClient::callAsync(APIRequest* request)
-{
-	log("trace") << "Calling: " << request->method.name << endl;
-	AsyncTransaction* transaction = new AsyncTransaction();
-	transaction->setRequest(request);
-	transaction->Complete += delegate(this, &APIClient::onTransactionComplete);
-	Mutex::ScopedLock lock(_mutex);
-	_transactions.push_back(transaction);
-	return transaction;
-}
-
-void APIClient::cancelTransactions()
-{
-	log("trace") << "Canceling Transactions" << endl;	
-	Mutex::ScopedLock lock(_mutex);
-	for (APITransactionList::const_iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
-		(*it)->Complete -= delegate(this, &APIClient::onTransactionComplete);
-		(*it)->cancel();
-	}
-	_transactions.clear();
-}
-
-void APIClient::onTransactionComplete(void* sender, http::Response&)
-{
-	log("trace") << "Transaction Complete" << endl;
-	Mutex::ScopedLock lock(_mutex);	
-	for (APITransactionList::iterator it = _transactions.begin(); it != _transactions.end(); ++it) {	
-		if (*it == sender) {
-			log("trace") << "Removing Transaction: " << sender << endl;
-			_transactions.erase(it);
-			// The transaction is self destructing.
-			return;
-		}
-	}
-}
-*/
-
-
-bool APIClient::loaded()
-{
-	Mutex::ScopedLock lock(_mutex);	
-	return _methods.loaded();
 }
 
 
 APIMethods& APIClient::methods()
-{
-	Mutex::ScopedLock lock(_mutex);
+{	
 	return _methods;
 }
 
 
-string APIClient::endpoint()
-{
-	Mutex::ScopedLock lock(_mutex);
-	return _credentials.endpoint;
+std::string APIClient::endpoint()
+{	
+	return _endpoint;
 }
+
+
+bool APIClient::loaded()
+{		
+	return _methods.loaded();
+}
+
 
 
 // ---------------------------------------------------------------------
@@ -230,17 +139,15 @@ bool APIMethods::loaded() const
 
 void APIMethods::load()
 {
-	try {			
-		Mutex::ScopedLock lock(_mutex); 					
+	try {				
 		json::Reader reader;
 		if (!reader.parse(APIv1, *this))
 			throw std::runtime_error(reader.getFormatedErrorMessages());
 		TraceL << "Loaded API Methods: " << json::stringify(*this, true) << endl;
 	} 
-	catch (std::exception& exc) 
-	{
+	catch (std::exception& exc) {
 		ErrorL << "API Load Error: " << exc.what() << endl;
-		throw exc;/*exc.rethrow();*/
+		throw exc;
 	}  
 }
 
@@ -251,9 +158,7 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 		throw std::runtime_error("Anionu API methods not loaded.");
 	
 	APIMethod method;
-	try
-	{			
-		Mutex::ScopedLock lock(_mutex); 	
+	try {
 		//TraceL << "Get: " << name << endl;	
 		for (auto it = this->begin(); it != this->end(); it++) {	
 			json::Value& meth = (*it);		
@@ -276,10 +181,9 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 		method.format(format);
 		method.interpolate(params);
 	}
-	catch (std::exception& exc)
-	{
+	catch (std::exception& exc) {
 		ErrorL << "Get Error: " << exc.what() << endl;
-		throw exc;/*exc.rethrow();*/
+		throw exc;
 	}
 	
 	return method;
@@ -323,7 +227,7 @@ void APIMethod::format(const std::string& format)
 }
 
 
-/*
+#if 0
 // ---------------------------------------------------------------------
 // API Request
 //
@@ -342,14 +246,13 @@ void APIRequest::prepare()
 		cred.authenticate(*this); 
 	}
 }
-*/
 
 
 // ---------------------------------------------------------------------
 // API Transaction
 //
-APITransaction::APITransaction(APIClient* client, const APIMethod& method) : //APIRequest* request
-	http::ClientConnection(client, method.url) //.getHost(), method.url.getPort()
+APITransaction::APITransaction(APIClient* client, const APIMethod& method) : 
+	http::ClientConnection(method.url)
 {
 	TraceL << "Create" << endl;
 }
@@ -359,19 +262,7 @@ APITransaction::~APITransaction()
 {
 	TraceL << "Destroy" << endl;
 }
-
-
-/*
-void APITransaction::onComplete()
-{	
-	//TraceL << "Callbacks: " << !cancelled() << endl;
-
-	//assert(!cancelled());
-	// Send from the current instance, so the
-	// sender can be cast as an APITransaction.
-	http::ClientConnection::Complete.emit(this, _response);
-}
-*/
+#endif
 
 
 } } // namespace scy::anio

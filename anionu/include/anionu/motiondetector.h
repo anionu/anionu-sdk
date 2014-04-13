@@ -20,6 +20,7 @@
 #ifndef Anionu_MotionDetector_H
 #define Anionu_MotionDetector_H
 
+
 #include "scy/base.h"
 #include "scy/stateful.h"
 #include "scy/signal.h"
@@ -98,6 +99,7 @@ public:
 	
 	virtual int motionLevel() const;
 	virtual Options& options();	
+	virtual void setOptions(Options& opts);	
 	
 	virtual bool isActive() const;
 	virtual bool isProcessing() const;
@@ -106,16 +108,12 @@ public:
 	virtual void process(IPacket& packet);
 			
 	PacketSignal emitter;
-	
-	const char* className() const { return "MotionDetector"; }
 
 protected:
 	void updateMHI(cv::Mat& source);
 	void computeMotionState();	
 
 	virtual void onStreamStateChange(const PacketStreamState&);	
-
-	//virtual void* self() { return this;	}
 
 private:
 	mutable Mutex _mutex;

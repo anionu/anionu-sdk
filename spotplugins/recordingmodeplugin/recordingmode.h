@@ -41,26 +41,32 @@ public:
 	RecordingMode(api::Environment& env, const std::string& channel);
 	virtual ~RecordingMode();
 	
+	//
+	/// IMode methods
 	virtual bool activate();
 	virtual void deactivate();
+	virtual bool isActive() const;
+	
+	virtual const char* modeName() const;
+	virtual const char* channelName() const;
+	virtual const char* errorMessage() const;
+	virtual const char* docFile() const;	
 		
+	//
+	/// IFormProcessor methods
+	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
+	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
+		
+	//
+	/// Local methods
 	void startRecording();
 	void stopRecording();
 	
 	void loadConfig();
-	bool isActive() const;
 	bool isRecording() const;
 	std::string recordingToken();
 		
-	virtual void buildForm(smpl::Form& form, smpl::FormElement& element);
-	virtual void parseForm(smpl::Form& form, smpl::FormElement& element);
-		
 	void onRecordingStopped(void* sender, api::RecordingSession& recorder);
-	
-	virtual const char* docFile() const;	
-	virtual const char* errorMessage() const;
-	virtual const char* channelName() const;
-	virtual const char* modeName() const { return "Recording Mode"; }
 
 private: 
 	int	_segmentDuration;
@@ -100,5 +106,5 @@ private:
 	//void onEncoderStateChange(void* sender, av::EncoderState& state, const av::EncoderState& oldState);
 	//Signal2<const api::EncoderOptions&, api::RecordingStream*&> RecordingStarted;
 	//Signal2<const api::EncoderOptions&, api::RecordingStream*&> RecordingStopped;
-	//env().media().RecordingStarted += delegate(this, &RecordingMode::onRecordingStarted);
-	//env().media().RecordingStopped += delegate(this, &RecordingMode::onRecordingStopped);
+	//env().media().RecordingStarted += sdelegate(this, &RecordingMode::onRecordingStarted);
+	//env().media().RecordingStopped += sdelegate(this, &RecordingMode::onRecordingStopped);

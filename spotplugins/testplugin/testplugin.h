@@ -51,7 +51,7 @@ class TestPlugin:
 		/// with operational modes. Modes can be activated and deactivated
 		/// via the online dashboard, and generally utilize the channel
 		/// media captures. See Surveillance Mode and Recording Mode.
-	public api::IMessageProcessor,
+	public api::IMessageProcessorBase,
 		/// The IMessageProcessor captures incoming and outgoing
 		/// messages between Spot and the Anionu server.
 		///
@@ -96,7 +96,7 @@ public:
 	const char* errorMessage() const;
 
 	//
-	/// IMessageProcessor
+	/// IMessageProcessorBase
 	bool onMessage(const char* message);
 	bool onCommand(const char* command);
 	void onPresence(const char* presence);

@@ -1,7 +1,7 @@
 {
-   "author" : "Sourcey",
    "id" : "surveillancemodeplugin",
    "name" : "Surveillance Mode Plugin",
+   "author" : "Sourcey",
    "sdk-version" : "0.6.0",
    "version" : "0.9.3"
 }
