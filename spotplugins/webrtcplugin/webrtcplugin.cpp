@@ -37,7 +37,7 @@ namespace spot {
 SPOT_CORE_PLUGIN(
 	WebRTCPlugin, 
 	"WebRTC Plugin", 
-	"0.1.0"
+	"0.1.1"
 )
 
 

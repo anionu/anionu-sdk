@@ -49,8 +49,9 @@ public:
 	static bool createEncoder(PacketStream& stream, av::EncoderOptions& options);
 	void registerCustomMediaFormats();
 	
-	void onSetupStreamingEncoders(void*, api::StreamingSession& session, bool& handled);
-	void onSetupRecordingEncoders(void*, api::RecordingSession& session, bool& handled);
+	void onSetupStreamingEncoders(api::StreamingSession& session, bool& handled);
+	void onSetupRecordingEncoders(api::RecordingSession& session, bool& handled);
+	void onCreateThumbnail(const av::ThumbnailerOptions& options, bool& handled);
 
 	const char* errorMessage() const;
 	

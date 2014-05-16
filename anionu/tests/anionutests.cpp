@@ -2,6 +2,7 @@
 #include "scy/application.h"
 #include "anionu/apiclient.h"
 #include "anionu/event.h"
+#include "anionu/ssl.h"
 #include "scy/net/sslsocket.h"
 #include "scy/net/sslmanager.h"
 #include "scy/http/form.h"
@@ -30,8 +31,8 @@ namespace anio {
 
 	
 #define TEST_SSL 1
-#define Anionu_API_ENDPOINT    "http://localhost:3000" //"https://anionu.com" //
-#define Anionu_API_OAUTH_TOKEN "ya29.1.AADtN_V5-IqRTru3ZOS5PNhrMcl_9Ui8se7P7gp8bndEE7HW_Cb_R6y0_oDymM3H5fPtew"
+#define Anionu_API_ENDPOINT    "https://anionu.com" //"http://localhost:3000"
+#define Anionu_API_OAUTH_TOKEN "authtokenhere"
 
 
 class Tests
@@ -45,16 +46,7 @@ public:
 #ifdef _MSC_VER
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-		{
-#if TEST_SSL
-			// Initialize SSL Context 
-			net::SSLContext::Ptr ptrContext = new net::SSLContext(
-				net::SSLContext::CLIENT_USE, "", "", "", 
-				net::SSLContext::VERIFY_NONE, 9, false, 
-				"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");		
-			net::SSLManager::instance().initializeClient(ptrContext);
-#endif
-		
+		{		
 			// Initialize client credentials
 			client.setEndpoint(Anionu_API_ENDPOINT);
 #if Anionu_ENABLE_PASSWORD
@@ -63,35 +55,54 @@ public:
 			client.setCredentials(Anionu_API_OAUTH_TOKEN);
 #endif
 
-			// Run tests
-			runAssetUploadTest();
+			testDefaultGet();
 #if 0
-			//runCreateEventTest();
-			//testAuthentication();
-			//runCreateEventTest();
-			//runAssetDownloadTest();
+			runAssetUploadTest();
+			runCreateEventTest();
+			testAuthentication();
+			runCreateEventTest();
+			runAssetDownloadTest();
+#endif
 			runLoop();
-#endif
-
-#if TEST_SSL
-			// Shutdown SSL
-			net::SSLManager::instance().shutdown();
-#endif
-
-			// Shutdown the API client
-			//client.shutdown();
-
-			// Shutdown the garbage collector to free all memory
-			//GarbageCollector::instance().shutdown();
-		
-			// Run the final cleanup
 			runCleanup();
 		}
 	}
 	
-	// ============================================================================
-	// Authentication Test
+	
+	//
+	/// Get Request
 	//	
+
+
+	void testDefaultGet()
+	{
+		auto conn = http::Client::instance().createConnection(Anionu_API_ENDPOINT);
+		conn->Headers += sdelegate(this, &Tests::onDefaultHeaders);
+		conn->Complete += sdelegate(this, &Tests::onDefaultComplete);
+		conn->setReadStream(new std::stringstream);
+		conn->request().setURI("/");
+		conn->send(); // send default GET /
+	}	
+	
+	void onDefaultHeaders(void*, http::Response& res)
+	{	
+		DebugL << "On response headers: " << res << endl;
+	}
+	
+	void onDefaultComplete(void* sender, const http::Response& response)
+	{		
+		auto conn = reinterpret_cast<http::ClientConnection*>(sender);
+		DebugL << "On response complete" << response << 
+			conn->readStream<std::stringstream>()->str() << endl;
+		conn->close();
+	}
+
+	
+	//
+	/// Authentication Test
+	//	
+
+
 	void testAuthentication()
 	{
 		auto conn = http::Client::instance().createConnection(Anionu_API_ENDPOINT);
@@ -99,7 +110,7 @@ public:
 		conn->Complete += sdelegate(this, &Tests::onAuthenticationComplete);
 		conn->setReadStream(new std::stringstream);
 		conn->request().setURI("/authenticate.json");
-		conn->send(); // send default GET /
+		conn->send();
 	}	
 	
 	void onAuthenticationHeaders(void*, http::Response& res)
@@ -115,15 +126,18 @@ public:
 		self->close();
 	}
 
-	// ============================================================================
-	// Create Event Test
+
 	//
+	/// Create Event Test
+	//
+
+
 	void runCreateEventTest() 
 	{
 		TraceL << "Starting" << endl;
 		
 		// Create the event
-		Event event("Random Event", "Umm ... something happened");
+		Event event("Random Event", "ZOMG, something happened!");
 
 		// Create the transaction
 		http::ClientConnection::Ptr trans = client.call("CreateEvent");
@@ -135,7 +149,7 @@ public:
 		form->set("event[name]", event.name);
 		form->set("event[message]", event.message);
 		form->set("event[severity]", event.severityStr());
-		form->set("event[origin]", event.origin); //Str()
+		form->set("event[origin]", event.origin);
 		//form->set("event[timestamp]", event.formatTime());
 
 		trans->send();
@@ -157,10 +171,13 @@ public:
 
 		//assert(response.success());
 	}
-			
-	// ============================================================================
-	// Transaction Asset Upload
+		
+
 	//
+	/// Transaction Asset Upload
+	//
+
+
 	bool gotUploadProgress;
 	bool gotUploadComplete;
 
@@ -213,9 +230,11 @@ public:
 	}
 
 
-	// ============================================================================
-	// Transaction Asset Download
 	//
+	/// Transaction Asset Download
+	//
+
+
 	bool gotProgress;
 	bool gotComplete;
 
@@ -263,8 +282,11 @@ public:
 		assert(response.success());
 	}
 
-	// ============================================================================
+
 	//
+	/// Event Loop Helpers
+	//
+
 	void runLoop() {
 		DebugL << "#################### Running" << endl;
 		app.run();
@@ -284,10 +306,19 @@ public:
 
 int main(int argc, char** argv) 
 {	
+	//assert(Anionu_API_OAUTH_TOKEN != "authtokenhere" && 
+	//	"Get an auth token from http://anionu.com/auth_token");
+
 	Logger::instance().add(new ConsoleChannel("debug", LTrace));
+#if TEST_SSL			
+	anio::initDefaultSSLContext();				
+#endif
 	{
 		anio::Tests run;
 	}
-	Logger::shutdown();
+#if TEST_SSL	
+	net::SSLManager::destroy();		
+#endif
+	Logger::destroy();
 	return 0;
 }

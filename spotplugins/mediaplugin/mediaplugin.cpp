@@ -21,6 +21,7 @@
 #include "anionu/spot/api/synchronizer.h"
 #include "anionu/spot/api/client.h"
 #include "scy/media/formatregistry.h"
+#include "scy/media/thumbnailer.h"
 
 
 using std::endl;
@@ -34,7 +35,7 @@ namespace spot {
 SPOT_CORE_PLUGIN(
 	MediaPlugin, 
 	"Media Plugin", 
-	"0.8.8"
+	"0.9.0"
 )
 
 
@@ -56,12 +57,15 @@ bool MediaPlugin::load()
 	try {
 		DebugL << "Loading" << endl;
 
+		// Override encoder creation for streaming and recording
+		env().streaming().SetupStreamingEncoders += delegate(this, &MediaPlugin::onSetupStreamingEncoders);
+		env().media().SetupRecordingEncoders += delegate(this, &MediaPlugin::onSetupRecordingEncoders);
+
+		// Override thumbnail creation
+		env().media().CreateThumbnail += delegate(this, &MediaPlugin::onCreateThumbnail);
+
 		// Register our custom media formats
 		registerCustomMediaFormats();
-
-		// Override encoder creation for streaming and recording
-		env().streaming().SetupStreamingEncoders += sdelegate(this, &MediaPlugin::onSetupStreamingEncoders);
-		env().media().SetupRecordingEncoders += sdelegate(this, &MediaPlugin::onSetupRecordingEncoders);		
 	}
 	catch (std::exception& exc) {
 		ErrorL << "Load failed: " << exc.what() << endl;
@@ -76,9 +80,10 @@ bool MediaPlugin::load()
 void MediaPlugin::unload() 
 {	
 	DebugL << "Unloading" << endl;
-
+	
 	env().streaming().SetupStreamingEncoders.detach(this);
 	env().media().SetupRecordingEncoders.detach(this);
+	env().media().CreateThumbnail.detach(this);
 	env().media().resetDefaultMediaFormats();
 }
 
@@ -88,7 +93,9 @@ bool MediaPlugin::createEncoder(PacketStream& stream, av::EncoderOptions& option
 	av::AVPacketEncoder* encoder = nullptr;
 	try {
 		// Create and initialize the encoder
-		encoder = new av::AVPacketEncoder(options);
+		encoder = new av::AVPacketEncoder(options, 
+			options.oformat.video.enabled && 
+			options.oformat.audio.enabled);
 		encoder->initialize(); // may throw
 		
 		// Attach the encoder to the packet stream
@@ -105,7 +112,7 @@ bool MediaPlugin::createEncoder(PacketStream& stream, av::EncoderOptions& option
 }
 
 
-void MediaPlugin::onSetupStreamingEncoders(void*, api::StreamingSession& session, bool& handled)
+void MediaPlugin::onSetupStreamingEncoders(api::StreamingSession& session, bool& handled)
 {
 	DebugL << "Initialize streaming encoder: " << session.token() << endl;
 		
@@ -120,7 +127,7 @@ void MediaPlugin::onSetupStreamingEncoders(void*, api::StreamingSession& session
 }
 
 
-void MediaPlugin::onSetupRecordingEncoders(void*, api::RecordingSession& session, bool& handled)
+void MediaPlugin::onSetupRecordingEncoders(api::RecordingSession& session, bool& handled)
 {	
 	DebugL << "Initialize recording encoder: " << session.options.token << endl;
 		
@@ -132,6 +139,27 @@ void MediaPlugin::onSetupRecordingEncoders(void*, api::RecordingSession& session
 		
 	// Initialize the session and set the handled flag on success
 	handled = createEncoder(session.stream, session.options);
+}
+
+
+void MediaPlugin::onCreateThumbnail(const av::ThumbnailerOptions& options, bool& handled)
+{
+	DebugL << "Create thumbnail: " << options.ifile << endl;
+		
+	// Create the thumbnail only if required
+	if (handled)
+		return;
+	
+	try {
+		av::Thumbnailer thumb(options);			
+		thumb.open(); // output default thumb: (ofile)_thumb.jpg
+		thumb.grab();
+		handled = true;
+	}
+	catch (std::exception& exc) {
+		ErrorL << "Create thumbnail failed: " << exc.what() << endl;
+		handled = false;
+	}
 }
 
 

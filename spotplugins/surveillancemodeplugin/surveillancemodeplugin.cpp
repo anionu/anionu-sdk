@@ -32,7 +32,7 @@ namespace spot {
 SPOT_CORE_PLUGIN(
 	SurveillanceModePlugin, 
 	"Surveillance Mode Plugin",
-	"0.9.3"
+	"0.9.4"
 )
 
 

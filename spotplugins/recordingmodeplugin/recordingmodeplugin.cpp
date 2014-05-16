@@ -32,7 +32,7 @@ namespace spot {
 SPOT_CORE_PLUGIN(
 	RecordingModePlugin, 
 	"Recording Mode Plugin", 
-	"0.9.2"
+	"0.9.3"
 )
 
 

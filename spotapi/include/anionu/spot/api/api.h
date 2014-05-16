@@ -46,8 +46,8 @@
 	#endif
 
 	#include "scy/base.h"
-	#if SCY_MAJOR_VERSION != 0 || SCY_MINOR_VERSION != 9 || SCY_PATCH_VERSION != 2
-		#error "Must use LibSourcey 0.9.2 to compile binary \
+	#if SCY_MAJOR_VERSION != 0 || SCY_MINOR_VERSION != 9 || SCY_PATCH_VERSION != 3
+		#error "Must use LibSourcey 0.9.3 to compile binary \
 				compatible plugins using the current API version."
 	#endif
 
@@ -65,7 +65,7 @@ namespace api {
 // This version is bumped whenever any ABI breaking are
 // introduced either by changes to the API or dependencies.
 //
-static const char* SDKVersion = "0.6.1";
+static const char* SDKVersion = "0.6.2";
 static const int SDKVersionNumber = 0x000601;
 
 

@@ -35,9 +35,9 @@ namespace spot {
 // Declare your plugin like so, using SPOT_CORE_PLUGIN or 
 // SPOT_BASE_PLUGIN depending on the API you are implementing.
 #ifdef Anionu_Spot_USING_CORE_API
-SPOT_CORE_PLUGIN(TestPlugin, "Test Plugin", "0.1.0")
+SPOT_CORE_PLUGIN(TestPlugin, "Test Plugin", "0.1.1")
 #else
-SPOT_BASE_PLUGIN(TestPlugin, "Test Plugin", "0.1.0")
+SPOT_BASE_PLUGIN(TestPlugin, "Test Plugin", "0.1.1")
 #endif	
 	
 // The video file to synchronize with clous storage.
@@ -49,12 +49,13 @@ SPOT_BASE_PLUGIN(TestPlugin, "Test Plugin", "0.1.0")
 // to the plugin folder, otherwise the plugin will fail to load.
 // You can use the pre-compiled FFmpeg binaries from 
 // ~/anionu-abi/ffmpeg/bin, or you can build your own.
-#define ENABLE_MEDIA 0 //Anionu_Spot_USING_CORE_API
+// Must have Anionu_Spot_USING_CORE_API defined
+#define ENABLE_MEDIA 1
 	
 // Set this to 1 in order to enable h.264 streaming
 // and recording for Spot via FFmpeg. Note that x264
 // support must be compiled into FFmpeg, so you will
-// need to build FFmpeg yourself.
+// need to build FFmpeg yourself enabling libx264.
 #define ENABLE_H264 0
 
 
@@ -168,7 +169,9 @@ void TestPlugin::synchronizeTestVideo()
 	// This method shows how to synchronize a file with online storage.
 	// Be sure to change the video file path for testing.
 	DebugL << "Synchronizing test video: " << SYNC_VIDEO_PATH << endl;
-	env().synchronizer().sync("Video", SYNC_VIDEO_PATH, "Test Video");
+			
+	api::SynchronizerTask task(SYNC_VIDEO_PATH, "Video", "video/mp4", "Test Video");
+	env().synchronizer().sync(task);
 }
 
 
@@ -236,6 +239,9 @@ void TestPlugin::registerMediaFormats()
 	// selectable and configurable via the dashboard.	
 		
 	//
+	/// Define Video Formats
+
+	//
 	// MP4 (Recording)
 	av::Format mp4("MP4", "mp4", 
 		av::VideoCodec("MPEG4", "mpeg4", 480, 360, 25), 
@@ -280,6 +286,7 @@ void TestPlugin::registerMediaFormats()
 
 	//
 	/// Register Recording Formats
+
 	media.recordingFormats().registerFormat(mp4);
 #if ENABLE_H264
 	media.recordingFormats().registerFormat(mp4h264);
@@ -289,7 +296,8 @@ void TestPlugin::registerMediaFormats()
 #endif
 	
 	//
-	/// Register Video Streaming Formats
+	/// Register Audio Streaming Formats
+
 	media.videoStreamingFormats().registerFormat(flvVideo);
 #if ENABLE_H264
 	media.videoStreamingFormats().registerFormat(flvH264);
@@ -300,6 +308,7 @@ void TestPlugin::registerMediaFormats()
 		
 	//
 	/// Register Audio Streaming Formats
+
 	media.audioStreamingFormats().registerFormat(flvSpeex);
 	media.audioStreamingFormats().registerFormat(flvMonoMP3);
 	media.audioStreamingFormats().setDefault("Flash Speex");

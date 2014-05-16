@@ -32,8 +32,9 @@
 
 namespace scy {
 namespace av {
+	class FormatRegistry;
 	struct Format;
-	class FormatRegistry;}
+	struct ThumbnailerOptions;}
 namespace anio {
 namespace spot { 
 namespace api { 
@@ -43,18 +44,25 @@ class MediaManagerBase
 	/// ABI agnostic API
 {
 public:
-	virtual void startRecording(const char* channel, const char* ofile = nullptr, bool synchronize = false) = 0;
+	virtual bool startRecording(const char* channel, const char* ofile = nullptr, bool synchronize = false) = 0;
 		// Starts recording the video input of the given
 		// surveillance channel.
-		
+		//
 		// A medium severity "Recording Failed" event will
 		// be created and propagated on the system which 
 		// contains the full error message.
 
 	virtual bool stopRecording(const char* token) = 0;
 		// Stops the recorder instance matching the given token.
-		// Returns true on success, or if whiny is set then an 
-		// exception will be thrown on error.
+		// Returns true or false depending on success.
+
+	virtual bool createThumbnail(const char* ifile, const char* ofile = nullptr, 
+		int width = 0, int height = 0, double seek = 0.0) = 0;
+		// Creates a thumbnail from the input video file and
+		// saves it to the location specified by the ofile argument.
+		// If ofile is not specified the thumbnail will be saved to
+		// the following path: [basename]_thumb.jpg
+		// Returns true if the thumnbnail was created, false otherwise.
 		
 protected:
 	virtual ~MediaManagerBase() {};
@@ -118,6 +126,14 @@ public:
 		// ideally using the getEncoderOptions() method.
 		// An exception will be thrown on error.
 
+	virtual bool createThumbnail(const av::ThumbnailerOptions& options, bool whiny = true) = 0;
+		// Creates a thumbnail from the input video file and
+		// saves it to the location specified by the ofile argument.
+		// If ofile is not specified the thumbnail will be saved to
+		// the following path: [basename]_thumb.jpg
+		// Returns true on success, or if whiny is set then an 
+		// exception will be thrown on error.
+
 	virtual api::EncoderOptions getEncoderOptions(const std::string& channel) = 0;
 		// Initializes default recorder and encoder input format options 
 		// for the given channel, and output format options from the
@@ -178,6 +194,10 @@ public:
 		// Provides listeners with the ability to instantiate the recording encoder.
 		// If a valid Recorder instance is assigned to the second parameter,
 		// it will be used for encoding.
+
+	Signal2<const av::ThumbnailerOptions&, bool&> CreateThumbnail;
+		// Provides listeners with the ability to creat a video thumbnail.
+		// The second boolean argument should be set to true the thumbnail was created.
 		
 	Signal<api::RecordingSession&> RecordingStarted;
 	Signal<api::RecordingSession&> RecordingStopped;

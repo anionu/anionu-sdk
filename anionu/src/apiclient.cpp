@@ -83,7 +83,7 @@ http::ClientConnection::Ptr APIClient::call(const APIMethod& method)
 	transaction->request().setMethod(method.httpMethod);
 	//transaction->request().setURI(method.url.str());
 
-	if (method.authenticatable) {		
+	if (method.authenticate) {		
 #if Anionu_ENABLE_PASSWORD
 		http::BasicAuthenticator auth(
 			_credentials.username,
@@ -167,9 +167,9 @@ APIMethod APIMethods::get(const std::string& name, const std::string& format, co
 				meth["name"] == name) {
 				//TraceL << "Get API Method name: " << meth["name"].asString() << endl;
 				method.name = meth["name"].asString();
-				method.httpMethod = meth["http"].asString();
+				method.httpMethod = meth["method"].asString();
 				method.url = _client.endpoint() + meth["uri"].asString();
-				method.authenticatable = meth["auth"].asBool();
+				method.authenticate = !meth.isMember("authenticate") || meth["authenticate"].asBool();
 				break;
 			}
 		}
@@ -202,7 +202,7 @@ void APIMethods::print(std::ostream& os) const
 //
 APIMethod::APIMethod() : 
 	httpMethod("GET"),
-	authenticatable(true)
+	authenticate(true)
 {
 }
 
@@ -237,7 +237,7 @@ void APIRequest::prepare()
 	setURI(method.url.str());
 	http::Request::prepare();
 
-	if (!method.authenticatable) {
+	if (method.authenticate) {
 		
 		// Using basic auth over SSL
 		http::BasicAuthenticator cred(
